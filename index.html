@@ -269,7 +269,7 @@
   const PHASES = [
     { name: 'Legacy hub and spoke', desc: 'Branches on MPLS. Internet backhauled to the DC firewall stack. Remote users on VPN.' },
     { name: 'Remote users first', desc: 'SSE for remote users: ZTNA replaces the VPN for apps, SWG and CASB at the nearest PoP.' },
-    { name: 'Branches in waves', desc: 'Branch 1, the DC and the cloud VPC join the SASE cloud. Branch 2 still on MPLS. Both worlds side by side.' },
+    { name: 'Branches in waves', desc: 'Branch 1, the DC and the cloud VPC (virtual edge) join the SASE cloud. Branch 2 still on MPLS.' },
     { name: 'Target state', desc: 'MPLS retired. Every site and user under one policy. The DC firewall shrinks to east-west.' }
   ];
 
@@ -300,7 +300,7 @@
     aiEmbedded: ['AI hides inside sanctioned SaaS', 'Copilots inside office suites and CRMs, and agents calling APIs from servers, never touch a "Generative AI" category.', 'Govern by activity and data, and include server and API traffic, not only browsers.'],
     logPrivacy: ['Logging prompts is sensitive', 'Capturing prompt content creates privacy and legal obligations of its own.', 'Bring in privacy and legal early. Log metadata by default and content only on a DLP match.'],
     cloudRouting: ['Overlapping and leaking routes', 'VPC ranges overlap with on-prem or with each other, and a default route advertised into the VPC quietly sends cloud internet traffic through the SASE.', 'Plan address space early, advertise specific prefixes, and decide cloud internet egress on purpose.'],
-    cloudHA: ['One tunnel, one point of failure', 'A single tunnel to a single PoP means a cloud-side maintenance window becomes an outage.', 'Two tunnels to two PoPs with BGP, and test failover during a planned window.']
+    cloudHA: ['One virtual edge, one point of failure', 'A single virtual edge in one availability zone, with one tunnel to one PoP, turns a cloud-side maintenance window into an outage.', 'Deploy virtual edges in two availability zones with tunnels to two PoPs, and test failover during a planned window.']
   };
 
   // ---------- Legacy issues per flow, and how SASE answers each one ----------
@@ -350,7 +350,7 @@
     ],
     'branch-cloud': [
       ['Cloud via the DC', 'Branch → MPLS → DC → IPsec → cloud. Moving apps to the cloud made the DC more central, not less.', 'Branches reach the cloud through the nearest PoP and the middle mile. The DC is out of the path.'],
-      ['Tunnel sprawl', 'Every VPC, VNet and region needs its own tunnels, routes and firewall rules on the DC firewall pair.', 'Each VPC connects once to the SASE cloud, and every site and user can reach it under policy.'],
+      ['Tunnel sprawl', 'Every VPC, VNet and region needs its own tunnels, routes and firewall rules on the DC firewall pair.', 'A virtual SD-WAN edge connects each VPC once to the SASE cloud, and every site and user can reach it under policy.'],
       ['A separate security model', 'Security groups in the cloud and firewall rules on-prem, written by different teams in different tools.', 'One WAN firewall and IPS policy covers DC, branches and cloud alike.'],
       ['Remote users hairpin twice', 'A remote user on VPN goes to the DC and then back out to the cloud.', 'ZTNA from the nearest PoP straight to the cloud app.']
     ]
@@ -391,7 +391,7 @@
       dcedge: p < 2 ? { l: 'WAN edge', s: 'MPLS + IPsec hub', cls: 'legacy' } : sd(p === 2 ? 'SASE + MPLS hub' : 'dual ISP'),
       edge1: p < 2 ? ce : sd(p === 2 ? 'ISP + MPLS' : 'ISP + 5G'),
       edge2: p < 3 ? ce : sd('ISP + 5G'),
-      vgw: { s: p < 2 ? 'IPsec to the DC' : 'IPsec to a PoP' }
+      vgw: p < 2 ? { l: 'Cloud VPN GW', s: 'IPsec to the DC', cls: 'legacy' } : { l: 'SD-WAN edge', s: 'virtual, in VPC', cls: 'sdwan' }
     };
   }
 
@@ -401,7 +401,7 @@
     ['saas', [260, BUS_Y], 0, 3], ['genai', [470, BUS_Y], 0, 3],
     ['cloudapp', 'vgw', 0, 3],
     ['vgw', [815, BUS_Y], 0, 1, 'ipsec', 'IPsec to the DC', [822, 98]],
-    ['vgw', 'popB2', 2, 3, 'dashed', 'IPsec to the PoP', [822, 138]],
+    ['vgw', 'popB2', 2, 3, null, 'tunnel to the PoP', [822, 138]],
     ['remote', [95, BUS_Y], 0, 3, 'dashed', 'hotel Wi-Fi', 0.5],
     ['dcfw', [LEFT_X, BUS_Y], 0, 3, null, 'internet', [22, 300], [[LEFT_X, 475]]],
     ['apps', 'dcfw', 0, 3], ['apps', 'dcedge', 0, 3], ['dcedge', 'dcfw', 0, 3],
@@ -578,7 +578,7 @@
     path: ['users1', 'edge1', 'popB1', 'core', 'popB2', 'vgw', 'cloudapp'], verdict: 'Straight to the cloud through the PoPs', vclass: 'good',
     steps: [['SD-WAN edge', 'Tunnels to the nearest PoP.'],
       ['PoP', 'WAN firewall and IPS under the same policy as the DC, then the middle mile to the PoP nearest the cloud region.'],
-      ['Cloud VPN GW', 'IPsec with BGP from the VPC to that PoP (or a virtual SD-WAN edge inside the VPC).'],
+      ['Virtual SD-WAN edge', 'Runs inside the VPC, tunnels to that PoP and advertises the VPC prefixes. Same edge, same policy as a branch.'],
       ['Workload', 'Reached without touching the DC.']],
     caps: ['sdwan', 'mm', 'fwaas', 'ips'], pits: ['cloudRouting', 'cloudHA']
   };
@@ -586,9 +586,9 @@
     path: ['remote', 'popU', 'core', 'popB2', 'vgw', 'cloudapp'], verdict: 'ZTNA straight to the cloud', vclass: 'good',
     steps: [['Agent', 'Signs in through the IdP with a posture check and tunnels to the nearest PoP.'],
       ['Policy', 'User, group and posture decide access to this one cloud app.'],
-      ['PoPs', 'Middle mile to the PoP that holds the VPC\'s IPsec tunnel.'],
+      ['PoPs', 'Middle mile to the PoP that the VPC\'s virtual SD-WAN edge connects to.'],
       ['Workload', 'Reached privately. No public IP on the app, and the DC is not involved.']],
-    caps: ['ztna', 'idp', 'fwaas', 'ips', 'mm'], pits: ['cloudRouting', 'dualClient']
+    caps: ['ztna', 'idp', 'fwaas', 'ips', 'mm', 'sdwan'], pits: ['cloudRouting', 'dualClient']
   };
   S['remote-cloud'] = [
     { path: ['remote', 'dcfw', [LEFT_X, 475], [LEFT_X, BUS_Y], [815, BUS_Y], 'vgw', 'cloudapp'], verdict: 'Double hairpin through the DC', vclass: 'legacy',
