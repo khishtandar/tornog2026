@@ -199,6 +199,15 @@
   .pit p { margin: 0; font-size: 13.5px; }
   .pit .fix { color: var(--ok); }
   .pit .fix::before { content: "Fix: "; font-weight: 600; }
+  .tabs { display: flex; align-items: flex-end; gap: 4px; padding: 10px 16px 0; border-bottom: 1px solid var(--line); }
+  .tabs button { font: 600 13px var(--display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); background: none; border: 1px solid transparent; border-bottom: 0; border-radius: 8px 8px 0 0; padding: 8px 12px; cursor: pointer; margin-bottom: -1px; }
+  .tabs button:hover { color: var(--ink); }
+  .tabs button[aria-selected="true"] { color: var(--accent-ink); background: var(--surface); border-color: var(--line); border-bottom: 1px solid var(--surface); }
+  .tabkey { margin-left: auto; padding-bottom: 8px; }
+  .pit.issue { border-left-color: var(--bad); }
+  .pit.issue b::before { content: "✕ "; color: var(--bad); }
+  .pit.solved { border-left-color: var(--ok); }
+  .pit.solved b::before { content: "✓ "; color: var(--ok); }
 
   .foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 20px; color: var(--muted); font-size: 12.5px; }
   .foot a { color: var(--cloud); }
@@ -218,7 +227,7 @@
       <h1>SASE in Practice <small>Lessons from the field, and what AI changes</small></h1>
     </div>
     <div class="tools">
-      <span class="keys"><kbd>←</kbd><kbd>→</kbd> phase · <kbd>1</kbd>–<kbd>6</kbd> flow · <kbd>P</kbd> present · <kbd>T</kbd> theme</span>
+      <span class="keys"><kbd>←</kbd><kbd>→</kbd> phase · <kbd>1</kbd>–<kbd>6</kbd> flow · <kbd>F</kbd> fixes/pitfalls · <kbd>P</kbd> present · <kbd>T</kbd> theme</span>
       <button class="btn" id="presentBtn" type="button">Present</button>
       <button class="btn" id="themeBtn" type="button" aria-label="Toggle light or dark theme">Theme</button>
     </div>
@@ -276,11 +285,6 @@
 
   // ---------- Field pitfalls ----------
   const PIT = {
-    saasLatency: ['Backhaul hides the real cost', 'Every SaaS session trombones through the DC. Latency grows, and the DC internet link becomes the bottleneck for the whole company.', 'Baseline SaaS performance before cutover, then break out at the nearest PoP. Microsoft\'s own M365 guidance is local egress.'],
-    ipsecBackup: ['The backup path is never tested', 'The IPsec tunnel sits idle for months. When MPLS finally fails it comes up with the wrong MTU, an expired certificate or missing routes, and no QoS.', 'Test failover on a schedule, and monitor the tunnel itself, not just the interface.'],
-    flatWan: ['"Trusted" WAN, no inspection', 'Branch-to-DC traffic over MPLS is usually not inspected. Ransomware spreads site to site through the same any-to-any trust.', 'Put a WAN firewall and IPS policy between sites, not just at the internet edge.'],
-    vpnFlat: ['VPN means network access', 'Once connected, the user reaches whole subnets. A stolen laptop or credential becomes lateral movement.', 'Per-app access with ZTNA, tied to identity and device posture.'],
-    splitTunnel: ['Split tunnel is a blind spot', 'To save VPN capacity, SaaS and internet traffic is often sent straight out from the laptop: fast, but nobody inspects it.', 'Inspect internet traffic from the agent at the PoP nearest the user.'],
     egressIP: ['Your public IP changes', 'SaaS IP allow-lists, IdP conditional access, partner firewalls and geolocation were all built on the DC\'s egress IP.', 'Inventory every allow-list early. Use dedicated egress IPs from the provider and update the IdP before cutover.'],
     tlsBreak: ['TLS inspection breaks things', 'Certificate-pinned apps, non-browser clients and some OS updates fail when traffic is re-signed. Missing root CA means certificate errors everywhere.', 'Push the root CA through MDM first. Start with a bypass list for pinned apps and expand inspection in stages.'],
     dns: ['Private DNS', 'Without the VPN, off-net users cannot resolve internal names, so apps "don\'t work" even when access is allowed.', 'Map internal zones explicitly in the ZTNA design and test from outside the network.'],
@@ -292,10 +296,50 @@
     mtu: ['MTU and tunnel overhead', 'Tunnel overhead plus PPPoE or a second tunnel causes fragmentation. Small packets work and large transfers stall.', 'Clamp TCP MSS on the edge and test with DF-bit pings at full size.'],
     lastMile: ['The last mile is now your WAN', 'With MPLS gone, branch availability is the ISP\'s availability.', 'Two diverse links (or 5G) from different carriers and entry points, with per-link loss and jitter monitoring.'],
     voice: ['Voice over the internet', 'Jitter and loss on the underlay show up as choppy calls, even when the middle mile is clean.', 'QoS at the edge, loss mitigation or duplication for real-time traffic, and the nearest PoP.'],
-    aiBlind: ['A category block is not AI governance', 'The proxy sees only a domain. It cannot tell a corporate tenant from a personal account, or a question from a source-code upload. Users simply switch tools.', 'Discover what is used, then control by tenant, activity and data.'],
     aiTls: ['No TLS inspection, no AI visibility', 'Prompts and uploads live inside TLS. Desktop apps and browser extensions add more paths around the controls.', 'Inspect AI destinations (with sensible exceptions) so CASB and DLP can see the content.'],
     aiEmbedded: ['AI hides inside sanctioned SaaS', 'Copilots inside office suites and CRMs, and agents calling APIs from servers, never touch a "Generative AI" category.', 'Govern by activity and data, and include server and API traffic, not only browsers.'],
     logPrivacy: ['Logging prompts is sensitive', 'Capturing prompt content creates privacy and legal obligations of its own.', 'Bring in privacy and legal early. Log metadata by default and content only on a DLP match.']
+  };
+
+  // ---------- Legacy issues per flow, and how SASE answers each one ----------
+  // [title, the problem in the legacy design, what changes with SASE]
+  const ISSUES = {
+    'branch-saas': [
+      ['Backhaul latency', 'Every SaaS session goes branch → MPLS → DC → internet. Teams and M365 feel slow, and the further the branch, the worse it gets.', 'The branch breaks out to the nearest PoP and is fully inspected there. No trombone through the DC.'],
+      ['The DC is a choke point', 'All company internet rides the DC links and one firewall stack. A DC outage takes internet away from every branch.', 'Egress is spread across many PoPs, with automatic failover to another PoP.'],
+      ['Paying MPLS prices for internet', 'Most branch traffic is now SaaS and internet, yet it rides the most expensive circuit you have.', 'Internet traffic moves to broadband and 5G underlay. MPLS can shrink, then go.'],
+      ['Appliance capacity and refresh', 'NGFW and proxy are sized for peak and refreshed every few years. TLS inspection eats throughput, so it is often left off.', 'Inspection capacity is the provider\'s problem, so TLS inspection can stay on without sizing hardware.']
+    ],
+    'remote-app': [
+      ['VPN gives the whole network', 'Once connected, the user gets routes to whole subnets. A stolen laptop or credential means lateral movement.', 'ZTNA grants one app at a time, based on user, group and device posture.'],
+      ['An exposed VPN gateway', 'Internet-facing VPN gateways have been among the most exploited edge devices of recent years, and patching is urgent and manual.', 'No inbound listener: the connector dials out, so private apps are invisible from the internet.'],
+      ['Capacity planned for a few users', 'Concentrators sized for 20% remote work broke when everyone went home, and every session hairpins through one DC.', 'Users connect to the nearest of many PoPs, and capacity grows with demand.'],
+      ['Checked once, trusted all day', 'Identity and device health are checked at login, then never again.', 'Identity and device posture are evaluated for every session, and access drops when posture fails.']
+    ],
+    'branch-dc': [
+      ['The "trusted" WAN', 'Branch-to-DC traffic over MPLS is rarely inspected. Ransomware moves site to site through the same any-to-any trust.', 'A WAN firewall and IPS sit between every pair of sites, under the same policy as internet traffic.'],
+      ['Circuits take months', 'A new or moved site waits on carrier lead times for MPLS, with multi-year contracts.', 'Any internet link works. A zero-touch edge brings a site up in days.'],
+      ['A backup path nobody tests', 'The IPsec tunnel sits idle until MPLS fails, then comes up with the wrong MTU, an expired certificate or missing routes, and no QoS.', 'Every link is active, measured for loss and latency, and used per application. Failover is part of daily operation.'],
+      ['Routing by hand', 'Static routes, carrier BGP and per-router tunnel configs, with every change made box by box.', 'Routes and policy are orchestrated centrally, and the SASE cloud learns site prefixes automatically.']
+    ],
+    'branch-branch': [
+      ['Guaranteed bandwidth is expensive', 'Voice quality depends on carrier QoS classes on MPLS, which is the priciest bandwidth in the network.', 'Edge QoS and loss mitigation over internet links, plus a provider middle mile between PoPs.'],
+      ['Backup turns into a hairpin', 'IPsec is hub and spoke: when MPLS fails, branch-to-branch calls detour through the DC with no QoS.', 'Any-to-any over the SASE backbone, with no hub in the path.'],
+      ['No inspection between sites', 'Any-to-any MPLS means one infected branch can reach every other branch.', 'The WAN firewall applies between branches as well, with the same policy.'],
+      ['The carrier is a black box', 'When calls break, troubleshooting means opening a carrier ticket and waiting.', 'Loss, jitter and latency per link and per application, end to end, in one console.']
+    ],
+    'branch-ai': [
+      ['Only allow or block', 'A URL category treats every AI tool the same and cannot tell useful from risky.', 'Discovery lists every AI app in use with a risk score, so decisions are per app.'],
+      ['Corporate or personal account?', 'The same domain serves the company tenant and personal accounts, and the proxy cannot tell them apart.', 'Tenant control allows the corporate tenant and blocks personal logins.'],
+      ['Blind to prompts and uploads', 'Without TLS inspection at scale, nobody sees what is pasted or uploaded.', 'TLS inspection plus DLP on prompts and files, with in-line coaching for the user.'],
+      ['Off-network, off-policy', 'On the road or at home, users skip the DC proxy entirely.', 'The same AI policy applies to branch and remote users, from the nearest PoP.']
+    ],
+    'remote-saas': [
+      ['Hairpin through the DC', 'Full-tunnel VPN sends SaaS to the DC and back out, even when the user sits next to the SaaS region.', 'Traffic goes to the nearest PoP, is inspected there, and goes straight out.'],
+      ['Split tunnel blind spot', 'To save capacity, SaaS is often split-tunnelled, which means it is not inspected at all.', 'Everything is inspected by the PoP, so there is no trade-off between speed and security.'],
+      ['Different rules off-network', 'VPN disconnected means no web filtering and no DLP, and users disconnect when it is slow.', 'An always-on agent applies one policy everywhere, the same as in the office.'],
+      ['Concentrator spent on SaaS', 'Most VPN capacity carries SaaS and video, not private apps.', 'No concentrator to size: SaaS never touches the DC.']
+    ]
   };
 
   // ---------- Topology ----------
@@ -379,7 +423,7 @@
       ['MPLS', 'Internet-bound traffic rides the private WAN to the data center.'],
       ['DC perimeter', 'NGFW and web proxy inspect it, then out the DC internet link.'],
       ['SaaS', 'Sees the DC\'s public IP, wherever the user really is.']],
-    caps: ['mpls', 'ngfw', 'proxy'], pits: ['saasLatency']
+    caps: ['mpls', 'ngfw', 'proxy'], pits: []
   };
   const pathBranchSaas = ['users1', 'edge1', 'popB1', ...coreOut('saas')];
   const stepsBranchSaas = [['SD-WAN edge', 'Recognises the app and sends it over the internet underlay to the nearest PoP.'],
@@ -387,7 +431,7 @@
     ['Egress', 'Leaves from a provider IP close to the user, not from the DC.']];
   S['branch-saas'] = [
     legacySaas,
-    { ...legacySaas, note: 'Unchanged: phase 1 moved remote users only.', pits: ['saasLatency', 'flatWan'] },
+    { ...legacySaas, note: 'Unchanged: phase 1 moved remote users only.' },
     { path: pathBranchSaas, verdict: 'Inspected at the nearest PoP', vclass: 'good', steps: stepsBranchSaas,
       caps: ['sdwan', 'fwaas', 'swg', 'tls', 'ips', 'casb'], pits: ['egressIP', 'tlsBreak', 'mtu'] },
     { path: pathBranchSaas, verdict: 'Inspected at the nearest PoP', vclass: 'good', steps: stepsBranchSaas,
@@ -404,7 +448,7 @@
       steps: [['VPN client', 'Builds a tunnel over the internet to the concentrator in the DC.'],
         ['DC perimeter', 'Hands out an IP from the VPN pool, with routes to whole internal subnets.'],
         ['App', 'Reachable, and so is everything else in those subnets.']],
-      caps: ['vpn', 'ngfw'], pits: ['vpnFlat'] },
+      caps: ['vpn', 'ngfw'], pits: [] },
     { path: ztnaPath, verdict: 'ZTNA, one app at a time', vclass: 'good', steps: ztnaSteps,
       caps: ['ztna', 'idp', 'fwaas', 'ips'], pits: ['appInventory', 'dns', 'dualClient'] },
     { path: ztnaPath, verdict: 'ZTNA, one app at a time', vclass: 'good', steps: ztnaSteps,
@@ -419,7 +463,7 @@
       ['MPLS', 'Carrier QoS classes, predictable latency, long contract and lead times.'],
       ['DC WAN edge', 'Delivers it to the app. Usually nothing inspects branch-to-DC traffic.'],
       ['Backup', 'If MPLS fails, routing falls back to the IPsec tunnel over the internet to the DC WAN edge.']],
-    caps: ['mpls', 'ipsec'], pits: ['flatWan', 'ipsecBackup']
+    caps: ['mpls', 'ipsec'], pits: []
   };
   const sasePathDC = ['users1', 'edge1', 'popB1', 'core', 'popD', 'dcedge', 'apps'];
   S['branch-dc'] = [
@@ -445,14 +489,14 @@
       ['MPLS', 'The carrier\'s real-time class carries it straight between branches.'],
       ['Branch 2', 'Good call quality, at MPLS prices, with no inspection between sites.'],
       ['Backup', 'IPsec is hub and spoke: if MPLS fails, the call hairpins through the DC over the internet, with no carrier QoS.']],
-    caps: ['mpls', 'ipsec'], pits: ['flatWan', 'ipsecBackup']
+    caps: ['mpls', 'ipsec'], pits: []
   };
   S['branch-branch'] = [
     mplsVoice,
     { ...mplsVoice, note: 'Unchanged: phase 1 moved remote users only.' },
     { path: ['users1', 'edge1', 'popB1', 'core', 'popD', 'dcedge', ...viaMPLS(320, 780), 'edge2', 'users2'],
       verdict: 'Through the DC hub', vclass: 'warn',
-      note: 'Branch 1 is migrated, Branch 2 is not yet.',
+      note: 'Branch 1 is migrated, Branch 2 is not yet.', issuesOpen: true,
       steps: [['Branch 1', 'SD-WAN edge sends the call into the SASE cloud.'],
         ['PoPs', 'Middle mile to the DC\'s PoP: the only place both worlds meet.'],
         ['DC SD-WAN edge', 'Acts as the gateway between SASE and MPLS and redistributes routes both ways.'],
@@ -470,7 +514,7 @@
     steps: [['Branch router', 'Backhauled over MPLS like any internet traffic.'],
       ['DC proxy', 'Matches the URL category "Generative AI" and allows or blocks the whole site.'],
       ['GenAI tool', 'Whatever is typed or uploaded is invisible unless TLS is inspected.']],
-    caps: ['mpls', 'proxy'], pits: ['aiBlind', 'aiTls']
+    caps: ['mpls', 'proxy'], pits: []
   };
   const saseAI = {
     path: ['users1', 'edge1', 'popB1', ...coreOut('genai')], verdict: 'Discover, then control by activity', vclass: 'good',
@@ -492,7 +536,7 @@
       steps: [['VPN client', 'Full tunnel: everything goes to the DC first.'],
         ['DC perimeter', 'NGFW and proxy inspect it, then out the DC internet link.'],
         ['Workaround', 'Split tunnelling SaaS saves capacity but skips inspection entirely.']],
-      caps: ['vpn', 'ngfw', 'proxy'], pits: ['splitTunnel', 'saasLatency'] },
+      caps: ['vpn', 'ngfw', 'proxy'], pits: [] },
     { path: remoteSaasPath, verdict: 'Inspected at the nearest PoP', vclass: 'good', steps: remoteSaasSteps,
       caps: ['swg', 'tls', 'casb', 'dlp', 'fwaas'], pits: ['dualClient', 'egressIP'] },
     { path: remoteSaasPath, verdict: 'Inspected at the nearest PoP', vclass: 'good', steps: remoteSaasSteps,
@@ -502,7 +546,7 @@
   ];
 
   // ---------- State ----------
-  const state = { phase: 0, flow: 'branch-saas' };
+  const state = { phase: 0, flow: 'branch-saas', tab: 'main' };
   const $ = (id) => document.getElementById(id);
   const svg = $('topo');
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -632,6 +676,29 @@
     }
   }
 
+  // Legacy views list the problems; SASE views show how each one is answered.
+  function issuesHTML(flow, sc, inTab) {
+    const list = ISSUES[flow];
+    if (sc.vclass === 'legacy' || sc.issuesOpen) {
+      const h = sc.issuesOpen ? 'Legacy issues still open (Branch 2 not migrated)' : 'Legacy issues';
+      return `<div class="sect">${inTab ? '' : `<h3>${h}</h3>`}<div class="pits">${list.map(([t, bad]) => `<div class="pit issue"><b>${esc(t)}</b><p>${esc(bad)}</p></div>`).join('')}</div></div>`;
+    }
+    return `<div class="sect">${inTab ? '' : '<h3>How SASE fixes the legacy issues</h3>'}<div class="pits">${list.map(([t, , good]) => `<div class="pit solved"><b>${esc(t)}</b><p>${esc(good)}</p></div>`).join('')}</div></div>`;
+  }
+
+  // Bottom of the panel: issues or fixes, with migration pitfalls on a second tab so each view fits one screen.
+  function bottomHTML(flow, sc) {
+    const pitsHTML = `<div class="sect"><div class="pits">${sc.pits.map((k) => `<div class="pit"><b>${esc(PIT[k][0])}</b><p>${esc(PIT[k][1])}</p><p class="fix">${esc(PIT[k][2])}</p></div>`).join('')}</div></div>`;
+    if (!sc.pits.length) return issuesHTML(flow, sc);
+    const first = sc.issuesOpen ? 'Legacy issues still open' : sc.vclass === 'legacy' ? 'Legacy issues' : 'How SASE fixes it';
+    const tab = state.tab;
+    return `<div class="tabs" role="tablist">
+        <button type="button" role="tab" data-tab="main" aria-selected="${tab === 'main'}">${first}</button>
+        <button type="button" role="tab" data-tab="pits" aria-selected="${tab === 'pits'}">Migration pitfalls (${sc.pits.length})</button>
+        <span class="tabkey"><kbd>F</kbd></span>
+      </div>${tab === 'main' ? issuesHTML(flow, sc, true) : pitsHTML}`;
+  }
+
   function renderDetail() {
     const f = FLOWS.find((x) => x.id === state.flow), sc = S[f.id][state.phase];
     const ph = PHASES[state.phase];
@@ -646,9 +713,7 @@
       <div class="sect"><h3>Capabilities in play</h3>
         <div class="caps">${sc.caps.map((c) => `<span class="tag cat-${CAP[c][1]}">${esc(CAP[c][0])}</span>`).join('')}</div>
       </div>
-      <div class="sect"><h3>From the field</h3>
-        <div class="pits">${sc.pits.map((k) => `<div class="pit"><b>${esc(PIT[k][0])}</b><p>${esc(PIT[k][1])}</p><p class="fix">${esc(PIT[k][2])}</p></div>`).join('')}</div>
-      </div>`;
+      ${bottomHTML(f.id, sc)}`;
   }
 
   function renderControls() {
@@ -656,7 +721,8 @@
     $('flows').querySelectorAll('.chip').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.id === state.flow)));
   }
 
-  function render(push = true) {
+  function render(push = true, keepTab = false) {
+    if (!keepTab) state.tab = 'main';
     renderControls(); draw(); renderDetail();
     if (push) history.replaceState(null, '', `#p${state.phase}/${state.flow}`);
   }
@@ -692,6 +758,10 @@
     if (on && document.documentElement.requestFullscreen && !document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
     if (!on && document.fullscreenElement) document.exitFullscreen().catch(() => {});
   }
+  $('detail').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-tab]');
+    if (b) { state.tab = b.dataset.tab; render(false, true); }
+  });
   $('themeBtn').addEventListener('click', toggleTheme);
   $('presentBtn').addEventListener('click', togglePresent);
 
@@ -703,6 +773,7 @@
     else if (e.key === 'ArrowDown') { state.flow = FLOWS[(fi + 1) % FLOWS.length].id; render(); e.preventDefault(); }
     else if (e.key === 'ArrowUp') { state.flow = FLOWS[(fi + FLOWS.length - 1) % FLOWS.length].id; render(); e.preventDefault(); }
     else if (/^[1-6]$/.test(e.key)) { state.flow = FLOWS[+e.key - 1].id; render(); }
+    else if (e.key === 'f' || e.key === 'F') { state.tab = state.tab === 'main' ? 'pits' : 'main'; render(false, true); }
     else if (e.key === 'p' || e.key === 'P') togglePresent();
     else if (e.key === 't' || e.key === 'T') toggleTheme();
   });
