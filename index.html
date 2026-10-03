@@ -226,7 +226,7 @@
       <h1>SASE in Practice <small>Lessons from the field, and what AI changes</small></h1>
     </div>
     <div class="tools">
-      <span class="keys"><kbd>←</kbd><kbd>→</kbd> phase · <kbd>1</kbd>–<kbd>9</kbd> flow · <kbd>F</kbd> fixes/pitfalls · <kbd>P</kbd> present · <kbd>T</kbd> theme</span>
+      <span class="keys"><kbd>←</kbd><kbd>→</kbd> phase · <kbd>↑</kbd><kbd>↓</kbd> flow · <kbd>F</kbd> fixes/pitfalls · <kbd>P</kbd> present · <kbd>T</kbd> theme</span>
       <button class="btn" id="presentBtn" type="button">Present</button>
       <button class="btn" id="themeBtn" type="button" aria-label="Toggle light or dark theme">Theme</button>
     </div>
@@ -277,7 +277,7 @@
     mpls: ['MPLS', 'legacy'], ipsec: ['IPsec VPN over the internet', 'legacy'], ngfw: ['DC perimeter NGFW', 'legacy'], proxy: ['DC web proxy', 'legacy'], vpn: ['Remote-access VPN', 'legacy'],
     sdwan: ['SD-WAN edge', 'net'], mm: ['PoP-to-PoP middle mile', 'net'], qos: ['QoS and loss mitigation', 'net'],
     ztna: ['ZTNA', 'access'], idp: ['Identity and device posture', 'access'],
-    fwaas: ['FWaaS', 'sec'], swg: ['Secure Web Gateway', 'sec'], tls: ['TLS inspection', 'sec'], ips: ['IPS and anti-malware', 'sec'],
+    fwaas: ['FWaaS', 'sec'], swg: ['Secure Web Gateway', 'sec'], tls: ['TLS inspection', 'sec'], ips: ['IPS and anti-malware', 'sec'], rbi: ['Remote browser isolation', 'sec'],
     casb: ['CASB', 'data'], dlp: ['DLP', 'data'],
     aidisc: ['Shadow-AI discovery', 'ai'], aictl: ['AI tenant and activity control', 'ai']
   };
@@ -341,6 +341,18 @@
       ['Different rules off-network', 'VPN disconnected means no web filtering and no DLP, and users disconnect when it is slow.', 'An always-on agent applies one policy everywhere, the same as in the office.'],
       ['Concentrator spent on SaaS', 'Most VPN capacity carries SaaS and video, not private apps.', 'No concentrator to size: SaaS never touches the DC.']
     ],
+    'branch-web': [
+      ['Backhaul for every web page', 'All branch browsing rides MPLS to the DC and back out.', 'The branch breaks out to the nearest PoP and is fully inspected there.'],
+      ['Threat protection capped by the box', 'TLS inspection and sandboxing cost appliance throughput, so they are trimmed or turned off.', 'Full inspection, sandboxing and threat intelligence run in the cloud and are updated centrally.'],
+      ['Risky sites: block or allow', 'Uncategorized and newly registered sites are either blocked (help-desk tickets) or allowed (risk).', 'Remote browser isolation shows the page while no site code reaches the laptop.'],
+      ['Everyone browses from the DC', 'Geolocation and CDNs see the DC\'s location, so content comes from the wrong region or language.', 'Traffic leaves from a PoP near the user, so local content and CDNs work.']
+    ],
+    'dc-web': [
+      ['A security stack to run yourself', 'NGFW, proxy and sandbox at the perimeter are sized, patched and refreshed by your own team.', 'The provider runs, patches and scales the stack in every PoP.'],
+      ['Different rules for every location', 'HQ, backhauled branches and remote users on VPN or split tunnel each get a different internet policy.', 'One internet policy for HQ, branches and remote users.'],
+      ['Servers with wide-open outbound', 'Servers often get "any to 443" outbound rules for updates and APIs, with little inspection.', 'Server traffic gets per-app outbound rules and the same inspection as users.'],
+      ['One exit for the whole company', 'The DC ISP links are the main way out. Losing them stops internet for everyone backhauled through them.', 'Every site exits at its nearest PoP, with dual ISP links and PoP failover.']
+    ],
     'remote-ai': [
       ['Off VPN, no AI policy', 'At home or in a hotel, with the VPN off or split-tunnelled, users reach any AI tool with no control at all.', 'An always-on agent applies the same AI policy at the nearest PoP, on or off the network.'],
       ['Only allow or block', 'Even on the VPN, the DC proxy only matches a URL category.', 'Discovery lists every AI app in use with a risk score, so decisions are per app.'],
@@ -365,9 +377,10 @@
   // kind: end (selectable endpoint), dev (device), pop, core
   const N = {
     // Top: services
-    saas:   { x: 120, y: 55, kind: 'end', l: 'SaaS', s: 'M365 · CRM · storage' },
-    genai:  { x: 330, y: 55, kind: 'end', l: 'Generative AI', s: 'chat · copilots' },
-    cloudapp: { x: 570, y: 55, kind: 'end', l: 'Cloud workloads', s: 'VPC / VNet' },
+    web:    { x: 90, y: 55, kind: 'end', l: 'Internet sites', s: 'web · uncategorized' },
+    saas:   { x: 250, y: 55, kind: 'end', l: 'SaaS', s: 'M365 · CRM · storage' },
+    genai:  { x: 410, y: 55, kind: 'end', l: 'Generative AI', s: 'chat · copilots' },
+    cloudapp: { x: 590, y: 55, kind: 'end', l: 'Cloud workloads', s: 'VPC / VNet' },
     vgw:    { x: 780, y: 55, kind: 'dev', l: 'Cloud VPN GW', s: 'IPsec + BGP' },
     // Middle: users on the road, and the SASE cloud (the internet, IPsec and MPLS are drawn as bands)
     remote: { x: 100, y: 280, kind: 'end', l: 'Remote user', s: 'laptop' },
@@ -409,7 +422,7 @@
   // [a, b, firstPhase, lastPhase, class, label, labelPos (fraction of the last segment, or [x, y, anchor]), waypoints]
   const LINKS = [
     [[LEFT_X, BUS_Y], [985, BUS_Y], 0, 3, 'bus'],
-    ['saas', [120, BUS_Y], 0, 3], ['genai', [330, BUS_Y], 0, 3],
+    ['web', [90, BUS_Y], 0, 3], ['saas', [250, BUS_Y], 0, 3], ['genai', [410, BUS_Y], 0, 3],
     ['cloudapp', 'vgw', 0, 3],
     ['vgw', [780, BUS_Y], 0, 1, 'ipsec', 'IPsec to the DC', [787, 108]],
     ['vgw', 'popB2', 2, 3, null, 'tunnel to the PoP', [787, 146]],
@@ -459,6 +472,8 @@
     { id: 'branch-branch', group: 'Branch', label: 'Branch (voice)', title: 'Branch to branch, voice call', src: 'users1', dst: 'users2' },
     { id: 'branch-ai', group: 'Branch', label: 'GenAI', title: 'Branch user to a generative AI tool', src: 'users1', dst: 'genai' },
     { id: 'branch-cloud', group: 'Branch', label: 'Cloud app', title: 'Branch user to a cloud app', src: 'users1', dst: 'cloudapp' },
+    { id: 'branch-web', group: 'Branch', label: 'Internet', title: 'Branch user to the internet', src: 'users1', dst: 'web' },
+    { id: 'dc-web', group: 'HQ / DC', label: 'Internet', title: 'HQ / DC to the internet', src: 'apps', dst: 'web' },
     { id: 'remote-app', group: 'Remote', label: 'DC app', title: 'Remote user to a DC app', src: 'remote', dst: 'apps' },
     { id: 'remote-saas', group: 'Remote', label: 'SaaS', title: 'Remote user to SaaS', src: 'remote', dst: 'saas' },
     { id: 'remote-ai', group: 'Remote', label: 'GenAI', title: 'Remote user to a generative AI tool', src: 'remote', dst: 'genai' },
@@ -582,7 +597,7 @@
     ['SaaS', 'Reached from a nearby PoP, with no hairpin.']];
   S['remote-saas'] = [
     { path: ['remote', 'dcfw', ...dcOut('saas').slice(1)], verdict: 'Hairpinned through the VPN', vclass: 'legacy',
-      risk: ['remote', [60, 280], [60, BUS_Y], [120, BUS_Y], 'saas'], riskLabel: 'split tunnel: uninspected', riskAt: [150, 205],
+      risk: ['remote', [60, 280], [60, BUS_Y], [250, BUS_Y], 'saas'], riskLabel: 'split tunnel: uninspected', riskAt: [150, 205],
       steps: [['VPN client', 'Full tunnel: everything goes to the DC first.'],
         ['DC perimeter', 'NGFW and proxy inspect it, then out the DC internet link.'],
         ['Workaround', 'Split tunnelling SaaS saves capacity but skips inspection entirely.']],
@@ -644,7 +659,7 @@
   };
   S['remote-ai'] = [
     { path: ['remote', ...dcOut('genai')], verdict: 'Controlled only while the VPN is on', vclass: 'legacy',
-      risk: ['remote', [60, 280], [60, BUS_Y], [330, BUS_Y], 'genai'], riskLabel: 'VPN off: no AI policy', riskAt: [150, 205],
+      risk: ['remote', [60, 280], [60, BUS_Y], [410, BUS_Y], 'genai'], riskLabel: 'VPN off: no AI policy', riskAt: [150, 205],
       steps: [['VPN client', 'With a full tunnel, AI traffic goes to the DC like everything else.'],
         ['DC proxy', 'Allows or blocks the "Generative AI" category. No tenant, activity or prompt visibility.'],
         ['Off VPN', 'VPN disconnected or split-tunnelled: the user reaches any AI tool with no policy at all.']],
@@ -653,6 +668,40 @@
     { ...saseRemoteAI, pits: ['aiEmbedded', 'logPrivacy'] },
     { ...saseRemoteAI, pits: ['aiEmbedded', 'logPrivacy'] }
   ];
+
+  S['branch-web'] = [
+    { path: [...backhaul1, ...dcOut('web')], verdict: 'Backhauled to the DC', vclass: 'legacy',
+      steps: [['Branch router', 'No local breakout. The default route sends web traffic into MPLS.'],
+        ['DC perimeter', 'NGFW and proxy apply URL filtering and whatever threat checks the appliance can afford.'],
+        ['Internet', 'Every branch browses from the DC\'s public IP and location.']],
+      caps: ['mpls', 'ngfw', 'proxy'], pits: [] }
+  ];
+  S['branch-web'][1] = { ...S['branch-web'][0], note: 'Unchanged: phase 1 moved remote users only.' };
+  const saseWeb = {
+    path: ['users1', 'edge1', 'popB1', ...coreOut('web')], verdict: 'Inspected at the nearest PoP', vclass: 'good',
+    steps: [['SD-WAN edge', 'Sends web traffic over the internet underlay to the nearest PoP.'],
+      ['PoP', 'FWaaS, SWG with URL filtering, TLS inspection, IPS, anti-malware and sandboxing, in one pass.'],
+      ['Risky sites', 'Uncategorized or newly registered sites open in remote browser isolation instead of being blocked.'],
+      ['Egress', 'Leaves from a provider IP near the user.']],
+    caps: ['sdwan', 'fwaas', 'swg', 'tls', 'ips', 'rbi'], pits: ['egressIP', 'tlsBreak']
+  };
+  S['branch-web'].push(saseWeb, { ...saseWeb, pits: ['tlsBreak', 'lastMile'] });
+
+  const legacyDcWeb = {
+    path: ['apps', ...dcOut('web')], verdict: 'Out through the DC perimeter', vclass: 'legacy',
+    steps: [['HQ / DC', 'HQ users and servers (patches, APIs, backups to the cloud) send internet traffic to the perimeter.'],
+      ['DC perimeter', 'NGFW and proxy inspect it, sized and patched in house.'],
+      ['Internet', 'Leaves through the DC\'s own ISP links, the company\'s main way out.']],
+    caps: ['ngfw', 'proxy'], pits: []
+  };
+  const saseDcWeb = {
+    path: ['apps', 'dcedge', 'popD', ...coreOut('web')], verdict: 'Same policy as every other site', vclass: 'good',
+    steps: [['DC SD-WAN edge', 'Sends HQ and server internet traffic to the nearest PoP over dual ISP links.'],
+      ['PoP', 'The same FWaaS, SWG, IPS and anti-malware policy as branches and remote users, including server traffic.'],
+      ['Egress', 'Leaves from a provider IP. The DC firewall no longer sits on the internet path.']],
+    caps: ['sdwan', 'fwaas', 'swg', 'tls', 'ips'], pits: ['egressIP', 'twoPolicies']
+  };
+  S['dc-web'] = [legacyDcWeb, legacyDcWeb, saseDcWeb, { ...saseDcWeb, pits: ['egressIP'] }];
 
   S['branch-cloud'] = [legacyCloud, { ...legacyCloud, note: 'Unchanged: phase 1 moved remote users only.' }, saseCloud, { ...saseCloud, pits: ['cloudHA', 'mtu'] }];
 
@@ -721,13 +770,13 @@
     zone(20, 495, 360, 227, 'HQ / Data center', null, true);
     zone(400, 495, 250, 227, 'Branch 1', null, true);
     zone(670, 495, 315, 227, 'Branch 2', null, true);
-    el('rect', { x: 480, y: 4, width: 400, height: 92, rx: 14, class: 't-zone' }, svg);
-    el('text', { x: 492, y: 20, class: 't-zone-label' }, svg).textContent = 'Public cloud · AWS · Azure · GCP';
+    el('rect', { x: 500, y: 4, width: 385, height: 92, rx: 14, class: 't-zone' }, svg);
+    el('text', { x: 512, y: 20, class: 't-zone-label' }, svg).textContent = 'Public cloud · AWS · Azure · GCP';
     const cloud = el('g', { class: p === 0 ? 'ghost' : null }, svg);
     el('rect', { x: 200, y: 152, width: 785, height: 233, rx: 50, class: 't-cloud' }, cloud);
     el('text', { x: 222, y: 180, class: 't-cloud-label' }, cloud).textContent = 'SASE CLOUD';
     el('text', { x: 222, y: 196, class: 't-cloud-cap' }, cloud).textContent = p === 0 ? 'not deployed yet' : 'policy drawn once; runs in every PoP';
-    el('text', { x: 130, y: BUS_Y - 8, class: 't-bus-label' }, svg).textContent = 'INTERNET';
+    el('text', { x: 140, y: BUS_Y - 8, class: 't-bus-label' }, svg).textContent = 'INTERNET';
 
     // MPLS
     const mp = el('g', { class: `t-mpls${p === 3 ? ' ghost' : ''}${usesMPLS ? ' on' : ''}` }, svg);
@@ -872,7 +921,7 @@
     }
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'chip'; b.dataset.id = f.id;
-    b.innerHTML = `<span class="k">${i + 1}</span>${esc(f.label)}`;
+    b.textContent = f.label;
     b.addEventListener('click', () => { state.flow = f.id; render(); });
     $('flows').appendChild(b);
   });
@@ -906,7 +955,6 @@
     else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { state.phase = Math.max(0, state.phase - 1); render(); e.preventDefault(); }
     else if (e.key === 'ArrowDown') { state.flow = FLOWS[(fi + 1) % FLOWS.length].id; render(); e.preventDefault(); }
     else if (e.key === 'ArrowUp') { state.flow = FLOWS[(fi + FLOWS.length - 1) % FLOWS.length].id; render(); e.preventDefault(); }
-    else if (/^[1-9]$/.test(e.key)) { state.flow = FLOWS[+e.key - 1].id; render(); }
     else if (e.key === 'f' || e.key === 'F') { state.tab = state.tab === 'main' ? 'pits' : 'main'; render(false, true); }
     else if (e.key === 'p' || e.key === 'P') togglePresent();
     else if (e.key === 't' || e.key === 'T') toggleTheme();
