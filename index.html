@@ -1,0 +1,714 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SASE in Practice</title>
+<meta name="description" content="Vendor-neutral, interactive companion to the TorNOG talk 'SASE in Practice: Lessons from the Field (and What AI Changes)'.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --bg: #EEF1F5;
+    --surface: #FFFFFF;
+    --surface-2: #F4F6F9;
+    --ink: #141C2B;
+    --muted: #556075;
+    --line: #C9D0DB;
+    --grid: #D5DBE4;
+    --accent: #D9480F;
+    --accent-ink: #9A3008;
+    --accent-soft: rgba(217, 72, 15, 0.12);
+    --cloud: #2457C5;
+    --cloud-fill: rgba(36, 87, 197, 0.06);
+    --ok: #2F8A4C;
+    --warn: #A86507;
+    --bad: #C92A2A;
+    --c-legacy: #6B7585;
+    --c-net: #0E7C86;
+    --c-access: #2457C5;
+    --c-sec: #C92A2A;
+    --c-data: #B0336F;
+    --c-ai: #7048E8;
+    --shadow: 0 1px 2px rgba(20, 28, 43, 0.06), 0 8px 24px rgba(20, 28, 43, 0.06);
+    --display: "Barlow Semi Condensed", "Arial Narrow", "Segoe UI", sans-serif;
+    --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #0B1018; --surface: #121A26; --surface-2: #182233; --ink: #E6EBF2; --muted: #98A4B8;
+      --line: #2A3649; --grid: #1A2433; --accent: #FF7A3D; --accent-ink: #FFA477; --accent-soft: rgba(255, 122, 61, 0.15);
+      --cloud: #6E9BFF; --cloud-fill: rgba(110, 155, 255, 0.07); --ok: #5CC37E; --warn: #F0AE45; --bad: #FF6B6B;
+      --c-legacy: #8E99AB; --c-net: #3CB4BE; --c-access: #6E9BFF; --c-sec: #FF6B6B; --c-data: #E879B9; --c-ai: #A68BFF;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #0B1018; --surface: #121A26; --surface-2: #182233; --ink: #E6EBF2; --muted: #98A4B8;
+    --line: #2A3649; --grid: #1A2433; --accent: #FF7A3D; --accent-ink: #FFA477; --accent-soft: rgba(255, 122, 61, 0.15);
+    --cloud: #6E9BFF; --cloud-fill: rgba(110, 155, 255, 0.07); --ok: #5CC37E; --warn: #F0AE45; --bad: #FF6B6B;
+    --c-legacy: #8E99AB; --c-net: #3CB4BE; --c-access: #6E9BFF; --c-sec: #FF6B6B; --c-data: #E879B9; --c-ai: #A68BFF;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+  .wrap { max-width: 1680px; margin: 0 auto; padding: 12px 16px 20px; display: grid; gap: 12px; }
+  button { font-family: inherit; }
+  button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Header */
+  .top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 24px; }
+  .brand { display: grid; gap: 2px; }
+  .eyebrow { font: 600 13px var(--display); letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent-ink); }
+  h1 { margin: 0; font: 700 clamp(26px, 2.8vw, 36px)/1.05 var(--display); letter-spacing: -0.01em; text-wrap: balance; }
+  h1 small { font-weight: 500; color: var(--muted); font-size: 0.62em; letter-spacing: 0; }
+  .tools { display: flex; gap: 8px; align-items: center; }
+  .btn { font: 500 13px/1 var(--body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; cursor: pointer; }
+  .btn:hover { border-color: var(--accent); }
+  .keys { font-size: 12.5px; color: var(--muted); }
+  kbd { font: 500 11.5px var(--mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 1px 5px; background: var(--surface); color: var(--ink); }
+
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); }
+
+  /* Phase stepper */
+  .phases { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; overflow: hidden; }
+  .phase { text-align: left; border: 0; border-right: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 10px 14px; cursor: pointer; display: grid; gap: 2px; position: relative; }
+  .phase:last-child { border-right: 0; }
+  .phase .pn { font: 600 12px var(--display); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+  .phase .pt { font: 700 19px/1.15 var(--display); }
+  .phase .pd { font-size: 13px; color: var(--muted); line-height: 1.4; }
+  .phase:hover { background: var(--surface-2); }
+  .phase[aria-pressed="true"] { background: var(--accent-soft); }
+  .phase[aria-pressed="true"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: var(--accent); }
+  .phase[aria-pressed="true"] .pn { color: var(--accent-ink); }
+  @media (max-width: 900px) {
+    .phases { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .keys { display: none; }
+    .brand, .top { min-width: 0; }
+    .phase .pd { display: none; }
+    .phase:nth-child(2) { border-right: 0; }
+    .phase:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+  }
+
+  /* Main grid */
+  .main { display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(360px, 1fr); gap: 12px; align-items: stretch; }
+  @media (max-width: 1100px) { .main { grid-template-columns: 1fr; } }
+
+  .stage { display: flex; flex-direction: column; min-width: 0; }
+  .flows { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  .label { font: 600 12.5px var(--display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-right: 4px; }
+  .chip { font: 500 12.5px/1 var(--body); color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; padding: 7px 10px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+  .chip .k { font: 500 11px var(--mono); color: var(--muted); }
+  .chip:hover { border-color: var(--accent); }
+  .chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-ink); }
+  .chip[aria-pressed="true"] .k { color: var(--accent-ink); }
+  .canvas { overflow-x: auto; flex: 1; display: grid; align-items: center; }
+  svg.topo { display: block; width: 100%; min-width: 760px; height: auto; max-height: calc(100vh - 300px); min-height: 400px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 8px 12px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--muted); align-items: center; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .sw { width: 22px; height: 0; border-top: 3px solid var(--line); display: inline-block; }
+  .sw.fl { border-top: 3px dashed var(--accent); }
+  .sw.rk { border-top: 3px dashed var(--bad); }
+  .sw.mp { border-top: 3px dotted var(--c-legacy); }
+  .sw.cl { border-top: 3px solid var(--cloud); opacity: .6; }
+
+  /* SVG */
+  .t-grid { fill: var(--grid); }
+  .t-zone { fill: none; stroke: var(--line); stroke-width: 1.5; stroke-dasharray: 6 5; }
+  .t-zone-label { font: 600 12.5px var(--display); letter-spacing: 0.14em; fill: var(--muted); text-transform: uppercase; }
+  .t-cloud { fill: var(--cloud-fill); stroke: var(--cloud); stroke-width: 1.5; }
+  .t-cloud-label { font: 700 15px var(--display); letter-spacing: 0.14em; fill: var(--cloud); }
+  .t-cloud-cap { font: 400 11px var(--mono); fill: var(--muted); }
+  .t-link { stroke: var(--line); stroke-width: 2; fill: none; }
+  .t-link.core { stroke: var(--cloud); stroke-width: 4; opacity: .45; }
+  .t-link.dashed { stroke-dasharray: 5 5; }
+  .t-link.bus { stroke: var(--muted); stroke-width: 2.5; opacity: .55; }
+  .t-link.mpls { stroke: var(--c-legacy); stroke-width: 3; stroke-dasharray: 2 5; stroke-linecap: round; }
+  .t-link-label { font: 500 11px var(--mono); fill: var(--muted); }
+  .t-node rect { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+  .t-node.dev rect { fill: var(--surface-2); }
+  .t-node.legacy rect { stroke: var(--c-legacy); stroke-dasharray: 4 3; }
+  .t-node.sdwan rect { stroke: var(--c-net); stroke-width: 2; }
+  .t-node .n1 { font: 600 14px var(--body); fill: var(--ink); }
+  .t-node .n2 { font: 400 11.5px var(--mono); fill: var(--muted); }
+  .t-node.on rect { stroke: var(--accent); stroke-width: 3; stroke-dasharray: none; }
+  .t-node.pick { cursor: pointer; }
+  .t-pop circle { fill: var(--surface); stroke: var(--cloud); stroke-width: 2.5; }
+  .t-pop text { font: 700 12.5px var(--display); letter-spacing: 0.06em; fill: var(--cloud); }
+  .t-pop.on circle { stroke: var(--accent); stroke-width: 3.5; }
+  .t-core .ring { fill: var(--cloud-fill); stroke: var(--cloud); stroke-width: 1.5; stroke-dasharray: 4 4; }
+  .t-core .disc { fill: var(--surface); stroke: var(--cloud); stroke-width: 3; }
+  .t-core .n1 { font: 700 15px var(--display); letter-spacing: 0.04em; fill: var(--cloud); }
+  .t-core .n2 { font: 400 10.5px var(--mono); fill: var(--muted); }
+  .t-core.on .disc { stroke: var(--accent); stroke-width: 4; }
+  .t-mpls rect { fill: color-mix(in srgb, var(--c-legacy) 10%, var(--surface)); stroke: var(--c-legacy); stroke-width: 1.5; stroke-dasharray: 4 3; }
+  .t-mpls text { font: 600 13px var(--display); letter-spacing: 0.12em; fill: var(--c-legacy); }
+  .t-mpls.on rect { stroke: var(--accent); stroke-width: 3; }
+  .t-bus-label { font: 700 13px var(--display); letter-spacing: 0.14em; fill: var(--muted); }
+  .ghost, .t-link.ghost { opacity: .16; }
+  .t-retired { font: 700 12px var(--display); letter-spacing: 0.12em; fill: var(--bad); }
+  .t-flow { fill: none; stroke: var(--accent); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 12 9; animation: flow 1s linear infinite; }
+  .t-flow-glow { fill: none; stroke: var(--accent); stroke-width: 13; stroke-linecap: round; stroke-linejoin: round; opacity: .15; }
+  .t-risk { fill: none; stroke: var(--bad); stroke-width: 3; stroke-dasharray: 3 7; stroke-linecap: round; stroke-linejoin: round; animation: flow 1.4s linear infinite; }
+  .t-risk-label rect { fill: var(--bad); }
+  .t-risk-label text { font: 600 11.5px var(--body); fill: #FFFFFF; }
+  .t-arrow { fill: var(--accent); }
+  .t-arrow-risk { fill: var(--bad); }
+  @keyframes flow { to { stroke-dashoffset: -21; } }
+  @media (prefers-reduced-motion: reduce) { .t-flow, .t-risk { animation: none; } }
+
+  /* Detail panel */
+  .detail { display: flex; flex-direction: column; min-width: 0; max-height: calc(100vh - 170px); overflow: auto; }
+  @media (max-width: 1100px) { .detail { max-height: none; } }
+  .d-head { padding: 14px 16px 12px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; }
+  .d-title { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+  .d-title h2 { margin: 0; font: 700 23px/1.15 var(--display); }
+  .verdict { font: 600 12.5px/1 var(--body); padding: 6px 10px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+  .v-legacy { color: var(--c-legacy); background: color-mix(in srgb, var(--c-legacy) 12%, transparent); }
+  .v-good { color: var(--ok); background: color-mix(in srgb, var(--ok) 12%, transparent); }
+  .v-warn { color: var(--warn); background: color-mix(in srgb, var(--warn) 12%, transparent); }
+  .d-note { margin: 0; color: var(--muted); font-size: 14px; }
+  .sect { padding: 12px 16px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; }
+  .sect:last-child { border-bottom: 0; }
+  .sect h3 { margin: 0; font: 600 13px var(--display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  ol.steps li { display: grid; grid-template-columns: 24px 1fr; gap: 10px; align-items: start; font-size: 14px; }
+  .num { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--surface); font: 700 12px var(--body); }
+  .where { display: inline-block; font: 500 11.5px/1 var(--mono); padding: 3px 6px; border-radius: 6px; border: 1px solid var(--line); color: var(--muted); background: var(--surface-2); margin-right: 4px; vertical-align: 1px; }
+  .caps { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { display: inline-flex; align-items: center; gap: 6px; font: 500 13px/1.25 var(--body); color: var(--ink); background: color-mix(in srgb, var(--c) 10%, var(--surface)); border: 1px solid color-mix(in srgb, var(--c) 45%, transparent); border-radius: 7px; padding: 5px 8px; }
+  .tag::before { content: ""; width: 8px; height: 8px; border-radius: 2px; background: var(--c); flex: none; }
+  .tag.sm { font-size: 12px; padding: 3px 7px; }
+  .cat-legacy { --c: var(--c-legacy); } .cat-net { --c: var(--c-net); } .cat-access { --c: var(--c-access); }
+  .cat-sec { --c: var(--c-sec); } .cat-data { --c: var(--c-data); } .cat-ai { --c: var(--c-ai); }
+  .pits { display: grid; gap: 8px; }
+  .pit { border: 1px solid var(--line); border-left: 4px solid var(--warn); border-radius: 8px; padding: 9px 12px; display: grid; gap: 4px; background: var(--surface); }
+  .pit b { font: 600 14.5px var(--body); }
+  .pit p { margin: 0; font-size: 13.5px; }
+  .pit .fix { color: var(--ok); }
+  .pit .fix::before { content: "Fix: "; font-weight: 600; }
+
+  .foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 20px; color: var(--muted); font-size: 12.5px; }
+  .foot a { color: var(--cloud); }
+
+  /* Presenter mode: hide chrome, use the whole screen */
+  body.present .keys, body.present .foot, body.present .legend.cats { display: none; }
+  body.present .wrap { max-width: none; padding: 8px 12px; gap: 8px; }
+  body.present svg.topo { max-height: calc(100vh - 200px); }
+  body.present .detail { max-height: calc(100vh - 150px); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="eyebrow">TorNOG Fall Meetup · November 12, 2026</span>
+      <h1>SASE in Practice <small>Lessons from the field, and what AI changes</small></h1>
+    </div>
+    <div class="tools">
+      <span class="keys"><kbd>←</kbd><kbd>→</kbd> phase · <kbd>1</kbd>–<kbd>6</kbd> flow · <kbd>P</kbd> present · <kbd>T</kbd> theme</span>
+      <button class="btn" id="presentBtn" type="button">Present</button>
+      <button class="btn" id="themeBtn" type="button" aria-label="Toggle light or dark theme">Theme</button>
+    </div>
+  </header>
+
+  <nav class="panel phases" id="phases" aria-label="Migration phase"></nav>
+
+  <div class="main">
+    <section class="panel stage" aria-label="Network diagram">
+      <div class="flows" id="flows" role="group" aria-label="Traffic flow"><span class="label">Flow</span></div>
+      <div class="canvas">
+        <svg class="topo" id="topo" viewBox="0 0 1000 680" role="img" aria-label="Sample enterprise network: a data center, two branches, a remote user, MPLS, the internet with SaaS and generative AI tools, and a SASE cloud with four PoPs around a shared security and policy core."></svg>
+      </div>
+      <div class="legend">
+        <span><i class="sw fl"></i> This flow</span>
+        <span><i class="sw rk"></i> What can go wrong</span>
+        <span><i class="sw cl"></i> PoP to shared core</span>
+        <span><i class="sw mp"></i> MPLS</span>
+        <span>Faded = not deployed yet, or retired</span>
+      </div>
+    </section>
+
+    <section class="panel detail" id="detail" aria-live="polite"></section>
+  </div>
+
+  <footer class="foot">
+    <span>Vendor-neutral and simplified, for discussion. The network is fictional. Views are my own, not my employer's.</span>
+    <span>Pouya Khishtandar · <a href="https://www.linkedin.com/in/khishtandar" target="_blank" rel="noopener noreferrer">linkedin.com/in/khishtandar</a></span>
+  </footer>
+</div>
+
+<script>
+(() => {
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  const BUS_Y = 110, MPLS_Y = 647, LEFT_X = 16;
+
+  // ---------- Phases ----------
+  const PHASES = [
+    { name: 'Legacy hub and spoke', desc: 'Branches on MPLS. Internet backhauled to the DC firewall stack. Remote users on VPN.' },
+    { name: 'Remote users first', desc: 'SSE for remote users: ZTNA replaces the VPN for apps, SWG and CASB at the nearest PoP.' },
+    { name: 'Branches in waves', desc: 'Branch 1 and the DC get SD-WAN edges. Branch 2 still on MPLS. Both worlds run side by side.' },
+    { name: 'Target state', desc: 'MPLS retired. Every site and user under one policy. The DC firewall shrinks to east-west.' }
+  ];
+
+  // ---------- Capabilities ----------
+  const CAP = {
+    mpls: ['MPLS', 'legacy'], ngfw: ['DC perimeter NGFW', 'legacy'], proxy: ['DC web proxy', 'legacy'], vpn: ['Remote-access VPN', 'legacy'],
+    sdwan: ['SD-WAN edge', 'net'], mm: ['PoP-to-PoP middle mile', 'net'], qos: ['QoS and loss mitigation', 'net'],
+    ztna: ['ZTNA', 'access'], idp: ['Identity and device posture', 'access'],
+    fwaas: ['FWaaS', 'sec'], swg: ['Secure Web Gateway', 'sec'], tls: ['TLS inspection', 'sec'], ips: ['IPS and anti-malware', 'sec'],
+    casb: ['CASB', 'data'], dlp: ['DLP', 'data'],
+    aidisc: ['Shadow-AI discovery', 'ai'], aictl: ['AI tenant and activity control', 'ai']
+  };
+
+  // ---------- Field pitfalls ----------
+  const PIT = {
+    saasLatency: ['Backhaul hides the real cost', 'Every SaaS session trombones through the DC. Latency grows, and the DC internet link becomes the bottleneck for the whole company.', 'Baseline SaaS performance before cutover, then break out at the nearest PoP. Microsoft\'s own M365 guidance is local egress.'],
+    flatWan: ['"Trusted" WAN, no inspection', 'Branch-to-DC traffic over MPLS is usually not inspected. Ransomware spreads site to site through the same any-to-any trust.', 'Put a WAN firewall and IPS policy between sites, not just at the internet edge.'],
+    vpnFlat: ['VPN means network access', 'Once connected, the user reaches whole subnets. A stolen laptop or credential becomes lateral movement.', 'Per-app access with ZTNA, tied to identity and device posture.'],
+    splitTunnel: ['Split tunnel is a blind spot', 'To save VPN capacity, SaaS and internet traffic is often sent straight out from the laptop: fast, but nobody inspects it.', 'Inspect internet traffic from the agent at the PoP nearest the user.'],
+    egressIP: ['Your public IP changes', 'SaaS IP allow-lists, IdP conditional access, partner firewalls and geolocation were all built on the DC\'s egress IP.', 'Inventory every allow-list early. Use dedicated egress IPs from the provider and update the IdP before cutover.'],
+    tlsBreak: ['TLS inspection breaks things', 'Certificate-pinned apps, non-browser clients and some OS updates fail when traffic is re-signed. Missing root CA means certificate errors everywhere.', 'Push the root CA through MDM first. Start with a bypass list for pinned apps and expand inspection in stages.'],
+    dns: ['Private DNS', 'Without the VPN, off-net users cannot resolve internal names, so apps "don\'t work" even when access is allowed.', 'Map internal zones explicitly in the ZTNA design and test from outside the network.'],
+    appInventory: ['Nobody has the app list', 'The VPN gave everyone the whole network, so nobody knows which apps users actually need. ZTNA needs them defined.', 'Run in discovery mode first, learn from the logs, then tighten app by app.'],
+    dualClient: ['Two agents on one laptop', 'The legacy VPN client and the SASE agent fight over routes, DNS and the default gateway during coexistence.', 'Test coexistence on the standard image and set a firm VPN retirement date.'],
+    twoPolicies: ['Two rulebases drift apart', 'During migration both the legacy firewall and the SASE enforce policy. Rules diverge, and traffic can be NATed or inspected twice.', 'Pick one source of truth and migrate rules by intent, not line by line.'],
+    asym: ['Asymmetric routing', 'The branch reaches the DC through SASE, but the DC still learns the branch prefix over MPLS and returns that way. Stateful devices drop it, and voice becomes one-way.', 'One return path per prefix: BGP local preference or communities, and withdraw migrated prefixes from MPLS.'],
+    hubTransit: ['The DC becomes a transit hub', 'Migrated and not-yet-migrated sites talk through the DC, which adds hairpin latency and loads the DC links.', 'Migrate in regional waves, size the hub for it, and keep the coexistence window short.'],
+    mtu: ['MTU and tunnel overhead', 'Tunnel overhead plus PPPoE or a second tunnel causes fragmentation. Small packets work and large transfers stall.', 'Clamp TCP MSS on the edge and test with DF-bit pings at full size.'],
+    lastMile: ['The last mile is now your WAN', 'With MPLS gone, branch availability is the ISP\'s availability.', 'Two diverse links (or 5G) from different carriers and entry points, with per-link loss and jitter monitoring.'],
+    voice: ['Voice over the internet', 'Jitter and loss on the underlay show up as choppy calls, even when the middle mile is clean.', 'QoS at the edge, loss mitigation or duplication for real-time traffic, and the nearest PoP.'],
+    aiBlind: ['A category block is not AI governance', 'The proxy sees only a domain. It cannot tell a corporate tenant from a personal account, or a question from a source-code upload. Users simply switch tools.', 'Discover what is used, then control by tenant, activity and data.'],
+    aiTls: ['No TLS inspection, no AI visibility', 'Prompts and uploads live inside TLS. Desktop apps and browser extensions add more paths around the controls.', 'Inspect AI destinations (with sensible exceptions) so CASB and DLP can see the content.'],
+    aiEmbedded: ['AI hides inside sanctioned SaaS', 'Copilots inside office suites and CRMs, and agents calling APIs from servers, never touch a "Generative AI" category.', 'Govern by activity and data, and include server and API traffic, not only browsers.'],
+    logPrivacy: ['Logging prompts is sensitive', 'Capturing prompt content creates privacy and legal obligations of its own.', 'Bring in privacy and legal early. Log metadata by default and content only on a DLP match.']
+  };
+
+  // ---------- Topology ----------
+  // kind: end (selectable endpoint), dev (device), pop, core
+  const N = {
+    saas:   { x: 330, y: 45, kind: 'end', l: 'SaaS', s: 'M365 · CRM · storage' },
+    genai:  { x: 610, y: 45, kind: 'end', l: 'Generative AI', s: 'chat · copilots' },
+    remote: { x: 95, y: 230, kind: 'end', l: 'Remote user', s: 'laptop' },
+    popU:   { x: 300, y: 215, kind: 'pop', from: 1 },
+    core:   { x: 545, y: 262, kind: 'core', from: 1 },
+    popD:   { x: 385, y: 365, kind: 'pop', from: 1 },
+    popB1:  { x: 640, y: 372, kind: 'pop', from: 2 },
+    popB2:  { x: 815, y: 322, kind: 'pop', from: 3 },
+    dcfw:   { x: 95, y: 475, kind: 'dev', l: 'Perimeter FW', s: 'NGFW · proxy · VPN' },
+    conn:   { x: 245, y: 475, kind: 'dev', l: 'ZTNA connector', s: 'dials out', from: 1 },
+    apps:   { x: 105, y: 570, kind: 'end', l: 'Private apps', s: 'ERP · file shares' },
+    dcedge: { x: 320, y: 570, kind: 'dev', l: 'WAN edge', s: 'MPLS CE' },
+    users1: { x: 485, y: 570, kind: 'end', l: 'Branch 1 users', s: '10.10.0.0/16' },
+    edge1:  { x: 590, y: 480, kind: 'dev', l: 'CE router', s: 'MPLS only' },
+    edge2:  { x: 780, y: 480, kind: 'dev', l: 'CE router', s: 'MPLS only' },
+    users2: { x: 890, y: 570, kind: 'end', l: 'Branch 2 users', s: '10.20.0.0/16' }
+  };
+  const BOX = { end: [150, 50], dev: [132, 44] };
+  const R = { pop: 25, core: 58 };
+
+  // Labels that change as the migration progresses.
+  function phaseLabels(p) {
+    const sd = (s) => ({ l: 'SD-WAN edge', s, cls: 'sdwan' });
+    const ce = { l: 'CE router', s: 'MPLS only', cls: 'legacy' };
+    return {
+      remote: { s: p === 0 ? 'laptop · VPN client' : p === 3 ? 'laptop · SASE agent' : 'laptop · agent + VPN' },
+      dcfw: p === 3 ? { l: 'DC firewall', s: 'east-west only', cls: 'legacy' } : { l: 'Perimeter FW', s: 'NGFW · proxy · VPN', cls: 'legacy' },
+      dcedge: p < 2 ? { l: 'WAN edge', s: 'MPLS CE', cls: 'legacy' } : sd(p === 2 ? 'SASE + MPLS hub' : 'dual ISP'),
+      edge1: p < 2 ? ce : sd(p === 2 ? 'ISP + MPLS' : 'ISP + 5G'),
+      edge2: p < 3 ? ce : sd('ISP + 5G')
+    };
+  }
+
+  // [a, b, firstPhase, lastPhase, class, label, labelPos, waypoints]
+  const LINKS = [
+    [[LEFT_X, BUS_Y], [960, BUS_Y], 0, 3, 'bus'],
+    ['saas', [330, BUS_Y], 0, 3], ['genai', [610, BUS_Y], 0, 3],
+    ['remote', [95, BUS_Y], 0, 3, 'dashed', 'hotel Wi-Fi', 0.5],
+    ['dcfw', [LEFT_X, BUS_Y], 0, 3, null, 'DC internet', 0.62, [[LEFT_X, 475]]],
+    ['apps', 'dcfw', 0, 3], ['apps', 'dcedge', 0, 3], ['dcedge', 'dcfw', 0, 3],
+    ['users1', 'edge1', 0, 3], ['users2', 'edge2', 0, 3],
+    ['remote', 'dcfw', 0, 2, 'dashed', 'VPN', 0.5],
+    ['edge1', [590, MPLS_Y], 0, 2, 'mpls'], ['edge2', [780, MPLS_Y], 0, 2, 'mpls'], ['dcedge', [320, MPLS_Y], 0, 2, 'mpls'],
+    ['popU', 'core', 1, 3, 'core'], ['popD', 'core', 1, 3, 'core'], ['popB1', 'core', 2, 3, 'core'], ['popB2', 'core', 3, 3, 'core'],
+    ['core', [545, BUS_Y], 1, 3, null, 'egress', 0.55],
+    ['remote', 'popU', 1, 3, 'dashed', 'agent', 0.45],
+    ['conn', 'popD', 1, 3, 'dashed', 'outbound only', 0.5], ['conn', 'apps', 1, 3],
+    ['dcedge', 'popD', 2, 3, null, 'tunnel', 0.55],
+    ['edge1', 'popB1', 2, 3, null, 'tunnel', 0.5],
+    ['edge2', 'popB2', 3, 3, null, 'tunnel', 0.5]
+  ];
+
+  // ---------- Flows ----------
+  const viaMPLS = (fromX, toX) => [[fromX, MPLS_Y], [toX, MPLS_Y]];
+  const dcOut = (dst) => ['dcfw', [LEFT_X, 475], [LEFT_X, BUS_Y], [N[dst].x, BUS_Y], dst];
+  const coreOut = (dst) => ['core', [545, BUS_Y], [N[dst].x, BUS_Y], dst];
+  const backhaul1 = ['users1', 'edge1', ...viaMPLS(590, 320), 'dcedge'];
+
+  const FLOWS = [
+    { id: 'branch-saas', label: 'Branch → SaaS', title: 'Branch user to SaaS', src: 'users1', dst: 'saas' },
+    { id: 'remote-app', label: 'Remote → private app', title: 'Remote user to private app', src: 'remote', dst: 'apps' },
+    { id: 'branch-dc', label: 'Branch → DC', title: 'Branch user to a DC app', src: 'users1', dst: 'apps' },
+    { id: 'branch-branch', label: 'Branch → branch (voice)', title: 'Branch 1 to Branch 2, voice call', src: 'users1', dst: 'users2' },
+    { id: 'branch-ai', label: 'Branch → GenAI', title: 'Branch user to a generative AI tool', src: 'users1', dst: 'genai' },
+    { id: 'remote-saas', label: 'Remote → SaaS', title: 'Remote user to SaaS', src: 'remote', dst: 'saas' }
+  ];
+
+  // SCN[flowId][phase] = { path, risk, riskLabel, verdict, vclass, note, steps: [[where, text]], caps, pits }
+  const S = {};
+  const legacySaas = {
+    path: [...backhaul1, ...dcOut('saas')], verdict: 'Backhauled to the DC', vclass: 'legacy',
+    steps: [['CE router', 'No local internet. The default route points into MPLS.'],
+      ['MPLS', 'Internet-bound traffic rides the private WAN to the data center.'],
+      ['DC perimeter', 'NGFW and web proxy inspect it, then out the DC internet link.'],
+      ['SaaS', 'Sees the DC\'s public IP, wherever the user really is.']],
+    caps: ['mpls', 'ngfw', 'proxy'], pits: ['saasLatency']
+  };
+  const pathBranchSaas = ['users1', 'edge1', 'popB1', ...coreOut('saas')];
+  const stepsBranchSaas = [['SD-WAN edge', 'Recognises the app and sends it over the internet underlay to the nearest PoP.'],
+    ['PoP', 'FWaaS, SWG, TLS inspection, IPS and CASB in one pass, under the same policy used for every user.'],
+    ['Egress', 'Leaves from a provider IP close to the user, not from the DC.']];
+  S['branch-saas'] = [
+    legacySaas,
+    { ...legacySaas, note: 'Unchanged: phase 1 moved remote users only.', pits: ['saasLatency', 'flatWan'] },
+    { path: pathBranchSaas, verdict: 'Inspected at the nearest PoP', vclass: 'good', steps: stepsBranchSaas,
+      caps: ['sdwan', 'fwaas', 'swg', 'tls', 'ips', 'casb'], pits: ['egressIP', 'tlsBreak', 'mtu'] },
+    { path: pathBranchSaas, verdict: 'Inspected at the nearest PoP', vclass: 'good', steps: stepsBranchSaas,
+      caps: ['sdwan', 'fwaas', 'swg', 'tls', 'ips', 'casb'], pits: ['tlsBreak', 'lastMile'] }
+  ];
+
+  const ztnaPath = ['remote', 'popU', 'core', 'popD', 'conn', 'apps'];
+  const ztnaSteps = [['Agent', 'Signs in through the IdP (SSO, MFA) with a device-posture check, and tunnels to the nearest PoP.'],
+    ['Policy', 'User, group and posture decide access to this one app, not to a subnet.'],
+    ['Connector', 'Sits in the DC and dials out to the PoP. No inbound ports are open on the firewall.'],
+    ['App', 'Sees the connector. The user never gets an IP on the internal network.']];
+  S['remote-app'] = [
+    { path: ['remote', 'dcfw', 'apps'], verdict: 'Network-level VPN', vclass: 'legacy',
+      steps: [['VPN client', 'Builds a tunnel over the internet to the concentrator in the DC.'],
+        ['DC perimeter', 'Hands out an IP from the VPN pool, with routes to whole internal subnets.'],
+        ['App', 'Reachable, and so is everything else in those subnets.']],
+      caps: ['vpn', 'ngfw'], pits: ['vpnFlat'] },
+    { path: ztnaPath, verdict: 'ZTNA, one app at a time', vclass: 'good', steps: ztnaSteps,
+      caps: ['ztna', 'idp', 'fwaas', 'ips'], pits: ['appInventory', 'dns', 'dualClient'] },
+    { path: ztnaPath, verdict: 'ZTNA, one app at a time', vclass: 'good', steps: ztnaSteps,
+      caps: ['ztna', 'idp', 'fwaas', 'ips'], pits: ['dualClient', 'twoPolicies'] },
+    { path: ztnaPath, verdict: 'ZTNA, one app at a time', vclass: 'good', note: 'The VPN concentrator is retired.', steps: ztnaSteps,
+      caps: ['ztna', 'idp', 'fwaas', 'ips'], pits: ['appInventory'] }
+  ];
+
+  const mplsDC = {
+    path: [...backhaul1, 'apps'], verdict: 'Over MPLS', vclass: 'legacy',
+    steps: [['CE router', 'Sends the traffic into the carrier\'s MPLS VPN.'],
+      ['MPLS', 'Carrier QoS classes, predictable latency, long contract and lead times.'],
+      ['DC WAN edge', 'Delivers it to the app. Usually nothing inspects branch-to-DC traffic.']],
+    caps: ['mpls'], pits: ['flatWan']
+  };
+  const sasePathDC = ['users1', 'edge1', 'popB1', 'core', 'popD', 'dcedge', 'apps'];
+  S['branch-dc'] = [
+    mplsDC,
+    { ...mplsDC, note: 'Unchanged: phase 1 moved remote users only.' },
+    { path: sasePathDC, verdict: 'Via SASE: check the return path', vclass: 'warn',
+      risk: ['apps', 'dcedge', ...viaMPLS(320, 590), 'edge1'], riskLabel: 'return over MPLS?',
+      steps: [['SD-WAN edge', 'Tunnels to the nearest PoP.'],
+        ['PoP', 'WAN firewall and IPS between sites, then the provider\'s middle mile to the DC\'s PoP.'],
+        ['DC SD-WAN edge', 'Delivers to the app.'],
+        ['Return', 'The DC still learns 10.10.0.0/16 over MPLS too. If MPLS wins, the reply takes the other path.']],
+      caps: ['sdwan', 'mm', 'fwaas', 'ips'], pits: ['asym', 'twoPolicies'] },
+    { path: sasePathDC, verdict: 'Via SASE, inspected between sites', vclass: 'good',
+      steps: [['SD-WAN edge', 'Tunnels to the nearest PoP over two internet links.'],
+        ['PoP', 'WAN firewall and IPS between sites, then the middle mile to the DC\'s PoP.'],
+        ['DC SD-WAN edge', 'Delivers to the app. One path in each direction.']],
+      caps: ['sdwan', 'mm', 'fwaas', 'ips'], pits: ['mtu', 'lastMile'] }
+  ];
+
+  const mplsVoice = {
+    path: ['users1', 'edge1', ...viaMPLS(590, 780), 'edge2', 'users2'], verdict: 'Any-to-any MPLS', vclass: 'legacy',
+    steps: [['Phone', 'Marks voice DSCP EF.'],
+      ['MPLS', 'The carrier\'s real-time class carries it straight between branches.'],
+      ['Branch 2', 'Good call quality, at MPLS prices, with no inspection between sites.']],
+    caps: ['mpls'], pits: ['flatWan']
+  };
+  S['branch-branch'] = [
+    mplsVoice,
+    { ...mplsVoice, note: 'Unchanged: phase 1 moved remote users only.' },
+    { path: ['users1', 'edge1', 'popB1', 'core', 'popD', 'dcedge', ...viaMPLS(320, 780), 'edge2', 'users2'],
+      verdict: 'Through the DC hub', vclass: 'warn',
+      note: 'Branch 1 is migrated, Branch 2 is not yet.',
+      steps: [['Branch 1', 'SD-WAN edge sends the call into the SASE cloud.'],
+        ['PoPs', 'Middle mile to the DC\'s PoP: the only place both worlds meet.'],
+        ['DC SD-WAN edge', 'Acts as the gateway between SASE and MPLS and redistributes routes both ways.'],
+        ['MPLS', 'Carries the call on to Branch 2.']],
+      caps: ['sdwan', 'mm', 'mpls'], pits: ['hubTransit', 'asym'] },
+    { path: ['users1', 'edge1', 'popB1', 'core', 'popB2', 'edge2', 'users2'], verdict: 'Site to site over the SASE backbone', vclass: 'good',
+      steps: [['SD-WAN edge', 'Prioritises voice and protects it against loss on the last mile.'],
+        ['PoP', 'WAN firewall between sites, then the middle mile to Branch 2\'s PoP.'],
+        ['Branch 2', 'SD-WAN edge delivers the call. MPLS is gone.']],
+      caps: ['sdwan', 'qos', 'mm', 'fwaas'], pits: ['voice', 'lastMile'] }
+  ];
+
+  const legacyAI = {
+    path: [...backhaul1, ...dcOut('genai')], verdict: 'Allow or block by category', vclass: 'legacy',
+    steps: [['CE router', 'Backhauled over MPLS like any internet traffic.'],
+      ['DC proxy', 'Matches the URL category "Generative AI" and allows or blocks the whole site.'],
+      ['GenAI tool', 'Whatever is typed or uploaded is invisible unless TLS is inspected.']],
+    caps: ['mpls', 'proxy'], pits: ['aiBlind', 'aiTls']
+  };
+  const saseAI = {
+    path: ['users1', 'edge1', 'popB1', ...coreOut('genai')], verdict: 'Discover, then control by activity', vclass: 'good',
+    steps: [['PoP', 'TLS inspection opens the session so the content can be seen.'],
+      ['Discover', 'Identifies every AI app in use with a risk score: the shadow-AI report.'],
+      ['Control', 'Corporate tenant allowed, personal accounts blocked. Prompts allowed, file uploads blocked.'],
+      ['DLP', 'Scans prompts and uploads for source code, PII and customer data, and coaches the user.']],
+    caps: ['tls', 'aidisc', 'casb', 'aictl', 'dlp'], pits: ['aiTls', 'aiEmbedded', 'logPrivacy']
+  };
+  S['branch-ai'] = [legacyAI, { ...legacyAI, note: 'Unchanged: phase 1 moved remote users only.' }, saseAI, { ...saseAI, pits: ['aiEmbedded', 'logPrivacy'] }];
+
+  const remoteSaasPath = ['remote', 'popU', ...coreOut('saas')];
+  const remoteSaasSteps = [['Agent', 'Always on. Tunnels internet traffic to the nearest PoP, not the DC.'],
+    ['PoP', 'The same SWG, CASB and DLP policy as the branch users: one policy, wherever the user sits.'],
+    ['SaaS', 'Reached from a nearby PoP, with no hairpin.']];
+  S['remote-saas'] = [
+    { path: ['remote', 'dcfw', ...dcOut('saas').slice(1)], verdict: 'Hairpinned through the VPN', vclass: 'legacy',
+      risk: ['remote', [95, BUS_Y], [330, BUS_Y], 'saas'], riskLabel: 'split tunnel: uninspected',
+      steps: [['VPN client', 'Full tunnel: everything goes to the DC first.'],
+        ['DC perimeter', 'NGFW and proxy inspect it, then out the DC internet link.'],
+        ['Workaround', 'Split tunnelling SaaS saves capacity but skips inspection entirely.']],
+      caps: ['vpn', 'ngfw', 'proxy'], pits: ['splitTunnel', 'saasLatency'] },
+    { path: remoteSaasPath, verdict: 'Inspected at the nearest PoP', vclass: 'good', steps: remoteSaasSteps,
+      caps: ['swg', 'tls', 'casb', 'dlp', 'fwaas'], pits: ['dualClient', 'egressIP'] },
+    { path: remoteSaasPath, verdict: 'Inspected at the nearest PoP', vclass: 'good', steps: remoteSaasSteps,
+      caps: ['swg', 'tls', 'casb', 'dlp', 'fwaas'], pits: ['egressIP', 'tlsBreak'] },
+    { path: remoteSaasPath, verdict: 'Inspected at the nearest PoP', vclass: 'good', steps: remoteSaasSteps,
+      caps: ['swg', 'tls', 'casb', 'dlp', 'fwaas'], pits: ['tlsBreak'] }
+  ];
+
+  // ---------- State ----------
+  const state = { phase: 0, flow: 'branch-saas' };
+  const $ = (id) => document.getElementById(id);
+  const svg = $('topo');
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  function el(tag, attrs, parent) {
+    const e = document.createElementNS(SVGNS, tag);
+    for (const k in attrs) if (attrs[k] != null) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  const pt = (p) => (Array.isArray(p) ? { x: p[0], y: p[1] } : { x: N[p].x, y: N[p].y });
+
+  // Pull a segment's end back to the edge of the node it points at.
+  function clipTo(id, from) {
+    const n = N[id], dx = from.x - n.x, dy = from.y - n.y;
+    if (!dx && !dy) return { x: n.x, y: n.y };
+    if (n.kind === 'pop' || n.kind === 'core') {
+      const r = (n.kind === 'pop' ? R.pop : R.core) + 4, d = Math.hypot(dx, dy);
+      return { x: n.x + dx / d * r, y: n.y + dy / d * r };
+    }
+    const [w, h] = BOX[n.kind];
+    const t = Math.min(dx ? (w / 2 + 4) / Math.abs(dx) : Infinity, dy ? (h / 2 + 4) / Math.abs(dy) : Infinity);
+    return { x: n.x + dx * t, y: n.y + dy * t };
+  }
+  function pathD(list) {
+    const pts = list.map(pt);
+    const last = list[list.length - 1];
+    if (!Array.isArray(last)) pts[pts.length - 1] = clipTo(last, pts[pts.length - 2]);
+    return pts.map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+  }
+  const live = (from, to) => state.phase >= (from ?? 0) && state.phase <= (to ?? 3);
+
+  // ---------- Drawing ----------
+  function zone(x, y, w, h, label) {
+    el('rect', { x, y, width: w, height: h, rx: 14, class: 't-zone' }, svg);
+    el('text', { x: x + 12, y: y + 20, class: 't-zone-label' }, svg).textContent = label;
+  }
+
+  function draw() {
+    const p = state.phase, sc = S[state.flow][p];
+    const onPath = new Set(sc.path.filter((x) => !Array.isArray(x)));
+    const usesMPLS = sc.path.some((x) => Array.isArray(x) && x[1] === MPLS_Y);
+    svg.textContent = '';
+
+    const defs = el('defs', {}, svg);
+    const pat = el('pattern', { id: 'dots', width: 22, height: 22, patternUnits: 'userSpaceOnUse' }, defs);
+    el('circle', { cx: 2, cy: 2, r: 1.2, class: 't-grid' }, pat);
+    for (const [id, cls] of [['arrow', 't-arrow'], ['arrowRisk', 't-arrow-risk']]) {
+      const mk = el('marker', { id, viewBox: '0 0 10 10', refX: 7, refY: 5, markerWidth: 4.5, markerHeight: 4.5, orient: 'auto-start-reverse' }, defs);
+      el('path', { d: 'M0,0 L10,5 L0,10 z', class: cls }, mk);
+    }
+    el('rect', { x: 0, y: 0, width: 1000, height: 680, fill: 'url(#dots)' }, svg);
+
+    // Zones and the SASE cloud
+    zone(20, 425, 370, 190, 'HQ / Data center');
+    zone(405, 425, 255, 190, 'Branch 1');
+    zone(675, 425, 300, 190, 'Branch 2');
+    el('text', { x: 95, y: 190, 'text-anchor': 'middle', class: 't-zone-label' }, svg).textContent = 'On the road';
+    const cloud = el('g', { class: p === 0 ? 'ghost' : null }, svg);
+    el('rect', { x: 205, y: 150, width: 690, height: 255, rx: 60, class: 't-cloud' }, cloud);
+    el('text', { x: 880, y: 182, 'text-anchor': 'end', class: 't-cloud-label' }, cloud).textContent = 'SASE CLOUD';
+    el('text', { x: 880, y: 198, 'text-anchor': 'end', class: 't-cloud-cap' }, cloud).textContent = p === 0 ? 'not deployed yet' : 'policy drawn once; runs in every PoP';
+    el('text', { x: LEFT_X + 6, y: BUS_Y - 8, class: 't-bus-label' }, svg).textContent = 'INTERNET';
+
+    // MPLS
+    const mp = el('g', { class: `t-mpls${p === 3 ? ' ghost' : ''}${usesMPLS ? ' on' : ''}` }, svg);
+    el('rect', { x: 260, y: MPLS_Y - 17, width: 640, height: 34, rx: 17 }, mp);
+    el('text', { x: 886, y: MPLS_Y + 5, 'text-anchor': 'end' }, mp).textContent = 'MPLS WAN';
+    if (p === 3) el('text', { x: 580, y: MPLS_Y - 24, 'text-anchor': 'middle', class: 't-retired' }, svg).textContent = 'RETIRED';
+
+    // Links
+    for (const [a, b, from, to, cls, label, lp, via] of LINKS) {
+      const pts = [pt(a), ...(via || []).map(pt), pt(b)];
+      const d = pts.map((q, i) => `${i ? 'L' : 'M'}${q.x},${q.y}`).join(' ');
+      const on = live(from, to);
+      el('path', { d, class: `t-link${cls ? ' ' + cls : ''}${on ? '' : ' ghost'}` }, svg);
+      if (label && on) {
+        const s = pts[pts.length - 2], e = pts[pts.length - 1], t = lp ?? 0.5;
+        el('text', { x: s.x + (e.x - s.x) * t + 6, y: s.y + (e.y - s.y) * t - 5, class: 't-link-label' }, svg).textContent = label;
+      }
+    }
+
+    // Flow (under the nodes, so it reads as passing through them)
+    if (sc.risk) {
+      el('path', { d: pathD(sc.risk), class: 't-risk', 'marker-end': 'url(#arrowRisk)' }, svg);
+    }
+    const d = pathD(sc.path);
+    el('path', { d, class: 't-flow-glow' }, svg);
+    el('path', { d, class: 't-flow', 'marker-end': 'url(#arrow)' }, svg);
+
+    // Nodes
+    const labels = phaseLabels(p);
+    for (const id in N) {
+      const n = N[id], on = onPath.has(id), active = live(n.from, 3);
+      if (n.kind === 'pop') {
+        const g = el('g', { class: `t-pop${on ? ' on' : ''}${active ? '' : ' ghost'}` }, svg);
+        el('circle', { cx: n.x, cy: n.y, r: R.pop }, g);
+        el('text', { x: n.x, y: n.y + 4.5, 'text-anchor': 'middle' }, g).textContent = 'PoP';
+      } else if (n.kind === 'core') {
+        const g = el('g', { class: `t-core${on ? ' on' : ''}${active ? '' : ' ghost'}` }, svg);
+        el('circle', { cx: n.x, cy: n.y, r: 76, class: 'ring' }, g);
+        el('circle', { cx: n.x, cy: n.y, r: R.core, class: 'disc' }, g);
+        el('text', { x: n.x, y: n.y - 6, 'text-anchor': 'middle', class: 'n1' }, g).textContent = 'ONE POLICY';
+        el('text', { x: n.x, y: n.y + 9, 'text-anchor': 'middle', class: 'n2' }, g).textContent = 'SWG · CASB · FW';
+        el('text', { x: n.x, y: n.y + 22, 'text-anchor': 'middle', class: 'n2' }, g).textContent = 'ZTNA · DLP · IPS';
+      } else {
+        const lb = { l: n.l, s: n.s, ...(labels[id] || {}) };
+        const [w, h] = BOX[n.kind];
+        const g = el('g', { class: `t-node ${n.kind}${lb.cls ? ' ' + lb.cls : ''}${on ? ' on' : ''}${active ? '' : ' ghost'}` }, svg);
+        el('rect', { x: n.x - w / 2, y: n.y - h / 2, width: w, height: h, rx: 9 }, g);
+        el('text', { x: n.x, y: n.y - 3, 'text-anchor': 'middle', class: 'n1' }, g).textContent = lb.l;
+        el('text', { x: n.x, y: n.y + 14, 'text-anchor': 'middle', class: 'n2' }, g).textContent = lb.s;
+      }
+    }
+
+    // Risk label on top of everything
+    if (sc.risk && sc.riskLabel) {
+      const pts = sc.risk.map(pt), i = Math.floor((pts.length - 1) / 2);
+      const m = { x: (pts[i].x + pts[i + 1].x) / 2, y: (pts[i].y + pts[i + 1].y) / 2 };
+      const w = sc.riskLabel.length * 6.6 + 16;
+      const g = el('g', { class: 't-risk-label' }, svg);
+      el('rect', { x: m.x - w / 2, y: m.y - 11, width: w, height: 22, rx: 11 }, g);
+      el('text', { x: m.x, y: m.y + 4, 'text-anchor': 'middle' }, g).textContent = sc.riskLabel;
+    }
+  }
+
+  function renderDetail() {
+    const f = FLOWS.find((x) => x.id === state.flow), sc = S[f.id][state.phase];
+    const ph = PHASES[state.phase];
+    $('detail').innerHTML = `
+      <div class="d-head">
+        <div class="d-title"><h2>${esc(f.title)}</h2><span class="verdict v-${sc.vclass}">${esc(sc.verdict)}</span></div>
+        <p class="d-note">Phase ${state.phase}: ${esc(ph.name)}.${sc.note ? ' ' + esc(sc.note) : ''}</p>
+      </div>
+      <div class="sect"><h3>How the packet gets there</h3>
+        <ol class="steps">${sc.steps.map(([w, t], i) => `<li><span class="num">${i + 1}</span><span><span class="where">${esc(w)}</span>${esc(t)}</span></li>`).join('')}</ol>
+      </div>
+      <div class="sect"><h3>Capabilities in play</h3>
+        <div class="caps">${sc.caps.map((c) => `<span class="tag cat-${CAP[c][1]}">${esc(CAP[c][0])}</span>`).join('')}</div>
+      </div>
+      <div class="sect"><h3>From the field</h3>
+        <div class="pits">${sc.pits.map((k) => `<div class="pit"><b>${esc(PIT[k][0])}</b><p>${esc(PIT[k][1])}</p><p class="fix">${esc(PIT[k][2])}</p></div>`).join('')}</div>
+      </div>`;
+  }
+
+  function renderControls() {
+    $('phases').querySelectorAll('.phase').forEach((b, i) => b.setAttribute('aria-pressed', String(i === state.phase)));
+    $('flows').querySelectorAll('.chip').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.id === state.flow)));
+  }
+
+  function render(push = true) {
+    renderControls(); draw(); renderDetail();
+    if (push) history.replaceState(null, '', `#p${state.phase}/${state.flow}`);
+  }
+
+  // ---------- Controls ----------
+  PHASES.forEach((ph, i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'phase';
+    b.innerHTML = `<span class="pn">Phase ${i}</span><span class="pt">${esc(ph.name)}</span><span class="pd">${esc(ph.desc)}</span>`;
+    b.addEventListener('click', () => { state.phase = i; render(); });
+    $('phases').appendChild(b);
+  });
+  FLOWS.forEach((f, i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.dataset.id = f.id;
+    b.innerHTML = `<span class="k">${i + 1}</span>${esc(f.label)}`;
+    b.addEventListener('click', () => { state.flow = f.id; render(); });
+    $('flows').appendChild(b);
+  });
+
+  function setTheme(t) {
+    document.documentElement.dataset.theme = t;
+    try { localStorage.setItem('tornog-theme', t); } catch (e) {}
+  }
+  function toggleTheme() {
+    const cur = document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    setTheme(cur === 'dark' ? 'light' : 'dark');
+  }
+  try { const t = localStorage.getItem('tornog-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  function togglePresent() {
+    const on = document.body.classList.toggle('present');
+    $('presentBtn').textContent = on ? 'Exit present' : 'Present';
+    if (on && document.documentElement.requestFullscreen && !document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+    if (!on && document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  }
+  $('themeBtn').addEventListener('click', toggleTheme);
+  $('presentBtn').addEventListener('click', togglePresent);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const fi = FLOWS.findIndex((f) => f.id === state.flow);
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') { state.phase = Math.min(3, state.phase + 1); render(); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { state.phase = Math.max(0, state.phase - 1); render(); e.preventDefault(); }
+    else if (e.key === 'ArrowDown') { state.flow = FLOWS[(fi + 1) % FLOWS.length].id; render(); e.preventDefault(); }
+    else if (e.key === 'ArrowUp') { state.flow = FLOWS[(fi + FLOWS.length - 1) % FLOWS.length].id; render(); e.preventDefault(); }
+    else if (/^[1-6]$/.test(e.key)) { state.flow = FLOWS[+e.key - 1].id; render(); }
+    else if (e.key === 'p' || e.key === 'P') togglePresent();
+    else if (e.key === 't' || e.key === 'T') toggleTheme();
+  });
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement && document.body.classList.contains('present')) {
+      document.body.classList.remove('present'); $('presentBtn').textContent = 'Present';
+    }
+  });
+
+  // Deep links such as #p2/branch-dc, so slides can jump straight to a view.
+  function fromHash() {
+    const m = location.hash.match(/^#p([0-3])(?:\/([\w-]+))?$/);
+    if (!m) return false;
+    state.phase = +m[1];
+    if (m[2] && S[m[2]]) state.flow = m[2];
+    return true;
+  }
+  window.addEventListener('hashchange', () => { if (fromHash()) render(false); });
+  fromHash();
+  render(false);
+  window.__lab = { state, S, N, FLOWS, render };
+})();
+</script>
+</body>
+</html>
