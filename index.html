@@ -117,6 +117,7 @@
   .sw.fl { border-top: 3px dashed var(--accent); }
   .sw.rk { border-top: 3px dashed var(--bad); }
   .sw.mp { border-top: 3px dotted var(--c-legacy); }
+  .sw.ip { border-top: 3px dashed var(--c-legacy); }
   .sw.cl { border-top: 3px solid var(--cloud); opacity: .6; }
 
   /* SVG */
@@ -151,6 +152,10 @@
   .t-mpls rect { fill: color-mix(in srgb, var(--c-legacy) 10%, var(--surface)); stroke: var(--c-legacy); stroke-width: 1.5; stroke-dasharray: 4 3; }
   .t-mpls text { font: 600 13px var(--display); letter-spacing: 0.12em; fill: var(--c-legacy); }
   .t-mpls.on rect { stroke: var(--accent); stroke-width: 3; }
+  .t-link.ipsec { stroke: var(--c-legacy); stroke-width: 2.5; stroke-dasharray: 8 4; }
+  .t-ipsec rect { fill: var(--surface-2); stroke: var(--c-legacy); stroke-width: 1.5; stroke-dasharray: 8 4; }
+  .t-ipsec text { font: 600 13px var(--display); letter-spacing: 0.12em; fill: var(--c-legacy); }
+  .t-ipsec.on rect { stroke: var(--accent); stroke-width: 3; }
   .t-bus-label { font: 700 13px var(--display); letter-spacing: 0.14em; fill: var(--muted); }
   .ghost, .t-link.ghost { opacity: .16; }
   .t-retired { font: 700 12px var(--display); letter-spacing: 0.12em; fill: var(--bad); }
@@ -225,13 +230,14 @@
     <section class="panel stage" aria-label="Network diagram">
       <div class="flows" id="flows" role="group" aria-label="Traffic flow"><span class="label">Flow</span></div>
       <div class="canvas">
-        <svg class="topo" id="topo" viewBox="0 0 1000 680" role="img" aria-label="Sample enterprise network: a data center, two branches, a remote user, MPLS, the internet with SaaS and generative AI tools, and a SASE cloud with four PoPs around a shared security and policy core."></svg>
+        <svg class="topo" id="topo" viewBox="0 0 1000 725" role="img" aria-label="Sample enterprise network: a data center, two branches, a remote user, MPLS and IPsec over the internet between the sites, the internet with SaaS and generative AI tools, and a SASE cloud with four PoPs around a shared security and policy core."></svg>
       </div>
       <div class="legend">
         <span><i class="sw fl"></i> This flow</span>
         <span><i class="sw rk"></i> What can go wrong</span>
         <span><i class="sw cl"></i> PoP to shared core</span>
         <span><i class="sw mp"></i> MPLS</span>
+        <span><i class="sw ip"></i> IPsec over the internet</span>
         <span>Faded = not deployed yet, or retired</span>
       </div>
     </section>
@@ -248,7 +254,7 @@
 <script>
 (() => {
   const SVGNS = 'http://www.w3.org/2000/svg';
-  const BUS_Y = 110, MPLS_Y = 647, LEFT_X = 16;
+  const BUS_Y = 110, MPLS_Y = 647, IPSEC_Y = 695, LEFT_X = 16;
 
   // ---------- Phases ----------
   const PHASES = [
@@ -260,7 +266,7 @@
 
   // ---------- Capabilities ----------
   const CAP = {
-    mpls: ['MPLS', 'legacy'], ngfw: ['DC perimeter NGFW', 'legacy'], proxy: ['DC web proxy', 'legacy'], vpn: ['Remote-access VPN', 'legacy'],
+    mpls: ['MPLS', 'legacy'], ipsec: ['IPsec VPN over the internet', 'legacy'], ngfw: ['DC perimeter NGFW', 'legacy'], proxy: ['DC web proxy', 'legacy'], vpn: ['Remote-access VPN', 'legacy'],
     sdwan: ['SD-WAN edge', 'net'], mm: ['PoP-to-PoP middle mile', 'net'], qos: ['QoS and loss mitigation', 'net'],
     ztna: ['ZTNA', 'access'], idp: ['Identity and device posture', 'access'],
     fwaas: ['FWaaS', 'sec'], swg: ['Secure Web Gateway', 'sec'], tls: ['TLS inspection', 'sec'], ips: ['IPS and anti-malware', 'sec'],
@@ -271,6 +277,7 @@
   // ---------- Field pitfalls ----------
   const PIT = {
     saasLatency: ['Backhaul hides the real cost', 'Every SaaS session trombones through the DC. Latency grows, and the DC internet link becomes the bottleneck for the whole company.', 'Baseline SaaS performance before cutover, then break out at the nearest PoP. Microsoft\'s own M365 guidance is local egress.'],
+    ipsecBackup: ['The backup path is never tested', 'The IPsec tunnel sits idle for months. When MPLS finally fails it comes up with the wrong MTU, an expired certificate or missing routes, and no QoS.', 'Test failover on a schedule, and monitor the tunnel itself, not just the interface.'],
     flatWan: ['"Trusted" WAN, no inspection', 'Branch-to-DC traffic over MPLS is usually not inspected. Ransomware spreads site to site through the same any-to-any trust.', 'Put a WAN firewall and IPS policy between sites, not just at the internet edge.'],
     vpnFlat: ['VPN means network access', 'Once connected, the user reaches whole subnets. A stolen laptop or credential becomes lateral movement.', 'Per-app access with ZTNA, tied to identity and device posture.'],
     splitTunnel: ['Split tunnel is a blind spot', 'To save VPN capacity, SaaS and internet traffic is often sent straight out from the laptop: fast, but nobody inspects it.', 'Inspect internet traffic from the agent at the PoP nearest the user.'],
@@ -305,10 +312,10 @@
     dcfw:   { x: 95, y: 475, kind: 'dev', l: 'Perimeter FW', s: 'NGFW · proxy · VPN' },
     conn:   { x: 245, y: 475, kind: 'dev', l: 'ZTNA connector', s: 'dials out', from: 1 },
     apps:   { x: 105, y: 570, kind: 'end', l: 'Private apps', s: 'ERP · file shares' },
-    dcedge: { x: 320, y: 570, kind: 'dev', l: 'WAN edge', s: 'MPLS CE' },
+    dcedge: { x: 320, y: 570, kind: 'dev', l: 'WAN edge', s: 'MPLS + IPsec hub' },
     users1: { x: 485, y: 570, kind: 'end', l: 'Branch 1 users', s: '10.10.0.0/16' },
-    edge1:  { x: 590, y: 480, kind: 'dev', l: 'CE router', s: 'MPLS only' },
-    edge2:  { x: 780, y: 480, kind: 'dev', l: 'CE router', s: 'MPLS only' },
+    edge1:  { x: 590, y: 480, kind: 'dev', l: 'Branch router', s: 'MPLS + IPsec' },
+    edge2:  { x: 780, y: 480, kind: 'dev', l: 'Branch router', s: 'MPLS + IPsec' },
     users2: { x: 890, y: 570, kind: 'end', l: 'Branch 2 users', s: '10.20.0.0/16' }
   };
   const BOX = { end: [150, 50], dev: [132, 44] };
@@ -317,11 +324,11 @@
   // Labels that change as the migration progresses.
   function phaseLabels(p) {
     const sd = (s) => ({ l: 'SD-WAN edge', s, cls: 'sdwan' });
-    const ce = { l: 'CE router', s: 'MPLS only', cls: 'legacy' };
+    const ce = { l: 'Branch router', s: 'MPLS + IPsec', cls: 'legacy' };
     return {
       remote: { s: p === 0 ? 'laptop · VPN client' : p === 3 ? 'laptop · SASE agent' : 'laptop · agent + VPN' },
       dcfw: p === 3 ? { l: 'DC firewall', s: 'east-west only', cls: 'legacy' } : { l: 'Perimeter FW', s: 'NGFW · proxy · VPN', cls: 'legacy' },
-      dcedge: p < 2 ? { l: 'WAN edge', s: 'MPLS CE', cls: 'legacy' } : sd(p === 2 ? 'SASE + MPLS hub' : 'dual ISP'),
+      dcedge: p < 2 ? { l: 'WAN edge', s: 'MPLS + IPsec hub', cls: 'legacy' } : sd(p === 2 ? 'SASE + MPLS hub' : 'dual ISP'),
       edge1: p < 2 ? ce : sd(p === 2 ? 'ISP + MPLS' : 'ISP + 5G'),
       edge2: p < 3 ? ce : sd('ISP + 5G')
     };
@@ -337,6 +344,9 @@
     ['users1', 'edge1', 0, 3], ['users2', 'edge2', 0, 3],
     ['remote', 'dcfw', 0, 2, 'dashed', 'VPN', 0.5],
     ['edge1', [590, MPLS_Y], 0, 2, 'mpls'], ['edge2', [780, MPLS_Y], 0, 2, 'mpls'], ['dcedge', [320, MPLS_Y], 0, 2, 'mpls'],
+    ['dcedge', [338, IPSEC_Y], 0, 2, 'ipsec', null, null, [[338, 570]]],
+    ['edge1', [608, IPSEC_Y], 0, 1, 'ipsec', null, null, [[608, 480]]],
+    ['edge2', [798, IPSEC_Y], 0, 2, 'ipsec', null, null, [[798, 480]]],
     ['popU', 'core', 1, 3, 'core'], ['popD', 'core', 1, 3, 'core'], ['popB1', 'core', 2, 3, 'core'], ['popB2', 'core', 3, 3, 'core'],
     ['core', [545, BUS_Y], 1, 3, null, 'egress', 0.55],
     ['remote', 'popU', 1, 3, 'dashed', 'agent', 0.45],
@@ -365,7 +375,7 @@
   const S = {};
   const legacySaas = {
     path: [...backhaul1, ...dcOut('saas')], verdict: 'Backhauled to the DC', vclass: 'legacy',
-    steps: [['CE router', 'No local internet. The default route points into MPLS.'],
+    steps: [['Branch router', 'Its internet link only carries the IPsec backup tunnel, with no local breakout. The default route points into MPLS.'],
       ['MPLS', 'Internet-bound traffic rides the private WAN to the data center.'],
       ['DC perimeter', 'NGFW and web proxy inspect it, then out the DC internet link.'],
       ['SaaS', 'Sees the DC\'s public IP, wherever the user really is.']],
@@ -405,10 +415,11 @@
 
   const mplsDC = {
     path: [...backhaul1, 'apps'], verdict: 'Over MPLS', vclass: 'legacy',
-    steps: [['CE router', 'Sends the traffic into the carrier\'s MPLS VPN.'],
+    steps: [['Branch router', 'Sends the traffic into the carrier\'s MPLS VPN.'],
       ['MPLS', 'Carrier QoS classes, predictable latency, long contract and lead times.'],
-      ['DC WAN edge', 'Delivers it to the app. Usually nothing inspects branch-to-DC traffic.']],
-    caps: ['mpls'], pits: ['flatWan']
+      ['DC WAN edge', 'Delivers it to the app. Usually nothing inspects branch-to-DC traffic.'],
+      ['Backup', 'If MPLS fails, routing falls back to the IPsec tunnel over the internet to the DC WAN edge.']],
+    caps: ['mpls', 'ipsec'], pits: ['flatWan', 'ipsecBackup']
   };
   const sasePathDC = ['users1', 'edge1', 'popB1', 'core', 'popD', 'dcedge', 'apps'];
   S['branch-dc'] = [
@@ -432,8 +443,9 @@
     path: ['users1', 'edge1', ...viaMPLS(590, 780), 'edge2', 'users2'], verdict: 'Any-to-any MPLS', vclass: 'legacy',
     steps: [['Phone', 'Marks voice DSCP EF.'],
       ['MPLS', 'The carrier\'s real-time class carries it straight between branches.'],
-      ['Branch 2', 'Good call quality, at MPLS prices, with no inspection between sites.']],
-    caps: ['mpls'], pits: ['flatWan']
+      ['Branch 2', 'Good call quality, at MPLS prices, with no inspection between sites.'],
+      ['Backup', 'IPsec is hub and spoke: if MPLS fails, the call hairpins through the DC over the internet, with no carrier QoS.']],
+    caps: ['mpls', 'ipsec'], pits: ['flatWan', 'ipsecBackup']
   };
   S['branch-branch'] = [
     mplsVoice,
@@ -455,7 +467,7 @@
 
   const legacyAI = {
     path: [...backhaul1, ...dcOut('genai')], verdict: 'Allow or block by category', vclass: 'legacy',
-    steps: [['CE router', 'Backhauled over MPLS like any internet traffic.'],
+    steps: [['Branch router', 'Backhauled over MPLS like any internet traffic.'],
       ['DC proxy', 'Matches the URL category "Generative AI" and allows or blocks the whole site.'],
       ['GenAI tool', 'Whatever is typed or uploaded is invisible unless TLS is inspected.']],
     caps: ['mpls', 'proxy'], pits: ['aiBlind', 'aiTls']
@@ -541,7 +553,7 @@
       const mk = el('marker', { id, viewBox: '0 0 10 10', refX: 7, refY: 5, markerWidth: 4.5, markerHeight: 4.5, orient: 'auto-start-reverse' }, defs);
       el('path', { d: 'M0,0 L10,5 L0,10 z', class: cls }, mk);
     }
-    el('rect', { x: 0, y: 0, width: 1000, height: 680, fill: 'url(#dots)' }, svg);
+    el('rect', { x: 0, y: 0, width: 1000, height: 725, fill: 'url(#dots)' }, svg);
 
     // Zones and the SASE cloud
     zone(20, 425, 370, 190, 'HQ / Data center');
@@ -559,6 +571,10 @@
     el('rect', { x: 260, y: MPLS_Y - 17, width: 640, height: 34, rx: 17 }, mp);
     el('text', { x: 886, y: MPLS_Y + 5, 'text-anchor': 'end' }, mp).textContent = 'MPLS WAN';
     if (p === 3) el('text', { x: 580, y: MPLS_Y - 24, 'text-anchor': 'middle', class: 't-retired' }, svg).textContent = 'RETIRED';
+    const usesIPsec = sc.path.some((x) => Array.isArray(x) && x[1] === IPSEC_Y);
+    const ip = el('g', { class: `t-ipsec${p === 3 ? ' ghost' : ''}${usesIPsec ? ' on' : ''}` }, svg);
+    el('rect', { x: 260, y: IPSEC_Y - 15, width: 640, height: 30, rx: 15 }, ip);
+    el('text', { x: 473, y: IPSEC_Y + 5, 'text-anchor': 'middle' }, ip).textContent = 'INTERNET · IPsec VPN';
 
     // Links
     for (const [a, b, from, to, cls, label, lp, via] of LINKS) {
