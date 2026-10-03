@@ -154,11 +154,10 @@
   .t-mpls.on rect { stroke: var(--accent); stroke-width: 3; }
   .t-link.ipsec { stroke: var(--c-legacy); stroke-width: 2.5; stroke-dasharray: 8 4; }
   .t-ipsec rect { fill: var(--surface-2); stroke: var(--c-legacy); stroke-width: 1.5; stroke-dasharray: 8 4; }
-  .t-ipsec text { font: 600 13px var(--display); letter-spacing: 0.12em; fill: var(--c-legacy); }
+  .t-ipsec text { font: 600 12px var(--display); letter-spacing: 0.06em; fill: var(--c-legacy); }
   .t-ipsec.on rect { stroke: var(--accent); stroke-width: 3; }
   .t-bus-label { font: 700 13px var(--display); letter-spacing: 0.14em; fill: var(--muted); }
   .ghost, .t-link.ghost { opacity: .16; }
-  .t-retired { font: 700 12px var(--display); letter-spacing: 0.12em; fill: var(--bad); }
   .t-flow { fill: none; stroke: var(--accent); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 12 9; animation: flow 1s linear infinite; }
   .t-flow-glow { fill: none; stroke: var(--accent); stroke-width: 13; stroke-linecap: round; stroke-linejoin: round; opacity: .15; }
   .t-risk { fill: none; stroke: var(--bad); stroke-width: 3; stroke-dasharray: 3 7; stroke-linecap: round; stroke-linejoin: round; animation: flow 1.4s linear infinite; }
@@ -239,7 +238,7 @@
     <section class="panel stage" aria-label="Network diagram">
       <div class="flows" id="flows" role="group" aria-label="Traffic flow"></div>
       <div class="canvas">
-        <svg class="topo" id="topo" viewBox="0 0 1000 725" role="img" aria-label="Sample enterprise network: a data center, two branches, a remote user, a public cloud VPC, MPLS and IPsec over the internet between the sites, the internet with SaaS and generative AI tools, and a SASE cloud with four PoPs around a shared security and policy core."></svg>
+        <svg class="topo" id="topo" viewBox="0 0 1000 730" role="img" aria-label="Sample enterprise network: a data center, two branches, a remote user, a public cloud VPC, MPLS and IPsec over the internet between the sites, the internet with SaaS and generative AI tools, and a SASE cloud with four PoPs around a shared security and policy core."></svg>
       </div>
       <div class="legend">
         <span><i class="sw fl"></i> This flow</span>
@@ -263,7 +262,7 @@
 <script>
 (() => {
   const SVGNS = 'http://www.w3.org/2000/svg';
-  const BUS_Y = 110, MPLS_Y = 647, IPSEC_Y = 695, LEFT_X = 16;
+  const BUS_Y = 125, MPLS_Y = 465, IPSEC_Y = 420, LEFT_X = 10;
 
   // ---------- Phases ----------
   const PHASES = [
@@ -359,26 +358,28 @@
   // ---------- Topology ----------
   // kind: end (selectable endpoint), dev (device), pop, core
   const N = {
-    saas:   { x: 260, y: 50, kind: 'end', l: 'SaaS', s: 'M365 · CRM · storage' },
-    genai:  { x: 470, y: 50, kind: 'end', l: 'Generative AI', s: 'chat · copilots' },
-    cloudapp: { x: 655, y: 50, kind: 'end', l: 'Cloud workloads', s: 'VPC / VNet' },
-    vgw:    { x: 815, y: 50, kind: 'dev', l: 'Cloud VPN GW', s: 'IPsec + BGP' },
-    remote: { x: 95, y: 230, kind: 'end', l: 'Remote user', s: 'laptop' },
-    popU:   { x: 330, y: 240, kind: 'pop', from: 1 },
-    core:   { x: 545, y: 262, kind: 'core', from: 1 },
-    popD:   { x: 385, y: 365, kind: 'pop', from: 1 },
-    popB1:  { x: 640, y: 372, kind: 'pop', from: 2 },
-    popB2:  { x: 815, y: 322, kind: 'pop', from: 2 },
-    dcfw:   { x: 95, y: 475, kind: 'dev', l: 'Perimeter FW', s: 'NGFW · proxy · VPN' },
-    conn:   { x: 245, y: 475, kind: 'dev', l: 'ZTNA connector', s: 'dials out', from: 1 },
-    apps:   { x: 105, y: 570, kind: 'end', l: 'Private apps', s: 'ERP · file shares' },
-    dcedge: { x: 320, y: 570, kind: 'dev', l: 'WAN edge', s: 'MPLS + IPsec hub' },
-    users1: { x: 485, y: 570, kind: 'end', l: 'Branch 1 users', s: '10.10.0.0/16' },
-    edge1:  { x: 590, y: 480, kind: 'dev', l: 'Branch router', s: 'MPLS + IPsec' },
-    edge2:  { x: 780, y: 480, kind: 'dev', l: 'Branch router', s: 'MPLS + IPsec' },
-    users2: { x: 890, y: 570, kind: 'end', l: 'Branch 2 users', s: '10.20.0.0/16' }
-  };
-  const BOX = { end: [150, 50], dev: [132, 44] };
+    // Top: services
+    saas:   { x: 120, y: 55, kind: 'end', l: 'SaaS', s: 'M365 · CRM · storage' },
+    genai:  { x: 330, y: 55, kind: 'end', l: 'Generative AI', s: 'chat · copilots' },
+    cloudapp: { x: 570, y: 55, kind: 'end', l: 'Cloud workloads', s: 'VPC / VNet' },
+    vgw:    { x: 780, y: 55, kind: 'dev', l: 'Cloud VPN GW', s: 'IPsec + BGP' },
+    // Middle: users on the road, and the SASE cloud (the internet, IPsec and MPLS are drawn as bands)
+    remote: { x: 100, y: 280, kind: 'end', l: 'Remote user', s: 'laptop' },
+    popU:   { x: 300, y: 250, kind: 'pop', from: 1 },
+    core:   { x: 580, y: 250, kind: 'core', from: 1 },
+    popD:   { x: 250, y: 345, kind: 'pop', from: 1 },
+    popB1:  { x: 505, y: 345, kind: 'pop', from: 2 },
+    popB2:  { x: 780, y: 300, kind: 'pop', from: 2 },
+    // Bottom: sites
+    dcfw:   { x: 100, y: 545, kind: 'dev', l: 'Perimeter FW', s: 'NGFW · proxy · VPN' },
+    dcedge: { x: 280, y: 545, kind: 'dev', l: 'WAN edge', s: 'MPLS + IPsec hub' },
+    apps:   { x: 100, y: 665, kind: 'end', l: 'Private apps', s: 'ERP · file shares' },
+    conn:   { x: 280, y: 665, kind: 'dev', l: 'ZTNA connector', s: 'dials out', from: 1 },
+    edge1:  { x: 525, y: 545, kind: 'dev', l: 'Branch router', s: 'MPLS + IPsec' },
+    users1: { x: 525, y: 665, kind: 'end', l: 'Branch 1 users', s: '10.10.0.0/16' },
+    edge2:  { x: 800, y: 545, kind: 'dev', l: 'Branch router', s: 'MPLS + IPsec' },
+    users2: { x: 800, y: 665, kind: 'end', l: 'Branch 2 users', s: '10.20.0.0/16' }
+  };  const BOX = { end: [150, 50], dev: [132, 44] };
   const R = { pop: 25, core: 58 };
 
   // Labels that change as the migration progresses.
@@ -395,37 +396,56 @@
     };
   }
 
-  // [a, b, firstPhase, lastPhase, class, label, labelPos (fraction of the last segment, or [x, y]), waypoints]
+  // Where each WAN edge's uplinks leave its box: to its PoP, to the MPLS band and to the IPsec band.
+  const UP = { dcedge: { pop: 250, mpls: 300, ipsec: 318 }, edge1: { pop: 505, mpls: 540, ipsec: 558 }, edge2: { pop: 780, mpls: 815, ipsec: 833 } };
+  const EDGE_Y = 545, CONN_X = 362, CORE_X = 580;
+
+  // [a, b, firstPhase, lastPhase, class, label, labelPos (fraction of the last segment, or [x, y, anchor]), waypoints]
   const LINKS = [
-    [[LEFT_X, BUS_Y], [960, BUS_Y], 0, 3, 'bus'],
-    ['saas', [260, BUS_Y], 0, 3], ['genai', [470, BUS_Y], 0, 3],
+    [[LEFT_X, BUS_Y], [985, BUS_Y], 0, 3, 'bus'],
+    ['saas', [120, BUS_Y], 0, 3], ['genai', [330, BUS_Y], 0, 3],
     ['cloudapp', 'vgw', 0, 3],
-    ['vgw', [815, BUS_Y], 0, 1, 'ipsec', 'IPsec to the DC', [822, 98]],
-    ['vgw', 'popB2', 2, 3, null, 'tunnel to the PoP', [822, 138]],
-    ['remote', [95, BUS_Y], 0, 3, 'dashed', 'hotel Wi-Fi', 0.5],
-    ['dcfw', [LEFT_X, BUS_Y], 0, 3, null, 'internet', [22, 300], [[LEFT_X, 475]]],
+    ['vgw', [780, BUS_Y], 0, 1, 'ipsec', 'IPsec to the DC', [787, 108]],
+    ['vgw', 'popB2', 2, 3, null, 'tunnel to the PoP', [787, 146]],
+    ['remote', [60, BUS_Y], 0, 3, 'dashed', 'hotel Wi-Fi', [66, 143], [[60, 280]]],
+    ['dcfw', [LEFT_X, BUS_Y], 0, 3, null, 'internet', [16, 470], [[LEFT_X, EDGE_Y]]],
     ['apps', 'dcfw', 0, 3], ['apps', 'dcedge', 0, 3], ['dcedge', 'dcfw', 0, 3],
     ['users1', 'edge1', 0, 3], ['users2', 'edge2', 0, 3],
-    ['remote', 'dcfw', 0, 2, 'dashed', 'VPN over the internet', [101, 380]],
-    ['edge1', [590, MPLS_Y], 0, 2, 'mpls'], ['edge2', [780, MPLS_Y], 0, 2, 'mpls'], ['dcedge', [320, MPLS_Y], 0, 2, 'mpls'],
-    ['dcedge', [338, IPSEC_Y], 0, 2, 'ipsec', null, null, [[338, 570]]],
-    ['edge1', [608, IPSEC_Y], 0, 1, 'ipsec', null, null, [[608, 480]]],
-    ['edge2', [798, IPSEC_Y], 0, 2, 'ipsec', null, null, [[798, 480]]],
+    ['remote', 'dcfw', 0, 2, 'dashed', 'VPN over the internet', [106, 445]],
+    ...['dcedge', 'edge1', 'edge2'].flatMap((e) => [
+      [e, [UP[e].mpls, MPLS_Y], 0, e === 'edge1' ? 1 : 2, 'mpls', null, null, [[UP[e].mpls, EDGE_Y]]],
+      [e, [UP[e].ipsec, IPSEC_Y], 0, e === 'edge1' ? 1 : 2, 'ipsec', null, null, [[UP[e].ipsec, EDGE_Y]]]
+    ]),
     ['popU', 'core', 1, 3, 'core'], ['popD', 'core', 1, 3, 'core'], ['popB1', 'core', 2, 3, 'core'], ['popB2', 'core', 2, 3, 'core'],
-    ['core', [545, BUS_Y], 1, 3, null, 'egress', 0.55],
-    ['remote', 'popU', 1, 3, 'dashed', 'agent', 0.45],
-    ['conn', 'popD', 1, 3, 'dashed', 'outbound only', [214, 400]], ['conn', 'apps', 1, 3], ['conn', 'dcfw', 1, 1],
-    ['dcedge', 'popD', 2, 3, null, 'tunnel', 0.55],
-    ['edge1', 'popB1', 2, 3, null, 'tunnel', 0.5],
-    ['edge2', 'popB2', 3, 3, null, 'tunnel', 0.5]
+    ['core', [CORE_X, BUS_Y], 1, 3, null, 'egress', [586, 146]],
+    ['remote', 'popU', 1, 3, 'dashed', 'agent', 0.5],
+    ['conn', 'popD', 1, 3, 'dashed', null, null, [[CONN_X, 665], [CONN_X, 345]]], ['conn', 'apps', 1, 3], ['conn', 'dcfw', 1, 1],
+    ['dcedge', 'popD', 2, 3, null, 'tunnel', [256, 398], [[UP.dcedge.pop, EDGE_Y]]],
+    ['edge1', 'popB1', 2, 3, null, 'tunnel', [511, 398], [[UP.edge1.pop, EDGE_Y]]],
+    ['edge2', 'popB2', 3, 3, null, 'tunnel', [786, 398], [[UP.edge2.pop, EDGE_Y]]]
   ];
+  // Waypoints between two nodes on a flow, so flows follow the drawn links.
+  const VIA = {
+    'edge1>popB1': [[UP.edge1.pop, EDGE_Y]], 'edge2>popB2': [[UP.edge2.pop, EDGE_Y]], 'dcedge>popD': [[UP.dcedge.pop, EDGE_Y]],
+    'conn>popD': [[CONN_X, 665], [CONN_X, 345]]
+  };
+  function expand(list) {
+    const outList = [];
+    list.forEach((p, i) => {
+      outList.push(p);
+      const q = list[i + 1];
+      if (typeof p !== 'string' || typeof q !== 'string') return;
+      if (VIA[`${p}>${q}`]) outList.push(...VIA[`${p}>${q}`]);
+      else if (VIA[`${q}>${p}`]) outList.push(...[...VIA[`${q}>${p}`]].reverse());
+    });
+    return outList;
+  }
 
   // ---------- Flows ----------
-  const viaMPLS = (fromX, toX) => [[fromX, MPLS_Y], [toX, MPLS_Y]];
-  const dcOut = (dst) => ['dcfw', [LEFT_X, 475], [LEFT_X, BUS_Y], [N[dst].x, BUS_Y], dst];
-  const coreOut = (dst) => ['core', [545, BUS_Y], [N[dst].x, BUS_Y], dst];
-  const backhaul1 = ['users1', 'edge1', ...viaMPLS(590, 320), 'dcedge'];
-
+  const mpls = (a, b) => [[UP[a].mpls, EDGE_Y], [UP[a].mpls, MPLS_Y], [UP[b].mpls, MPLS_Y], [UP[b].mpls, EDGE_Y]];
+  const dcOut = (dst) => ['dcfw', [LEFT_X, EDGE_Y], [LEFT_X, BUS_Y], [N[dst].x, BUS_Y], dst];
+  const coreOut = (dst) => ['core', [CORE_X, BUS_Y], [N[dst].x, BUS_Y], dst];
+  const backhaul1 = ['users1', 'edge1', ...mpls('edge1', 'dcedge'), 'dcedge'];
   const FLOWS = [
     { id: 'branch-saas', label: 'Branch → SaaS', title: 'Branch user to SaaS', src: 'users1', dst: 'saas' },
     { id: 'remote-app', label: 'Remote → app', title: 'Remote user to private app', src: 'remote', dst: 'apps' },
@@ -492,7 +512,7 @@
     mplsDC,
     { ...mplsDC, note: 'Unchanged: phase 1 moved remote users only.' },
     { path: sasePathDC, verdict: 'Via SASE: check the return path', vclass: 'warn',
-      risk: ['apps', 'dcedge', ...viaMPLS(320, 590), 'edge1'], riskLabel: 'return over MPLS?',
+      risk: ['apps', 'dcedge', ...mpls('dcedge', 'edge1'), 'edge1'], riskLabel: 'return over MPLS?',
       steps: [['SD-WAN edge', 'Tunnels to the nearest PoP.'],
         ['PoP', 'WAN firewall and IPS between sites, then the provider\'s middle mile to the DC\'s PoP.'],
         ['DC SD-WAN edge', 'Delivers to the app.'],
@@ -506,7 +526,7 @@
   ];
 
   const mplsVoice = {
-    path: ['users1', 'edge1', ...viaMPLS(590, 780), 'edge2', 'users2'], verdict: 'Any-to-any MPLS', vclass: 'legacy',
+    path: ['users1', 'edge1', ...mpls('edge1', 'edge2'), 'edge2', 'users2'], verdict: 'Any-to-any MPLS', vclass: 'legacy',
     steps: [['Phone', 'Marks voice DSCP EF.'],
       ['MPLS', 'The carrier\'s real-time class carries it straight between branches.'],
       ['Branch 2', 'Good call quality, at MPLS prices, with no inspection between sites.'],
@@ -516,7 +536,7 @@
   S['branch-branch'] = [
     mplsVoice,
     { ...mplsVoice, note: 'Unchanged: phase 1 moved remote users only.' },
-    { path: ['users1', 'edge1', 'popB1', 'core', 'popD', 'dcedge', ...viaMPLS(320, 780), 'edge2', 'users2'],
+    { path: ['users1', 'edge1', 'popB1', 'core', 'popD', 'dcedge', ...mpls('dcedge', 'edge2'), 'edge2', 'users2'],
       verdict: 'Through the DC hub', vclass: 'warn',
       note: 'Branch 1 is migrated, Branch 2 is not yet.', issuesOpen: 'Branch 2 not migrated',
       steps: [['Branch 1', 'SD-WAN edge sends the call into the SASE cloud.'],
@@ -554,7 +574,7 @@
     ['SaaS', 'Reached from a nearby PoP, with no hairpin.']];
   S['remote-saas'] = [
     { path: ['remote', 'dcfw', ...dcOut('saas').slice(1)], verdict: 'Hairpinned through the VPN', vclass: 'legacy',
-      risk: ['remote', [95, BUS_Y], [330, BUS_Y], 'saas'], riskLabel: 'split tunnel: uninspected',
+      risk: ['remote', [60, 280], [60, BUS_Y], [120, BUS_Y], 'saas'], riskLabel: 'split tunnel: uninspected', riskAt: [150, 205],
       steps: [['VPN client', 'Full tunnel: everything goes to the DC first.'],
         ['DC perimeter', 'NGFW and proxy inspect it, then out the DC internet link.'],
         ['Workaround', 'Split tunnelling SaaS saves capacity but skips inspection entirely.']],
@@ -568,7 +588,7 @@
   ];
 
   const legacyCloud = {
-    path: [...backhaul1, 'dcfw', [LEFT_X, 475], [LEFT_X, BUS_Y], [815, BUS_Y], 'vgw', 'cloudapp'], verdict: 'Through the DC to the cloud', vclass: 'legacy',
+    path: [...backhaul1, ...dcOut('vgw'), 'cloudapp'], verdict: 'Through the DC to the cloud', vclass: 'legacy',
     steps: [['Branch router', 'No direct path to the cloud. Traffic goes to the DC first, over MPLS.'],
       ['DC perimeter', 'The firewall pair terminates an IPsec tunnel over the internet to each VPC or VNet (or a private interconnect).'],
       ['Cloud VPN GW', 'Delivers to the workload. Inside the VPC, security groups are the only control.']],
@@ -591,12 +611,12 @@
     caps: ['ztna', 'idp', 'fwaas', 'ips', 'mm', 'sdwan'], pits: ['cloudRouting', 'dualClient']
   };
   S['remote-cloud'] = [
-    { path: ['remote', 'dcfw', [LEFT_X, 475], [LEFT_X, BUS_Y], [815, BUS_Y], 'vgw', 'cloudapp'], verdict: 'Double hairpin through the DC', vclass: 'legacy',
+    { path: ['remote', ...dcOut('vgw'), 'cloudapp'], verdict: 'Double hairpin through the DC', vclass: 'legacy',
       steps: [['VPN client', 'Tunnels over the internet to the concentrator in the DC.'],
         ['DC perimeter', 'Routes the session into the IPsec tunnel to the VPC, back out over the internet.'],
         ['Cloud VPN GW', 'Delivers to the workload. Every request and reply crosses the DC twice.']],
       caps: ['vpn', 'ngfw', 'ipsec'], pits: [] },
-    { path: ['remote', 'popU', 'core', 'popD', 'conn', 'dcfw', [LEFT_X, 475], [LEFT_X, BUS_Y], [815, BUS_Y], 'vgw', 'cloudapp'],
+    { path: ['remote', 'popU', 'core', 'popD', 'conn', ...dcOut('vgw'), 'cloudapp'],
       verdict: 'ZTNA, but still through the DC', vclass: 'warn', issuesOpen: 'VPC not connected yet',
       note: 'Remote users are on SASE, but the VPC is still connected only to the DC.',
       steps: [['Agent', 'ZTNA from the nearest PoP, with identity and posture.'],
@@ -637,15 +657,20 @@
   function pathD(list) {
     const pts = list.map(pt);
     const last = list[list.length - 1];
-    if (!Array.isArray(last)) pts[pts.length - 1] = clipTo(last, pts[pts.length - 2]);
+    if (!Array.isArray(last)) {
+      // Drop waypoints already inside the destination box, so the arrow lands on the side it arrives from.
+      const n = N[last], [w, h] = BOX[n.kind] || [0, 0];
+      while (pts.length > 2 && Math.abs(pts[pts.length - 2].x - n.x) <= w / 2 && Math.abs(pts[pts.length - 2].y - n.y) <= h / 2) pts.splice(pts.length - 2, 1);
+      pts[pts.length - 1] = clipTo(last, pts[pts.length - 2]);
+    }
     return pts.map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
   }
   const live = (from, to) => state.phase >= (from ?? 0) && state.phase <= (to ?? 3);
 
   // ---------- Drawing ----------
-  function zone(x, y, w, h, label, lx) {
+  function zone(x, y, w, h, label, lx, bottom) {
     el('rect', { x, y, width: w, height: h, rx: 14, class: 't-zone' }, svg);
-    el('text', { x: lx ?? x + 12, y: y + 20, class: 't-zone-label' }, svg).textContent = label;
+    el('text', { x: lx ?? x + 12, y: bottom ? y + h - 10 : y + 20, class: 't-zone-label' }, svg).textContent = label;
   }
 
   function draw() {
@@ -661,30 +686,30 @@
       const mk = el('marker', { id, viewBox: '0 0 10 10', refX: 7, refY: 5, markerWidth: 4.5, markerHeight: 4.5, orient: 'auto-start-reverse' }, defs);
       el('path', { d: 'M0,0 L10,5 L0,10 z', class: cls }, mk);
     }
-    el('rect', { x: 0, y: 0, width: 1000, height: 725, fill: 'url(#dots)' }, svg);
+    el('rect', { x: 0, y: 0, width: 1000, height: 730, fill: 'url(#dots)' }, svg);
 
     // Zones and the SASE cloud
-    zone(20, 425, 370, 190, 'HQ / Data center', 106);
-    zone(405, 425, 255, 190, 'Branch 1');
-    zone(675, 425, 300, 190, 'Branch 2');
-    el('rect', { x: 565, y: 4, width: 330, height: 90, rx: 14, class: 't-zone' }, svg);
-    el('text', { x: 577, y: 18, class: 't-zone-label' }, svg).textContent = 'Public cloud · AWS · Azure · GCP';
-    el('text', { x: 103, y: 196, class: 't-zone-label' }, svg).textContent = 'On the road';
+    // Bottom: sites. Top: services.
+    zone(20, 150, 168, 235, 'On the road', 70);
+    zone(20, 495, 360, 227, 'HQ / Data center', null, true);
+    zone(400, 495, 250, 227, 'Branch 1', null, true);
+    zone(670, 495, 315, 227, 'Branch 2', null, true);
+    el('rect', { x: 480, y: 4, width: 400, height: 92, rx: 14, class: 't-zone' }, svg);
+    el('text', { x: 492, y: 20, class: 't-zone-label' }, svg).textContent = 'Public cloud · AWS · Azure · GCP';
     const cloud = el('g', { class: p === 0 ? 'ghost' : null }, svg);
-    el('rect', { x: 205, y: 150, width: 690, height: 255, rx: 60, class: 't-cloud' }, cloud);
-    el('text', { x: 222, y: 176, class: 't-cloud-label' }, cloud).textContent = 'SASE CLOUD';
-    el('text', { x: 222, y: 192, class: 't-cloud-cap' }, cloud).textContent = p === 0 ? 'not deployed yet' : 'policy drawn once; runs in every PoP';
-    el('text', { x: LEFT_X + 6, y: BUS_Y - 8, class: 't-bus-label' }, svg).textContent = 'INTERNET';
+    el('rect', { x: 200, y: 152, width: 785, height: 233, rx: 50, class: 't-cloud' }, cloud);
+    el('text', { x: 222, y: 180, class: 't-cloud-label' }, cloud).textContent = 'SASE CLOUD';
+    el('text', { x: 222, y: 196, class: 't-cloud-cap' }, cloud).textContent = p === 0 ? 'not deployed yet' : 'policy drawn once; runs in every PoP';
+    el('text', { x: 130, y: BUS_Y - 8, class: 't-bus-label' }, svg).textContent = 'INTERNET';
 
     // MPLS
     const mp = el('g', { class: `t-mpls${p === 3 ? ' ghost' : ''}${usesMPLS ? ' on' : ''}` }, svg);
-    el('rect', { x: 260, y: MPLS_Y - 17, width: 640, height: 34, rx: 17 }, mp);
-    el('text', { x: 886, y: MPLS_Y + 5, 'text-anchor': 'end' }, mp).textContent = 'MPLS WAN';
-    if (p === 3) el('text', { x: 580, y: MPLS_Y - 24, 'text-anchor': 'middle', class: 't-retired' }, svg).textContent = 'RETIRED';
+    el('rect', { x: 285, y: MPLS_Y - 16, width: 690, height: 32, rx: 16 }, mp);
+    el('text', { x: 905, y: MPLS_Y + 5, 'text-anchor': 'middle' }, mp).textContent = 'MPLS WAN';
     const usesIPsec = sc.path.some((x) => Array.isArray(x) && x[1] === IPSEC_Y);
     const ip = el('g', { class: `t-ipsec${p === 3 ? ' ghost' : ''}${usesIPsec ? ' on' : ''}` }, svg);
-    el('rect', { x: 260, y: IPSEC_Y - 15, width: 640, height: 30, rx: 15 }, ip);
-    el('text', { x: 473, y: IPSEC_Y + 5, 'text-anchor': 'middle' }, ip).textContent = 'IPsec over the internet';
+    el('rect', { x: 285, y: IPSEC_Y - 15, width: 690, height: 30, rx: 15 }, ip);
+    el('text', { x: 669, y: IPSEC_Y + 4, 'text-anchor': 'middle' }, ip).textContent = p === 3 ? 'IPsec · retired' : 'IPsec over the internet';
 
     // Links (labels are drawn later, above the flow)
     const linkLabels = [];
@@ -696,7 +721,7 @@
       if (label && on) {
         const s = pts[pts.length - 2], e = pts[pts.length - 1], t = lp ?? 0.5;
         let at, anchor = 'start';
-        if (Array.isArray(lp)) at = { x: lp[0], y: lp[1] };
+        if (Array.isArray(lp)) { at = { x: lp[0], y: lp[1] }; anchor = lp[2] || 'start'; }
         else {
           // Sit the label beside the line, clear of a flow drawn along it.
           const dx = e.x - s.x, dy = e.y - s.y, len = Math.hypot(dx, dy), nx = -dy / len, ny = dx / len;
@@ -709,9 +734,9 @@
 
     // Flow (under the nodes, so it reads as passing through them)
     if (sc.risk) {
-      el('path', { d: pathD(sc.risk), class: 't-risk', 'marker-end': 'url(#arrowRisk)' }, svg);
+      el('path', { d: pathD(expand(sc.risk)), class: 't-risk', 'marker-end': 'url(#arrowRisk)' }, svg);
     }
-    const d = pathD(sc.path);
+    const d = pathD(expand(sc.path));
     el('path', { d, class: 't-flow-glow' }, svg);
     el('path', { d, class: 't-flow', 'marker-end': 'url(#arrow)' }, svg);
 
@@ -744,8 +769,8 @@
 
     // Risk label on top of everything
     if (sc.risk && sc.riskLabel) {
-      const pts = sc.risk.map(pt), i = Math.floor((pts.length - 1) / 2);
-      const m = { x: (pts[i].x + pts[i + 1].x) / 2, y: (pts[i].y + pts[i + 1].y) / 2 };
+      const pts = expand(sc.risk).map(pt), i = Math.floor((pts.length - 1) / 2);
+      const m = sc.riskAt ? { x: sc.riskAt[0], y: sc.riskAt[1] } : { x: (pts[i].x + pts[i + 1].x) / 2, y: (pts[i].y + pts[i + 1].y) / 2 };
       const w = sc.riskLabel.length * 6.6 + 16;
       const g = el('g', { class: 't-risk-label' }, svg);
       el('rect', { x: m.x - w / 2, y: m.y - 11, width: w, height: 22, rx: 11 }, g);
