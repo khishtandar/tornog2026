@@ -59,7 +59,7 @@
   [hidden] { display: none !important; }
   html, body { margin: 0; }
   body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5; }
-  .wrap { max-width: 1680px; margin: 0 auto; padding: 12px 16px 20px; display: grid; gap: 12px; }
+  .wrap { max-width: 1680px; margin: 0 auto; padding: 12px 16px 12px; display: grid; gap: 12px; }
   button { font-family: inherit; }
   button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
@@ -132,7 +132,7 @@
   .t-link.dashed { stroke-dasharray: 5 5; }
   .t-link.bus { stroke: var(--muted); stroke-width: 2.5; opacity: .55; }
   .t-link.mpls { stroke: var(--c-legacy); stroke-width: 3; stroke-dasharray: 2 5; stroke-linecap: round; }
-  .t-link-label { font: 500 11px var(--mono); fill: var(--muted); }
+  .t-link-label { font: 500 11px var(--mono); fill: var(--muted); paint-order: stroke; stroke: var(--surface); stroke-width: 4px; stroke-linejoin: round; }
   .t-node rect { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
   .t-node.dev rect { fill: var(--surface-2); }
   .t-node.legacy rect { stroke: var(--c-legacy); stroke-dasharray: 4 3; }
@@ -227,7 +227,7 @@
       <h1>SASE in Practice <small>Lessons from the field, and what AI changes</small></h1>
     </div>
     <div class="tools">
-      <span class="keys"><kbd>←</kbd><kbd>→</kbd> phase · <kbd>1</kbd>–<kbd>6</kbd> flow · <kbd>F</kbd> fixes/pitfalls · <kbd>P</kbd> present · <kbd>T</kbd> theme</span>
+      <span class="keys"><kbd>←</kbd><kbd>→</kbd> phase · <kbd>1</kbd>–<kbd>7</kbd> flow · <kbd>F</kbd> fixes/pitfalls · <kbd>P</kbd> present · <kbd>T</kbd> theme</span>
       <button class="btn" id="presentBtn" type="button">Present</button>
       <button class="btn" id="themeBtn" type="button" aria-label="Toggle light or dark theme">Theme</button>
     </div>
@@ -239,7 +239,7 @@
     <section class="panel stage" aria-label="Network diagram">
       <div class="flows" id="flows" role="group" aria-label="Traffic flow"><span class="label">Flow</span></div>
       <div class="canvas">
-        <svg class="topo" id="topo" viewBox="0 0 1000 725" role="img" aria-label="Sample enterprise network: a data center, two branches, a remote user, MPLS and IPsec over the internet between the sites, the internet with SaaS and generative AI tools, and a SASE cloud with four PoPs around a shared security and policy core."></svg>
+        <svg class="topo" id="topo" viewBox="0 0 1000 725" role="img" aria-label="Sample enterprise network: a data center, two branches, a remote user, a public cloud VPC, MPLS and IPsec over the internet between the sites, the internet with SaaS and generative AI tools, and a SASE cloud with four PoPs around a shared security and policy core."></svg>
       </div>
       <div class="legend">
         <span><i class="sw fl"></i> This flow</span>
@@ -269,7 +269,7 @@
   const PHASES = [
     { name: 'Legacy hub and spoke', desc: 'Branches on MPLS. Internet backhauled to the DC firewall stack. Remote users on VPN.' },
     { name: 'Remote users first', desc: 'SSE for remote users: ZTNA replaces the VPN for apps, SWG and CASB at the nearest PoP.' },
-    { name: 'Branches in waves', desc: 'Branch 1 and the DC get SD-WAN edges. Branch 2 still on MPLS. Both worlds run side by side.' },
+    { name: 'Branches in waves', desc: 'Branch 1, the DC and the cloud VPC join the SASE cloud. Branch 2 still on MPLS. Both worlds side by side.' },
     { name: 'Target state', desc: 'MPLS retired. Every site and user under one policy. The DC firewall shrinks to east-west.' }
   ];
 
@@ -298,7 +298,9 @@
     voice: ['Voice over the internet', 'Jitter and loss on the underlay show up as choppy calls, even when the middle mile is clean.', 'QoS at the edge, loss mitigation or duplication for real-time traffic, and the nearest PoP.'],
     aiTls: ['No TLS inspection, no AI visibility', 'Prompts and uploads live inside TLS. Desktop apps and browser extensions add more paths around the controls.', 'Inspect AI destinations (with sensible exceptions) so CASB and DLP can see the content.'],
     aiEmbedded: ['AI hides inside sanctioned SaaS', 'Copilots inside office suites and CRMs, and agents calling APIs from servers, never touch a "Generative AI" category.', 'Govern by activity and data, and include server and API traffic, not only browsers.'],
-    logPrivacy: ['Logging prompts is sensitive', 'Capturing prompt content creates privacy and legal obligations of its own.', 'Bring in privacy and legal early. Log metadata by default and content only on a DLP match.']
+    logPrivacy: ['Logging prompts is sensitive', 'Capturing prompt content creates privacy and legal obligations of its own.', 'Bring in privacy and legal early. Log metadata by default and content only on a DLP match.'],
+    cloudRouting: ['Overlapping and leaking routes', 'VPC ranges overlap with on-prem or with each other, and a default route advertised into the VPC quietly sends cloud internet traffic through the SASE.', 'Plan address space early, advertise specific prefixes, and decide cloud internet egress on purpose.'],
+    cloudHA: ['One tunnel, one point of failure', 'A single tunnel to a single PoP means a cloud-side maintenance window becomes an outage.', 'Two tunnels to two PoPs with BGP, and test failover during a planned window.']
   };
 
   // ---------- Legacy issues per flow, and how SASE answers each one ----------
@@ -339,20 +341,28 @@
       ['Split tunnel blind spot', 'To save capacity, SaaS is often split-tunnelled, which means it is not inspected at all.', 'Everything is inspected by the PoP, so there is no trade-off between speed and security.'],
       ['Different rules off-network', 'VPN disconnected means no web filtering and no DLP, and users disconnect when it is slow.', 'An always-on agent applies one policy everywhere, the same as in the office.'],
       ['Concentrator spent on SaaS', 'Most VPN capacity carries SaaS and video, not private apps.', 'No concentrator to size: SaaS never touches the DC.']
+    ],
+    'branch-cloud': [
+      ['Cloud via the DC', 'Branch → MPLS → DC → IPsec → cloud. Moving apps to the cloud made the DC more central, not less.', 'Branches reach the cloud through the nearest PoP and the middle mile. The DC is out of the path.'],
+      ['Tunnel sprawl', 'Every VPC, VNet and region needs its own tunnels, routes and firewall rules on the DC firewall pair.', 'Each VPC connects once to the SASE cloud, and every site and user can reach it under policy.'],
+      ['A separate security model', 'Security groups in the cloud and firewall rules on-prem, written by different teams in different tools.', 'One WAN firewall and IPS policy covers DC, branches and cloud alike.'],
+      ['Remote users hairpin twice', 'A remote user on VPN goes to the DC and then back out to the cloud.', 'ZTNA from the nearest PoP straight to the cloud app.']
     ]
   };
 
   // ---------- Topology ----------
   // kind: end (selectable endpoint), dev (device), pop, core
   const N = {
-    saas:   { x: 330, y: 45, kind: 'end', l: 'SaaS', s: 'M365 · CRM · storage' },
-    genai:  { x: 610, y: 45, kind: 'end', l: 'Generative AI', s: 'chat · copilots' },
+    saas:   { x: 260, y: 50, kind: 'end', l: 'SaaS', s: 'M365 · CRM · storage' },
+    genai:  { x: 470, y: 50, kind: 'end', l: 'Generative AI', s: 'chat · copilots' },
+    cloudapp: { x: 655, y: 50, kind: 'end', l: 'Cloud workloads', s: 'VPC / VNet' },
+    vgw:    { x: 815, y: 50, kind: 'dev', l: 'Cloud VPN GW', s: 'IPsec + BGP' },
     remote: { x: 95, y: 230, kind: 'end', l: 'Remote user', s: 'laptop' },
-    popU:   { x: 300, y: 215, kind: 'pop', from: 1 },
+    popU:   { x: 330, y: 240, kind: 'pop', from: 1 },
     core:   { x: 545, y: 262, kind: 'core', from: 1 },
     popD:   { x: 385, y: 365, kind: 'pop', from: 1 },
     popB1:  { x: 640, y: 372, kind: 'pop', from: 2 },
-    popB2:  { x: 815, y: 322, kind: 'pop', from: 3 },
+    popB2:  { x: 815, y: 322, kind: 'pop', from: 2 },
     dcfw:   { x: 95, y: 475, kind: 'dev', l: 'Perimeter FW', s: 'NGFW · proxy · VPN' },
     conn:   { x: 245, y: 475, kind: 'dev', l: 'ZTNA connector', s: 'dials out', from: 1 },
     apps:   { x: 105, y: 570, kind: 'end', l: 'Private apps', s: 'ERP · file shares' },
@@ -374,27 +384,31 @@
       dcfw: p === 3 ? { l: 'DC firewall', s: 'east-west only', cls: 'legacy' } : { l: 'Perimeter FW', s: 'NGFW · proxy · VPN', cls: 'legacy' },
       dcedge: p < 2 ? { l: 'WAN edge', s: 'MPLS + IPsec hub', cls: 'legacy' } : sd(p === 2 ? 'SASE + MPLS hub' : 'dual ISP'),
       edge1: p < 2 ? ce : sd(p === 2 ? 'ISP + MPLS' : 'ISP + 5G'),
-      edge2: p < 3 ? ce : sd('ISP + 5G')
+      edge2: p < 3 ? ce : sd('ISP + 5G'),
+      vgw: { s: p < 2 ? 'IPsec to the DC' : 'IPsec to a PoP' }
     };
   }
 
-  // [a, b, firstPhase, lastPhase, class, label, labelPos, waypoints]
+  // [a, b, firstPhase, lastPhase, class, label, labelPos (fraction of the last segment, or [x, y]), waypoints]
   const LINKS = [
     [[LEFT_X, BUS_Y], [960, BUS_Y], 0, 3, 'bus'],
-    ['saas', [330, BUS_Y], 0, 3], ['genai', [610, BUS_Y], 0, 3],
+    ['saas', [260, BUS_Y], 0, 3], ['genai', [470, BUS_Y], 0, 3],
+    ['cloudapp', 'vgw', 0, 3],
+    ['vgw', [815, BUS_Y], 0, 1, 'ipsec', 'IPsec to the DC', [822, 98]],
+    ['vgw', 'popB2', 2, 3, 'dashed', 'IPsec to the PoP', [822, 138]],
     ['remote', [95, BUS_Y], 0, 3, 'dashed', 'hotel Wi-Fi', 0.5],
-    ['dcfw', [LEFT_X, BUS_Y], 0, 3, null, 'DC internet', 0.62, [[LEFT_X, 475]]],
+    ['dcfw', [LEFT_X, BUS_Y], 0, 3, null, 'internet', [22, 300], [[LEFT_X, 475]]],
     ['apps', 'dcfw', 0, 3], ['apps', 'dcedge', 0, 3], ['dcedge', 'dcfw', 0, 3],
     ['users1', 'edge1', 0, 3], ['users2', 'edge2', 0, 3],
-    ['remote', 'dcfw', 0, 2, 'dashed', 'VPN', 0.5],
+    ['remote', 'dcfw', 0, 2, 'dashed', 'VPN over the internet', [101, 380]],
     ['edge1', [590, MPLS_Y], 0, 2, 'mpls'], ['edge2', [780, MPLS_Y], 0, 2, 'mpls'], ['dcedge', [320, MPLS_Y], 0, 2, 'mpls'],
     ['dcedge', [338, IPSEC_Y], 0, 2, 'ipsec', null, null, [[338, 570]]],
     ['edge1', [608, IPSEC_Y], 0, 1, 'ipsec', null, null, [[608, 480]]],
     ['edge2', [798, IPSEC_Y], 0, 2, 'ipsec', null, null, [[798, 480]]],
-    ['popU', 'core', 1, 3, 'core'], ['popD', 'core', 1, 3, 'core'], ['popB1', 'core', 2, 3, 'core'], ['popB2', 'core', 3, 3, 'core'],
+    ['popU', 'core', 1, 3, 'core'], ['popD', 'core', 1, 3, 'core'], ['popB1', 'core', 2, 3, 'core'], ['popB2', 'core', 2, 3, 'core'],
     ['core', [545, BUS_Y], 1, 3, null, 'egress', 0.55],
     ['remote', 'popU', 1, 3, 'dashed', 'agent', 0.45],
-    ['conn', 'popD', 1, 3, 'dashed', 'outbound only', 0.5], ['conn', 'apps', 1, 3],
+    ['conn', 'popD', 1, 3, 'dashed', 'outbound only', [214, 400]], ['conn', 'apps', 1, 3],
     ['dcedge', 'popD', 2, 3, null, 'tunnel', 0.55],
     ['edge1', 'popB1', 2, 3, null, 'tunnel', 0.5],
     ['edge2', 'popB2', 3, 3, null, 'tunnel', 0.5]
@@ -410,9 +424,10 @@
     { id: 'branch-saas', label: 'Branch → SaaS', title: 'Branch user to SaaS', src: 'users1', dst: 'saas' },
     { id: 'remote-app', label: 'Remote → private app', title: 'Remote user to private app', src: 'remote', dst: 'apps' },
     { id: 'branch-dc', label: 'Branch → DC', title: 'Branch user to a DC app', src: 'users1', dst: 'apps' },
-    { id: 'branch-branch', label: 'Branch → branch (voice)', title: 'Branch 1 to Branch 2, voice call', src: 'users1', dst: 'users2' },
+    { id: 'branch-branch', label: 'Branch → branch', title: 'Branch to branch, voice call', src: 'users1', dst: 'users2' },
     { id: 'branch-ai', label: 'Branch → GenAI', title: 'Branch user to a generative AI tool', src: 'users1', dst: 'genai' },
-    { id: 'remote-saas', label: 'Remote → SaaS', title: 'Remote user to SaaS', src: 'remote', dst: 'saas' }
+    { id: 'remote-saas', label: 'Remote → SaaS', title: 'Remote user to SaaS', src: 'remote', dst: 'saas' },
+    { id: 'branch-cloud', label: 'Branch → cloud', title: 'Branch user to a cloud app', src: 'users1', dst: 'cloudapp' }
   ];
 
   // SCN[flowId][phase] = { path, risk, riskLabel, verdict, vclass, note, steps: [[where, text]], caps, pits }
@@ -545,6 +560,23 @@
       caps: ['swg', 'tls', 'casb', 'dlp', 'fwaas'], pits: ['tlsBreak'] }
   ];
 
+  const legacyCloud = {
+    path: [...backhaul1, 'dcfw', [LEFT_X, 475], [LEFT_X, BUS_Y], [815, BUS_Y], 'vgw', 'cloudapp'], verdict: 'Through the DC to the cloud', vclass: 'legacy',
+    steps: [['Branch router', 'No direct path to the cloud. Traffic goes to the DC first, over MPLS.'],
+      ['DC perimeter', 'The firewall pair terminates an IPsec tunnel over the internet to each VPC or VNet (or a private interconnect).'],
+      ['Cloud VPN GW', 'Delivers to the workload. Inside the VPC, security groups are the only control.']],
+    caps: ['mpls', 'ngfw', 'ipsec'], pits: []
+  };
+  const saseCloud = {
+    path: ['users1', 'edge1', 'popB1', 'core', 'popB2', 'vgw', 'cloudapp'], verdict: 'Straight to the cloud through the PoPs', vclass: 'good',
+    steps: [['SD-WAN edge', 'Tunnels to the nearest PoP.'],
+      ['PoP', 'WAN firewall and IPS under the same policy as the DC, then the middle mile to the PoP nearest the cloud region.'],
+      ['Cloud VPN GW', 'IPsec with BGP from the VPC to that PoP (or a virtual SD-WAN edge inside the VPC).'],
+      ['Workload', 'Reached without touching the DC.']],
+    caps: ['sdwan', 'mm', 'fwaas', 'ips'], pits: ['cloudRouting', 'cloudHA']
+  };
+  S['branch-cloud'] = [legacyCloud, { ...legacyCloud, note: 'Unchanged: phase 1 moved remote users only.' }, saseCloud, { ...saseCloud, pits: ['cloudHA', 'mtu'] }];
+
   // ---------- State ----------
   const state = { phase: 0, flow: 'branch-saas', tab: 'main' };
   const $ = (id) => document.getElementById(id);
@@ -579,9 +611,9 @@
   const live = (from, to) => state.phase >= (from ?? 0) && state.phase <= (to ?? 3);
 
   // ---------- Drawing ----------
-  function zone(x, y, w, h, label) {
+  function zone(x, y, w, h, label, lx) {
     el('rect', { x, y, width: w, height: h, rx: 14, class: 't-zone' }, svg);
-    el('text', { x: x + 12, y: y + 20, class: 't-zone-label' }, svg).textContent = label;
+    el('text', { x: lx ?? x + 12, y: y + 20, class: 't-zone-label' }, svg).textContent = label;
   }
 
   function draw() {
@@ -600,14 +632,16 @@
     el('rect', { x: 0, y: 0, width: 1000, height: 725, fill: 'url(#dots)' }, svg);
 
     // Zones and the SASE cloud
-    zone(20, 425, 370, 190, 'HQ / Data center');
+    zone(20, 425, 370, 190, 'HQ / Data center', 106);
     zone(405, 425, 255, 190, 'Branch 1');
     zone(675, 425, 300, 190, 'Branch 2');
-    el('text', { x: 95, y: 190, 'text-anchor': 'middle', class: 't-zone-label' }, svg).textContent = 'On the road';
+    el('rect', { x: 565, y: 4, width: 330, height: 90, rx: 14, class: 't-zone' }, svg);
+    el('text', { x: 577, y: 18, class: 't-zone-label' }, svg).textContent = 'Public cloud · AWS · Azure · GCP';
+    el('text', { x: 103, y: 196, class: 't-zone-label' }, svg).textContent = 'On the road';
     const cloud = el('g', { class: p === 0 ? 'ghost' : null }, svg);
     el('rect', { x: 205, y: 150, width: 690, height: 255, rx: 60, class: 't-cloud' }, cloud);
-    el('text', { x: 880, y: 182, 'text-anchor': 'end', class: 't-cloud-label' }, cloud).textContent = 'SASE CLOUD';
-    el('text', { x: 880, y: 198, 'text-anchor': 'end', class: 't-cloud-cap' }, cloud).textContent = p === 0 ? 'not deployed yet' : 'policy drawn once; runs in every PoP';
+    el('text', { x: 222, y: 176, class: 't-cloud-label' }, cloud).textContent = 'SASE CLOUD';
+    el('text', { x: 222, y: 192, class: 't-cloud-cap' }, cloud).textContent = p === 0 ? 'not deployed yet' : 'policy drawn once; runs in every PoP';
     el('text', { x: LEFT_X + 6, y: BUS_Y - 8, class: 't-bus-label' }, svg).textContent = 'INTERNET';
 
     // MPLS
@@ -618,9 +652,10 @@
     const usesIPsec = sc.path.some((x) => Array.isArray(x) && x[1] === IPSEC_Y);
     const ip = el('g', { class: `t-ipsec${p === 3 ? ' ghost' : ''}${usesIPsec ? ' on' : ''}` }, svg);
     el('rect', { x: 260, y: IPSEC_Y - 15, width: 640, height: 30, rx: 15 }, ip);
-    el('text', { x: 473, y: IPSEC_Y + 5, 'text-anchor': 'middle' }, ip).textContent = 'INTERNET · IPsec VPN';
+    el('text', { x: 473, y: IPSEC_Y + 5, 'text-anchor': 'middle' }, ip).textContent = 'IPsec over the internet';
 
-    // Links
+    // Links (labels are drawn later, above the flow)
+    const linkLabels = [];
     for (const [a, b, from, to, cls, label, lp, via] of LINKS) {
       const pts = [pt(a), ...(via || []).map(pt), pt(b)];
       const d = pts.map((q, i) => `${i ? 'L' : 'M'}${q.x},${q.y}`).join(' ');
@@ -628,7 +663,15 @@
       el('path', { d, class: `t-link${cls ? ' ' + cls : ''}${on ? '' : ' ghost'}` }, svg);
       if (label && on) {
         const s = pts[pts.length - 2], e = pts[pts.length - 1], t = lp ?? 0.5;
-        el('text', { x: s.x + (e.x - s.x) * t + 6, y: s.y + (e.y - s.y) * t - 5, class: 't-link-label' }, svg).textContent = label;
+        let at, anchor = 'start';
+        if (Array.isArray(lp)) at = { x: lp[0], y: lp[1] };
+        else {
+          // Sit the label beside the line, clear of a flow drawn along it.
+          const dx = e.x - s.x, dy = e.y - s.y, len = Math.hypot(dx, dy), nx = -dy / len, ny = dx / len;
+          at = { x: s.x + dx * t + nx * 12, y: s.y + dy * t + ny * 12 + (ny > 0.3 ? 8 : ny < -0.3 ? 0 : 4) };
+          anchor = nx > 0.3 ? 'start' : nx < -0.3 ? 'end' : 'middle';
+        }
+        linkLabels.push([at, anchor, label]);
       }
     }
 
@@ -640,16 +683,18 @@
     el('path', { d, class: 't-flow-glow' }, svg);
     el('path', { d, class: 't-flow', 'marker-end': 'url(#arrow)' }, svg);
 
+    for (const [at, anchor, label] of linkLabels) el('text', { x: at.x, y: at.y, 'text-anchor': anchor, class: 't-link-label' }, svg).textContent = label;
+
     // Nodes
     const labels = phaseLabels(p);
     for (const id in N) {
       const n = N[id], on = onPath.has(id), active = live(n.from, 3);
       if (n.kind === 'pop') {
-        const g = el('g', { class: `t-pop${on ? ' on' : ''}${active ? '' : ' ghost'}` }, svg);
+        const g = el('g', { class: `t-pop${on ? ' on' : ''}${active ? '' : ' ghost'}`, 'data-id': id }, svg);
         el('circle', { cx: n.x, cy: n.y, r: R.pop }, g);
         el('text', { x: n.x, y: n.y + 4.5, 'text-anchor': 'middle' }, g).textContent = 'PoP';
       } else if (n.kind === 'core') {
-        const g = el('g', { class: `t-core${on ? ' on' : ''}${active ? '' : ' ghost'}` }, svg);
+        const g = el('g', { class: `t-core${on ? ' on' : ''}${active ? '' : ' ghost'}`, 'data-id': id }, svg);
         el('circle', { cx: n.x, cy: n.y, r: 76, class: 'ring' }, g);
         el('circle', { cx: n.x, cy: n.y, r: R.core, class: 'disc' }, g);
         el('text', { x: n.x, y: n.y - 6, 'text-anchor': 'middle', class: 'n1' }, g).textContent = 'ONE POLICY';
@@ -658,7 +703,7 @@
       } else {
         const lb = { l: n.l, s: n.s, ...(labels[id] || {}) };
         const [w, h] = BOX[n.kind];
-        const g = el('g', { class: `t-node ${n.kind}${lb.cls ? ' ' + lb.cls : ''}${on ? ' on' : ''}${active ? '' : ' ghost'}` }, svg);
+        const g = el('g', { class: `t-node ${n.kind}${lb.cls ? ' ' + lb.cls : ''}${on ? ' on' : ''}${active ? '' : ' ghost'}`, 'data-id': id }, svg);
         el('rect', { x: n.x - w / 2, y: n.y - h / 2, width: w, height: h, rx: 9 }, g);
         el('text', { x: n.x, y: n.y - 3, 'text-anchor': 'middle', class: 'n1' }, g).textContent = lb.l;
         el('text', { x: n.x, y: n.y + 14, 'text-anchor': 'middle', class: 'n2' }, g).textContent = lb.s;
@@ -772,7 +817,7 @@
     else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { state.phase = Math.max(0, state.phase - 1); render(); e.preventDefault(); }
     else if (e.key === 'ArrowDown') { state.flow = FLOWS[(fi + 1) % FLOWS.length].id; render(); e.preventDefault(); }
     else if (e.key === 'ArrowUp') { state.flow = FLOWS[(fi + FLOWS.length - 1) % FLOWS.length].id; render(); e.preventDefault(); }
-    else if (/^[1-6]$/.test(e.key)) { state.flow = FLOWS[+e.key - 1].id; render(); }
+    else if (/^[1-7]$/.test(e.key)) { state.flow = FLOWS[+e.key - 1].id; render(); }
     else if (e.key === 'f' || e.key === 'F') { state.tab = state.tab === 'main' ? 'pits' : 'main'; render(false, true); }
     else if (e.key === 'p' || e.key === 'P') togglePresent();
     else if (e.key === 't' || e.key === 'T') toggleTheme();
