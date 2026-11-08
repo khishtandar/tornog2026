@@ -266,6 +266,71 @@
     .shift .was, .shift .now { border-top: 0; padding-top: 0; }
   }
 
+  /* Why SASE: legacy issues, then what SASE is, then how it covers each one (revealed in 3 steps) */
+  .why-grid { display: grid; grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .why-grid > * { padding: 9px 14px; border-top: 1px solid var(--line); min-width: 0; }
+  .why-grid > .wh { border-top: 0; display: grid; gap: 3px; align-content: start; padding-top: 12px; padding-bottom: 12px; }
+  .wh .sub { font: 600 12px var(--display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .wh b { font: 700 20px/1.2 var(--display); }
+  .wh span:last-child { font-size: 14px; color: var(--muted); }
+  .wh.leg { background: color-mix(in srgb, var(--bad) 7%, var(--surface)); border-bottom: 3px solid var(--bad); }
+  .wh.leg b { color: var(--bad); }
+  .wh.sase { background: color-mix(in srgb, var(--cloud) 8%, var(--surface)); border-bottom: 3px solid var(--cloud); }
+  .wh.sase b { color: var(--cloud); }
+  .wh.sase span:last-child { color: var(--ink); }
+  .wh.gap { background: var(--surface-2); border-bottom: 3px solid var(--line); }
+  .w-iss, .w-fix { display: grid; gap: 2px; align-content: start; font-size: 14px; }
+  .w-iss b, .w-fix b { font: 600 15px/1.3 var(--body); }
+  .w-iss b::before { content: "✕ "; color: var(--bad); }
+  .w-fix b::before { content: "✓ "; color: var(--ok); }
+  .w-iss p, .w-fix p { margin: 0; }
+  .w-iss p { color: var(--muted); }
+  .w-fix .caps { margin-top: 4px; }
+  .w-to { color: var(--accent); font-weight: 700; text-align: center; padding-left: 0 !important; padding-right: 0 !important; align-self: stretch; display: grid; place-items: center; }
+  .cat-core { --c: var(--cloud); }
+  .reveal { transition: opacity .35s ease; }
+  .why[data-stage="1"] .r2, .why[data-stage="1"] .r3, .why[data-stage="2"] .r3 { opacity: 0; visibility: hidden; }
+  .why[data-stage="1"] .wh.sase, .why[data-stage="2"] .wh.gap { display: none; }
+  .why:not([data-stage="1"]) .wh.gap { display: none; }
+  .why-dots { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); font-size: 13px; }
+  .why-dots i { width: 9px; height: 9px; border-radius: 50%; background: var(--line); display: inline-block; }
+  .why-dots i.on { background: var(--accent); }
+  @media (min-width: 1400px) and (min-height: 1000px) {
+    .why-grid > * { padding: 11px 18px; }
+    .wh b { font-size: 25px; }
+    .wh span:last-child { font-size: 16.5px; }
+    .w-iss, .w-fix { font-size: 15.5px; }
+    .w-iss b, .w-fix b { font-size: 17.5px; }
+  }
+  @media (max-width: 900px) {
+    .why-grid { grid-template-columns: 1fr; }
+    .w-to { display: none !important; }
+    .w-fix { border-top: 0 !important; padding-top: 0 !important; }
+  }
+
+  /* Your own lines, and the layout editor */
+  .t-user .ln { fill: none; stroke: var(--ink); stroke-width: 3; stroke-linecap: round; }
+  .t-user .hit { fill: none; stroke: transparent; stroke-width: 18; }
+  .t-user.sel .ln { stroke: var(--accent); stroke-dasharray: 9 5; }
+  .t-arrow-user { fill: var(--ink); }
+  .t-user-label rect { fill: var(--ink); }
+  .t-user-label text { font: 600 12px var(--body); fill: var(--surface); }
+  .t-temp { stroke: var(--accent); stroke-width: 3; stroke-dasharray: 6 5; pointer-events: none; }
+  body.mode-draw .t-user { cursor: pointer; }
+  body.mode-draw #topo [data-id] { cursor: crosshair; }
+  body.mode-edit #topo [data-id] { cursor: grab; }
+  body.mode-edit #topo .t-node rect { stroke-dasharray: 5 3; }
+  body.mode-draw #topo, body.mode-edit #topo { touch-action: none; }
+  body.mode-draw .canvas, body.mode-edit .canvas { outline: 2px dashed var(--accent); outline-offset: -4px; border-radius: 6px; }
+  .legend .ed { margin-left: auto; display: inline-flex; gap: 6px; }
+  .mini { font: 500 12px/1 var(--body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 7px; padding: 6px 9px; cursor: pointer; }
+  .mini:hover { border-color: var(--accent); }
+  .mini[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  .modehint { color: var(--ink); }
+  .modehint b { color: var(--accent-ink); }
+  body.mode-draw .legend .lg, body.mode-edit .legend .lg { display: none; }
+  body:not(.mode-draw):not(.mode-edit) .modehint, body:not(.mode-draw) .m-draw, body:not(.mode-edit) .m-edit { display: none; }
+
   /* Talk mode: a fixed run order for the time slot */
   .talkbar { display: flex; align-items: center; gap: 10px; min-width: 0; }
   .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; flex: none; }
@@ -282,7 +347,8 @@
   .tb-cue em { font: 500 11px var(--body); font-style: normal; color: var(--warn); border: 1px solid currentColor; border-radius: 999px; padding: 1px 6px; margin-left: 6px; vertical-align: 2px; }
   .tb-time { font: 500 12.5px var(--mono); color: var(--muted); background: none; border: 1px solid var(--line); border-radius: 8px; padding: 7px 8px; cursor: pointer; flex: none; }
   .tb-time.late { color: var(--bad); border-color: var(--bad); }
-  body.talk .keys, body.talk #introBtn, body.talk #themeBtn { display: none; }
+  body.talk .keys, body.talk #introBtn, body.talk #whyBtn, body.talk #themeBtn { display: none; }
+  @media (max-width: 1800px) { .keys { display: none; } }
   /* Keep the header on one line while talking: the cue shortens instead of wrapping. */
   @media (min-width: 901px) {
     body.talk .top { flex-wrap: nowrap; }
@@ -306,7 +372,7 @@
       <h1>SASE in Practice <small>Lessons from the field, and what AI changes</small></h1>
     </div>
     <div class="tools">
-      <span class="keys"><kbd>←</kbd><kbd>→</kbd> phase · <kbd>↑</kbd><kbd>↓</kbd> flow · <kbd>F</kbd> fixes/pitfalls · <kbd>I</kbd> intro · <kbd>G</kbd> talk · <kbd>P</kbd> present · <kbd>T</kbd> theme</span>
+      <span class="keys"><kbd>←</kbd><kbd>→</kbd> phase · <kbd>↑</kbd><kbd>↓</kbd> flow · <kbd>F</kbd> pitfalls · <kbd>G</kbd> talk · <kbd>D</kbd> draw · <kbd>E</kbd> edit · <kbd>P</kbd> present</span>
       <div class="talkbar" id="talkbar" hidden>
         <div class="seg" role="group" aria-label="Talk length">
           <button type="button" data-len="10">10 min</button><button type="button" data-len="15">15 min</button>
@@ -316,12 +382,24 @@
         <span class="tb-cue" id="tbCue"></span>
         <button class="tb-time" id="tbTime" type="button" title="Elapsed / planned end of this step. Click to restart the clock."></button>
       </div>
+      <button class="btn" id="whyBtn" type="button">Why SASE</button>
       <button class="btn" id="introBtn" type="button">What is SASE</button>
       <button class="btn" id="talkBtn" type="button">Talk</button>
       <button class="btn" id="presentBtn" type="button">Present</button>
       <button class="btn" id="themeBtn" type="button" aria-label="Toggle light or dark theme">Theme</button>
     </div>
   </header>
+
+  <section class="panel intro why" id="why" aria-labelledby="whyTitle" data-stage="1" hidden>
+    <div class="intro-head">
+      <h2 id="whyTitle">Why change: what hurts in the legacy network, and how SASE covers it</h2>
+    </div>
+    <div class="why-grid" id="whyGrid"></div>
+    <div class="intro-foot">
+      <span class="why-dots" id="whyDots"></span>
+      <button class="btn go" id="whyGo" type="button">Next →</button>
+    </div>
+  </section>
 
   <section class="panel intro" id="intro" aria-labelledby="introTitle" hidden>
     <div class="intro-head">
@@ -384,12 +462,21 @@
         <svg class="topo" id="topo" viewBox="0 0 1000 730" role="img" aria-label="Sample enterprise network: a data center, two branches, a remote user, a public cloud VPC, MPLS and IPsec over the internet between the sites, the internet with SaaS and generative AI tools, and a SASE cloud with four PoPs around a shared security and policy core."></svg>
       </div>
       <div class="legend">
-        <span><i class="sw fl"></i> This flow</span>
-        <span><i class="sw rk"></i> What can go wrong</span>
-        <span><i class="sw cl"></i> PoP to shared core</span>
-        <span><i class="sw mp"></i> MPLS</span>
-        <span><i class="sw ip"></i> IPsec over the internet</span>
-        <span>Faded = not deployed yet, or retired</span>
+        <span class="lg"><i class="sw fl"></i> This flow</span>
+        <span class="lg"><i class="sw rk"></i> What can go wrong</span>
+        <span class="lg"><i class="sw cl"></i> PoP to shared core</span>
+        <span class="lg"><i class="sw mp"></i> MPLS</span>
+        <span class="lg"><i class="sw ip"></i> IPsec over the internet</span>
+        <span class="lg">Faded = not deployed yet, or retired</span>
+        <span class="modehint m-draw"><b>Draw:</b> drag from one box to another. Click a line to select it, <kbd>Del</kbd> removes it, double-click labels it.</span>
+        <span class="modehint m-edit"><b>Edit layout:</b> drag any box, PoP or the policy core. Links and flows follow. Saved in this browser.</span>
+        <span class="ed">
+          <button class="mini m-draw" id="clearLines" type="button">Clear lines</button>
+          <button class="mini m-edit" id="copyLayout" type="button">Copy layout</button>
+          <button class="mini m-edit" id="resetLayout" type="button">Reset layout</button>
+          <button class="mini" id="drawBtn" type="button" title="Draw your own lines between boxes (D)">Draw lines</button>
+          <button class="mini" id="editBtn" type="button" title="Move boxes around (E)">Edit layout</button>
+        </span>
       </div>
     </section>
 
@@ -544,6 +631,18 @@
   };  const BOX = { end: [150, 50], dev: [132, 44] };
   const R = { pop: 25, core: 58 };
 
+  // ---------- Your layout and lines (saved in this browser only) ----------
+  const store = {
+    get(k, d) { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  };
+  const DEFAULT_POS = Object.fromEntries(Object.entries(N).map(([id, n]) => [id, [n.x, n.y]]));
+  const savedPos = store.get('tornog-layout', {});
+  for (const id in savedPos) if (N[id] && Array.isArray(savedPos[id])) [N[id].x, N[id].y] = savedPos[id];
+  // [{ a, b, label }], drawn on every view.
+  let userLines = store.get('tornog-lines', []).filter((l) => l && N[l.a] && N[l.b]);
+  let selLine = -1;
+
   // Labels that change as the migration progresses.
   function phaseLabels(p) {
     const sd = (s) => ({ l: 'SD-WAN edge', s, cls: 'sdwan' });
@@ -558,56 +657,59 @@
     };
   }
 
-  // Where each WAN edge's uplinks leave its box: to its PoP, to the MPLS band and to the IPsec band.
-  const UP = { dcedge: { pop: 250, mpls: 300, ipsec: 318 }, edge1: { pop: 505, mpls: 540, ipsec: 558 }, edge2: { pop: 780, mpls: 815, ipsec: 833 } };
-  const EDGE_Y = 545, CONN_X = 362, CORE_X = 580;
+  // Every coordinate below is relative to the nodes, so the layout editor can move them and links, flows and labels follow.
+  // Where each WAN edge's uplinks leave its box (x offset from its centre): to its PoP, to the MPLS band and to the IPsec band.
+  const UPOFF = { dcedge: { pop: -30, mpls: 20, ipsec: 38 }, edge1: { pop: -20, mpls: 15, ipsec: 33 }, edge2: { pop: -20, mpls: 15, ipsec: 33 } };
+  const X = (id) => N[id].x, Y = (id) => N[id].y;
+  const upX = (e, k) => X(e) + UPOFF[e][k];
+  const laneX = () => X('remote') - 40;   // the remote user's line up to the internet
+  const connX = () => X('conn') + 82;     // the ZTNA connector's line up to its PoP
 
   // [a, b, firstPhase, lastPhase, class, label, labelPos (fraction of the last segment, or [x, y, anchor]), waypoints]
-  const LINKS = [
-    [[LEFT_X, BUS_Y], [985, BUS_Y], 0, 3, 'bus'],
-    ['web', [90, BUS_Y], 0, 3], ['saas', [250, BUS_Y], 0, 3], ['genai', [410, BUS_Y], 0, 3],
-    ['cloudapp', 'vgw', 0, 3],
-    ['vgw', [780, BUS_Y], 0, 1, 'ipsec', 'IPsec to the DC', [787, 108]],
-    ['vgw', 'popB2', 2, 3, null, 'tunnel to the PoP', [787, 146]],
-    ['remote', [60, BUS_Y], 0, 3, 'dashed', 'hotel Wi-Fi', [66, 143], [[60, 280]]],
-    ['dcfw', [LEFT_X, BUS_Y], 0, 3, null, 'internet', [16, 470], [[LEFT_X, EDGE_Y]]],
-    ['apps', 'dcfw', 0, 3], ['apps', 'dcedge', 0, 3], ['dcedge', 'dcfw', 0, 3],
-    ['users1', 'edge1', 0, 3], ['users2', 'edge2', 0, 3],
-    ['remote', 'dcfw', 0, 2, 'dashed', 'VPN over the internet', [106, 445]],
-    ...['dcedge', 'edge1', 'edge2'].flatMap((e) => [
-      [e, [UP[e].mpls, MPLS_Y], 0, e === 'edge1' ? 1 : 2, 'mpls', null, null, [[UP[e].mpls, EDGE_Y]]],
-      [e, [UP[e].ipsec, IPSEC_Y], 0, e === 'edge1' ? 1 : 2, 'ipsec', null, null, [[UP[e].ipsec, EDGE_Y]]]
-    ]),
-    ['popU', 'core', 1, 3, 'core'], ['popD', 'core', 1, 3, 'core'], ['popB1', 'core', 2, 3, 'core'], ['popB2', 'core', 2, 3, 'core'],
-    ['core', [CORE_X, BUS_Y], 1, 3, null, 'egress', [586, 146]],
-    ['remote', 'popU', 1, 3, 'dashed', 'agent', 0.5],
-    ['conn', 'popD', 1, 3, 'dashed', null, null, [[CONN_X, 665], [CONN_X, 345]]], ['conn', 'apps', 1, 3], ['conn', 'dcfw', 1, 1],
-    ['dcedge', 'popD', 2, 3, null, 'tunnel', [256, 398], [[UP.dcedge.pop, EDGE_Y]]],
-    ['edge1', 'popB1', 2, 3, null, 'tunnel', [511, 398], [[UP.edge1.pop, EDGE_Y]]],
-    ['edge2', 'popB2', 3, 3, null, 'tunnel', [786, 398], [[UP.edge2.pop, EDGE_Y]]]
-  ];
+  function links() {
+    return [
+      [[LEFT_X, BUS_Y], [985, BUS_Y], 0, 3, 'bus'],
+      ...['web', 'saas', 'genai'].map((id) => [id, [X(id), BUS_Y], 0, 3]),
+      ['cloudapp', 'vgw', 0, 3],
+      ['vgw', [X('vgw'), BUS_Y], 0, 1, 'ipsec', 'IPsec to the DC', [X('vgw') + 7, BUS_Y - 17]],
+      ['vgw', 'popB2', 2, 3, null, 'tunnel to the PoP', [X('vgw') + 7, BUS_Y + 21]],
+      ['remote', [laneX(), BUS_Y], 0, 3, 'dashed', 'hotel Wi-Fi', [laneX() + 6, BUS_Y + 18], [[laneX(), Y('remote')]]],
+      ['dcfw', [LEFT_X, BUS_Y], 0, 3, null, 'internet', [LEFT_X + 6, Y('dcfw') - 75], [[LEFT_X, Y('dcfw')]]],
+      ['apps', 'dcfw', 0, 3], ['apps', 'dcedge', 0, 3], ['dcedge', 'dcfw', 0, 3],
+      ['users1', 'edge1', 0, 3], ['users2', 'edge2', 0, 3],
+      ['remote', 'dcfw', 0, 2, 'dashed', 'VPN over the internet', [X('dcfw') + 6, Y('dcfw') - 100]],
+      ...['dcedge', 'edge1', 'edge2'].flatMap((e) => [
+        [e, [upX(e, 'mpls'), MPLS_Y], 0, e === 'edge1' ? 1 : 2, 'mpls', null, null, [[upX(e, 'mpls'), Y(e)]]],
+        [e, [upX(e, 'ipsec'), IPSEC_Y], 0, e === 'edge1' ? 1 : 2, 'ipsec', null, null, [[upX(e, 'ipsec'), Y(e)]]]
+      ]),
+      ['popU', 'core', 1, 3, 'core'], ['popD', 'core', 1, 3, 'core'], ['popB1', 'core', 2, 3, 'core'], ['popB2', 'core', 2, 3, 'core'],
+      ['core', [X('core'), BUS_Y], 1, 3, null, 'egress', [X('core') + 6, BUS_Y + 21]],
+      ['remote', 'popU', 1, 3, 'dashed', 'agent', 0.5],
+      ['conn', 'popD', 1, 3, 'dashed', null, null, via()['conn>popD']], ['conn', 'apps', 1, 3], ['conn', 'dcfw', 1, 1],
+      ...[['dcedge', 'popD', 2], ['edge1', 'popB1', 2], ['edge2', 'popB2', 3]].map(([e, pop, from]) =>
+        [e, pop, from, 3, null, 'tunnel', [upX(e, 'pop') + 6, Y(e) - 147], [[upX(e, 'pop'), Y(e)]]])
+    ];
+  }
   // Waypoints between two nodes on a flow, so flows follow the drawn links.
-  const VIA = {
-    'edge1>popB1': [[UP.edge1.pop, EDGE_Y]], 'edge2>popB2': [[UP.edge2.pop, EDGE_Y]], 'dcedge>popD': [[UP.dcedge.pop, EDGE_Y]],
-    'conn>popD': [[CONN_X, 665], [CONN_X, 345]]
-  };
+  function via() {
+    return {
+      'edge1>popB1': [[upX('edge1', 'pop'), Y('edge1')]], 'edge2>popB2': [[upX('edge2', 'pop'), Y('edge2')]], 'dcedge>popD': [[upX('dcedge', 'pop'), Y('dcedge')]],
+      'conn>popD': [[connX(), Y('conn')], [connX(), Y('popD')]]
+    };
+  }
   function expand(list) {
-    const outList = [];
+    const outList = [], V = via();
     list.forEach((p, i) => {
       outList.push(p);
       const q = list[i + 1];
       if (typeof p !== 'string' || typeof q !== 'string') return;
-      if (VIA[`${p}>${q}`]) outList.push(...VIA[`${p}>${q}`]);
-      else if (VIA[`${q}>${p}`]) outList.push(...[...VIA[`${q}>${p}`]].reverse());
+      if (V[`${p}>${q}`]) outList.push(...V[`${p}>${q}`]);
+      else if (V[`${q}>${p}`]) outList.push(...[...V[`${q}>${p}`]].reverse());
     });
     return outList;
   }
 
   // ---------- Flows ----------
-  const mpls = (a, b) => [[UP[a].mpls, EDGE_Y], [UP[a].mpls, MPLS_Y], [UP[b].mpls, MPLS_Y], [UP[b].mpls, EDGE_Y]];
-  const dcOut = (dst) => ['dcfw', [LEFT_X, EDGE_Y], [LEFT_X, BUS_Y], [N[dst].x, BUS_Y], dst];
-  const coreOut = (dst) => ['core', [CORE_X, BUS_Y], [N[dst].x, BUS_Y], dst];
-  const backhaul1 = ['users1', 'edge1', ...mpls('edge1', 'dcedge'), 'dcedge'];
   // Grouped by who starts the flow; the chip shows only the destination.
   const FLOWS = [
     { id: 'branch-saas', group: 'Branch', label: 'SaaS', title: 'Branch user to SaaS', src: 'users1', dst: 'saas' },
@@ -624,7 +726,16 @@
   ];
 
   // SCN[flowId][phase] = { path, risk, riskLabel, verdict, vclass, note, steps: [[where, text]], caps, pits }
+  // Paths hold waypoints computed from node positions, so buildS() runs again whenever the layout changes.
   const S = {};
+  function buildS() {
+  const mpls = (a, b) => [[upX(a, 'mpls'), Y(a)], [upX(a, 'mpls'), MPLS_Y], [upX(b, 'mpls'), MPLS_Y], [upX(b, 'mpls'), Y(b)]];
+  const dcOut = (dst) => ['dcfw', [LEFT_X, Y('dcfw')], [LEFT_X, BUS_Y], [X(dst), BUS_Y], dst];
+  const coreOut = (dst) => ['core', [X('core'), BUS_Y], [X(dst), BUS_Y], dst];
+  const backhaul1 = ['users1', 'edge1', ...mpls('edge1', 'dcedge'), 'dcedge'];
+  const roadRisk = (dst) => ['remote', [laneX(), Y('remote')], [laneX(), BUS_Y], [X(dst), BUS_Y], dst];
+  const roadRiskAt = () => [X('remote') + 50, Y('remote') - 75];
+
   const legacySaas = {
     path: [...backhaul1, ...dcOut('saas')], verdict: 'Backhauled to the DC', vclass: 'legacy',
     steps: [['Branch router', 'Its internet link only carries the IPsec backup tunnel, with no local breakout. The default route points into MPLS.'],
@@ -740,7 +851,7 @@
     ['SaaS', 'Reached from a nearby PoP, with no hairpin.']];
   S['remote-saas'] = [
     { path: ['remote', 'dcfw', ...dcOut('saas').slice(1)], verdict: 'Hairpinned through the VPN', vclass: 'legacy',
-      risk: ['remote', [60, 280], [60, BUS_Y], [250, BUS_Y], 'saas'], riskLabel: 'split tunnel: uninspected', riskAt: [150, 205],
+      risk: roadRisk('saas'), riskLabel: 'split tunnel: uninspected', riskAt: roadRiskAt(),
       steps: [['VPN client', 'Full tunnel: everything goes to the DC first.'],
         ['DC perimeter', 'NGFW and proxy inspect it, then out the DC internet link.'],
         ['Workaround', 'Split tunnelling SaaS saves capacity but skips inspection entirely.']],
@@ -802,7 +913,7 @@
   };
   S['remote-ai'] = [
     { path: ['remote', ...dcOut('genai')], verdict: 'Controlled only while the VPN is on', vclass: 'legacy',
-      risk: ['remote', [60, 280], [60, BUS_Y], [410, BUS_Y], 'genai'], riskLabel: 'VPN off: no AI policy', riskAt: [150, 205],
+      risk: roadRisk('genai'), riskLabel: 'VPN off: no AI policy', riskAt: roadRiskAt(),
       steps: [['VPN client', 'With a full tunnel, AI traffic goes to the DC like everything else.'],
         ['DC proxy', 'Allows or blocks the "Generative AI" category. No tenant, activity or prompt visibility.'],
         ['Off VPN', 'VPN disconnected or split-tunnelled: the user reaches any AI tool with no policy at all.']],
@@ -847,31 +958,62 @@
   S['dc-web'] = [legacyDcWeb, legacyDcWeb, saseDcWeb, { ...saseDcWeb, pits: ['egressIP'] }];
 
   S['branch-cloud'] = [legacyCloud, { ...legacyCloud, note: 'Unchanged: phase 1 moved remote users only.' }, saseCloud, { ...saseCloud, pits: ['cloudHA', 'mtu'] }];
+  }
+  buildS();
+
+  // ---------- Why SASE: legacy issue → how SASE covers it ----------
+  // [issue, what hurts, how SASE covers it, capability tags (CAP keys, or 'one' for one policy)]
+  const WHY = [
+    ['Everything hairpins through the DC', 'Internet and SaaS ride MPLS to the DC and back out. Far branches and remote users feel it most.', 'Each site and user breaks out at the nearest PoP and is inspected there.', ['sdwan', 'swg']],
+    ['A WAN that is slow to change and costly', 'MPLS takes months to deliver and is the priciest bandwidth. The IPsec backup sits idle and untested.', 'Any internet link, all links active, zero-touch sites, and a provider backbone between PoPs.', ['sdwan', 'mm', 'qos']],
+    ['The VPN gives the whole network', 'Users get routes to whole subnets, and the VPN gateway is exposed on the internet.', 'ZTNA gives one app at a time, by identity and device posture. Nothing listens inbound.', ['ztna', 'idp']],
+    ['Nothing inspects the WAN', 'Any-to-any MPLS is "trusted", so ransomware moves from site to site.', 'A firewall and IPS between every pair of sites, under the same policy as internet traffic.', ['fwaas', 'ips']],
+    ['Security capped by the box', 'Appliances are sized for peak and refreshed every few years. TLS inspection costs throughput, so it is often off.', 'Single-pass inspection in every PoP, scaled by the provider, so TLS inspection stays on.', ['tls', 'swg', 'ips']],
+    ['A different policy everywhere', 'HQ, branches, remote users and the cloud each have their own rules, consoles and logs.', 'One policy and one log for every site, user and cloud workload.', ['one']],
+    ['Blind to SaaS data and AI', 'URL categories only allow or block. No view of tenants, uploads or prompts.', 'CASB and DLP see the data. AI tools are discovered and controlled per app and activity.', ['casb', 'dlp', 'aidisc']]
+  ];
+  const whyTag = (c) => c === 'one' ? '<span class="tag sm cat-core">One policy, one log</span>' : `<span class="tag sm cat-${CAP[c][1]}">${esc(CAP[c][0])}</span>`;
+  function buildWhy() {
+  $('whyGrid').innerHTML = `
+    <div class="wh leg"><span class="sub">1 · The legacy network</span><b>Hub and spoke</b><span>MPLS to the DC, internet backhauled through the DC firewall, remote users on VPN.</span></div>
+    <span class="wh"></span>
+    <div class="wh gap"><span class="sub">2 · ?</span><b>What would fix all of this?</b><span>Next: what SASE is.</span></div>
+    <div class="wh sase reveal r2"><span class="sub">2 · What SASE is</span><b>SASE = SD-WAN + SSE, from the cloud</b><span>Every site, user and cloud workload connects to the nearest PoP, where one policy and one pass of inspection apply to all traffic.</span></div>
+    ${WHY.map(([t, bad, good, caps]) => `
+      <div class="w-iss"><b>${esc(t)}</b><p>${esc(bad)}</p></div>
+      <span class="w-to reveal r3" aria-hidden="true">→</span>
+      <div class="w-fix reveal r3"><b>${esc(good)}</b><div class="caps">${caps.map(whyTag).join('')}</div></div>`).join('')}`;
+  }
+  const WHY_NEXT = ['Next: what SASE is →', 'Next: how SASE covers it →', 'Next: SD-WAN + SSE in detail →'];
 
   // ---------- Talk run orders ----------
-  // { v: 'intro' } or { p: phase, f: flow, tab: 'main' | 'pits' }, t = planned seconds, opt = "if time allows".
+  // { v: 'why', s: 1-3 }, { v: 'intro' } or { p: phase, f: flow, tab: 'main' | 'pits' }, t = planned seconds, opt = "if time allows".
   const TALKS = {
     10: [
-      { v: 'intro', t: 60, cue: 'What SASE actually means: SD-WAN + SSE, one policy' },
-      { p: 0, f: 'branch-saas', t: 60, cue: 'Where most networks start: everything backhauled' },
+      { v: 'why', s: 1, t: 20, cue: 'What hurts in the legacy network' },
+      { v: 'why', s: 2, t: 20, cue: 'What SASE is' },
+      { v: 'why', s: 3, t: 50, cue: 'How SASE covers each issue' },
+      { v: 'intro', t: 45, cue: 'SD-WAN + SSE under one policy' },
+      { p: 0, f: 'branch-saas', t: 30, cue: 'Where most networks start: everything backhauled' },
       { p: 1, f: 'remote-app', t: 60, cue: 'Phase 1: remote users first, VPN to ZTNA' },
       { p: 1, f: 'remote-app', tab: 'pits', t: 45, cue: 'Field lessons: the app list, private DNS, two agents' },
-      { p: 2, f: 'branch-dc', t: 45, cue: 'Phase 2: branches in waves, next to MPLS' },
-      { p: 2, f: 'branch-dc', tab: 'pits', t: 60, cue: 'Field lesson: asymmetric return over MPLS' },
+      { p: 2, f: 'branch-dc', tab: 'pits', t: 60, cue: 'Phase 2, field lesson: asymmetric return over MPLS' },
       { p: 2, f: 'branch-saas', tab: 'pits', t: 60, cue: 'Field lessons: egress IP, TLS inspection, MTU' },
       { p: 3, f: 'branch-branch', tab: 'pits', t: 45, cue: 'Target state: the last mile is now your WAN' },
       { p: 0, f: 'branch-ai', t: 45, cue: 'What AI changes: allow or block is not enough', opt: true },
       { p: 2, f: 'branch-ai', t: 60, cue: 'Discover, then control by tenant and activity', opt: true }
     ],
     15: [
-      { v: 'intro', t: 75, cue: 'What SASE actually means: SD-WAN + SSE, one policy' },
-      { p: 0, f: 'branch-saas', t: 90, cue: 'Where most networks start: everything backhauled' },
+      { v: 'why', s: 1, t: 30, cue: 'What hurts in the legacy network' },
+      { v: 'why', s: 2, t: 30, cue: 'What SASE is' },
+      { v: 'why', s: 3, t: 60, cue: 'How SASE covers each issue' },
+      { v: 'intro', t: 60, cue: 'SD-WAN + SSE under one policy' },
+      { p: 0, f: 'branch-saas', t: 45, cue: 'Where most networks start: everything backhauled' },
       { p: 1, f: 'remote-app', t: 75, cue: 'Phase 1: remote users first, VPN to ZTNA' },
       { p: 1, f: 'remote-app', tab: 'pits', t: 60, cue: 'Field lessons: the app list, private DNS, two agents' },
       { p: 2, f: 'branch-dc', t: 60, cue: 'Phase 2: branches in waves, next to MPLS' },
       { p: 2, f: 'branch-dc', tab: 'pits', t: 75, cue: 'Field lesson: asymmetric return over MPLS' },
       { p: 2, f: 'branch-branch', tab: 'pits', t: 60, cue: 'Field lesson: the DC becomes a transit hub' },
-      { p: 2, f: 'branch-saas', t: 45, cue: 'The same SaaS flow, now inspected at the nearest PoP' },
       { p: 2, f: 'branch-saas', tab: 'pits', t: 60, cue: 'Field lessons: egress IP, TLS inspection, MTU' },
       { p: 3, f: 'branch-branch', tab: 'pits', t: 60, cue: 'Target state: the last mile is now your WAN' },
       { p: 0, f: 'branch-ai', t: 60, cue: 'What AI changes: allow or block is not enough', opt: true },
@@ -881,8 +1023,8 @@
   };
 
   // ---------- State ----------
-  // view: 'lab' (diagram) or 'intro'. talk: null, or { len, i } while stepping through a run order.
-  const state = { phase: 0, flow: 'branch-saas', tab: 'main', view: 'lab', talk: null };
+  // view: 'lab' (diagram), 'why' (whyStage 1-3) or 'intro'. mode: null, 'draw' or 'edit'. talk: null, or { len, i } while stepping through a run order.
+  const state = { phase: 0, flow: 'branch-saas', tab: 'main', view: 'lab', whyStage: 1, talk: null, mode: null };
   const $ = (id) => document.getElementById(id);
   const svg = $('topo');
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -920,9 +1062,25 @@
   const live = (from, to) => state.phase >= (from ?? 0) && state.phase <= (to ?? 3);
 
   // ---------- Drawing ----------
-  function zone(x, y, w, h, label, lx, bottom) {
+  // A zone keeps its designed size, and grows when the layout editor moves one of its nodes outside it.
+  // It grows by exactly how far its members now reach past where they reached in the original layout.
+  function grow(x, y, w, h, members) {
+    const ext = (pos) => {
+      let a = Infinity, b = Infinity, c = -Infinity, d = -Infinity;
+      for (const id of members) {
+        const n = N[id], [px, py] = pos(id), [hw, hh] = n.kind === 'pop' ? [R.pop, R.pop] : n.kind === 'core' ? [76, 76] : BOX[n.kind].map((v) => v / 2);
+        a = Math.min(a, px - hw); b = Math.min(b, py - hh); c = Math.max(c, px + hw); d = Math.max(d, py + hh);
+      }
+      return [a, b, c, d];
+    };
+    const [a0, b0, c0, d0] = ext((id) => DEFAULT_POS[id]), [a1, b1, c1, d1] = ext((id) => [N[id].x, N[id].y]);
+    const x1 = x - Math.max(0, a0 - a1), y1 = y - Math.max(0, b0 - b1);
+    const x2 = x + w + Math.max(0, c1 - c0), y2 = y + h + Math.max(0, d1 - d0);
+    return [x1, y1, x2 - x1, y2 - y1];
+  }
+  function zone([x, y, w, h], label, lxOff, bottom) {
     el('rect', { x, y, width: w, height: h, rx: 14, class: 't-zone' }, svg);
-    el('text', { x: lx ?? x + 12, y: bottom ? y + h - 10 : y + 20, class: 't-zone-label' }, svg).textContent = label;
+    el('text', { x: x + (lxOff ?? 12), y: bottom ? y + h - 10 : y + 20, class: 't-zone-label' }, svg).textContent = label;
   }
 
   function draw() {
@@ -934,7 +1092,7 @@
     const defs = el('defs', {}, svg);
     const pat = el('pattern', { id: 'dots', width: 22, height: 22, patternUnits: 'userSpaceOnUse' }, defs);
     el('circle', { cx: 2, cy: 2, r: 1.2, class: 't-grid' }, pat);
-    for (const [id, cls] of [['arrow', 't-arrow'], ['arrowRisk', 't-arrow-risk']]) {
+    for (const [id, cls] of [['arrow', 't-arrow'], ['arrowRisk', 't-arrow-risk'], ['arrowUser', 't-arrow-user']]) {
       const mk = el('marker', { id, viewBox: '0 0 10 10', refX: 7, refY: 5, markerWidth: 4.5, markerHeight: 4.5, orient: 'auto-start-reverse' }, defs);
       el('path', { d: 'M0,0 L10,5 L0,10 z', class: cls }, mk);
     }
@@ -942,16 +1100,18 @@
 
     // Zones and the SASE cloud
     // Bottom: sites. Top: services.
-    zone(20, 150, 168, 235, 'On the road', 70);
-    zone(20, 495, 360, 227, 'HQ / Data center', null, true);
-    zone(400, 495, 250, 227, 'Branch 1', null, true);
-    zone(670, 495, 315, 227, 'Branch 2', null, true);
-    el('rect', { x: 500, y: 4, width: 385, height: 92, rx: 14, class: 't-zone' }, svg);
-    el('text', { x: 512, y: 20, class: 't-zone-label' }, svg).textContent = 'Public cloud · AWS · Azure · GCP';
+    zone(grow(20, 150, 168, 235, ['remote']), 'On the road', 50);
+    zone(grow(20, 495, 360, 227, ['dcfw', 'dcedge', 'apps', 'conn']), 'HQ / Data center', null, true);
+    zone(grow(400, 495, 250, 227, ['edge1', 'users1']), 'Branch 1', null, true);
+    zone(grow(670, 495, 315, 227, ['edge2', 'users2']), 'Branch 2', null, true);
+    const [px, py, pw, ph] = grow(500, 4, 385, 92, ['cloudapp', 'vgw']);
+    el('rect', { x: px, y: py, width: pw, height: ph, rx: 14, class: 't-zone' }, svg);
+    el('text', { x: px + 12, y: py + 16, class: 't-zone-label' }, svg).textContent = 'Public cloud · AWS · Azure · GCP';
     const cloud = el('g', { class: p === 0 ? 'ghost' : null }, svg);
-    el('rect', { x: 200, y: 152, width: 785, height: 233, rx: 50, class: 't-cloud' }, cloud);
-    el('text', { x: 222, y: 180, class: 't-cloud-label' }, cloud).textContent = 'SASE CLOUD';
-    el('text', { x: 222, y: 196, class: 't-cloud-cap' }, cloud).textContent = p === 0 ? 'not deployed yet' : 'policy drawn once; runs in every PoP';
+    const [cx, cy, cw, ch] = grow(200, 152, 785, 233, ['popU', 'core', 'popD', 'popB1', 'popB2']);
+    el('rect', { x: cx, y: cy, width: cw, height: ch, rx: 50, class: 't-cloud' }, cloud);
+    el('text', { x: cx + 22, y: cy + 28, class: 't-cloud-label' }, cloud).textContent = 'SASE CLOUD';
+    el('text', { x: cx + 22, y: cy + 44, class: 't-cloud-cap' }, cloud).textContent = p === 0 ? 'not deployed yet' : 'policy drawn once; runs in every PoP';
     el('text', { x: 140, y: BUS_Y - 8, class: 't-bus-label' }, svg).textContent = 'INTERNET';
 
     // MPLS
@@ -965,8 +1125,8 @@
 
     // Links (labels are drawn later, above the flow)
     const linkLabels = [];
-    for (const [a, b, from, to, cls, label, lp, via] of LINKS) {
-      const pts = [pt(a), ...(via || []).map(pt), pt(b)];
+    for (const [a, b, from, to, cls, label, lp, wps] of links()) {
+      const pts = [pt(a), ...(wps || []).map(pt), pt(b)];
       const d = pts.map((q, i) => `${i ? 'L' : 'M'}${q.x},${q.y}`).join(' ');
       const on = live(from, to);
       el('path', { d, class: `t-link${cls ? ' ' + cls : ''}${on ? '' : ' ghost'}` }, svg);
@@ -991,6 +1151,14 @@
     const d = pathD(expand(sc.path));
     el('path', { d, class: 't-flow-glow' }, svg);
     el('path', { d, class: 't-flow', 'marker-end': 'url(#arrow)' }, svg);
+
+    // Your own lines: under the nodes, so they start at a box edge.
+    userLines.forEach((l, i) => {
+      const d = pathD([l.a, l.b]);
+      const g = el('g', { class: `t-user${i === selLine ? ' sel' : ''}`, 'data-line': i }, svg);
+      el('path', { d, class: 'hit' }, g);
+      el('path', { d, class: 'ln', 'marker-end': 'url(#arrowUser)' }, g);
+    });
 
     for (const [at, anchor, label] of linkLabels) el('text', { x: at.x, y: at.y, 'text-anchor': anchor, class: 't-link-label' }, svg).textContent = label;
 
@@ -1018,6 +1186,15 @@
         el('text', { x: n.x, y: n.y + 14, 'text-anchor': 'middle', class: 'n2' }, g).textContent = lb.s;
       }
     }
+
+    // Labels on your own lines
+    userLines.forEach((l, i) => {
+      if (!l.label) return;
+      const m = { x: (N[l.a].x + N[l.b].x) / 2, y: (N[l.a].y + N[l.b].y) / 2 }, w = l.label.length * 6.8 + 16;
+      const g = el('g', { class: 't-user-label t-user', 'data-line': i }, svg);
+      el('rect', { x: m.x - w / 2, y: m.y - 11, width: w, height: 22, rx: 6 }, g);
+      el('text', { x: m.x, y: m.y + 4, 'text-anchor': 'middle' }, g).textContent = l.label;
+    });
 
     // Risk label on top of everything
     if (sc.risk && sc.riskLabel) {
@@ -1084,6 +1261,7 @@
     if (!state.talk) return false;
     const s = steps()[state.talk.i];
     if (s.v === 'intro') return state.view === 'intro';
+    if (s.v === 'why') return state.view === 'why' && state.whyStage === s.s;
     return state.view === 'lab' && state.phase === s.p && state.flow === s.f && state.tab === (s.tab || 'main');
   }
   function goStep(i) {
@@ -1091,6 +1269,7 @@
     state.talk.i = Math.max(0, Math.min(list.length - 1, i));
     const s = list[state.talk.i];
     if (s.v === 'intro') state.view = 'intro';
+    else if (s.v === 'why') { state.view = 'why'; state.whyStage = s.s; }
     else { state.view = 'lab'; state.phase = s.p; state.flow = s.f; state.tab = s.tab || 'main'; }
     render(true, true);
   }
@@ -1135,14 +1314,22 @@
   function hashFor() {
     if (onStep()) return `#talk${state.talk.len}/${state.talk.i + 1}`;
     if (state.view === 'intro') return '#intro';
+    if (state.view === 'why') return `#why/${state.whyStage}`;
     return `#p${state.phase}/${state.flow}`;
   }
   function render(push = true, keepTab = false) {
     if (!keepTab) state.tab = 'main';
-    const intro = state.view === 'intro';
-    $('intro').hidden = !intro; $('phases').hidden = intro; $('main').hidden = intro;
-    $('introBtn').textContent = intro ? 'Diagram' : 'What is SASE';
-    if (!intro) { renderControls(); draw(); renderDetail(); }
+    const v = state.view, lab = v === 'lab';
+    $('intro').hidden = v !== 'intro'; $('why').hidden = v !== 'why'; $('phases').hidden = !lab; $('main').hidden = !lab;
+    $('introBtn').textContent = v === 'intro' ? 'Diagram' : 'What is SASE';
+    $('whyBtn').textContent = v === 'why' ? 'Diagram' : 'Why SASE';
+    if (v === 'why') {
+      $('why').dataset.stage = state.whyStage;
+      $('whyDots').innerHTML = [1, 2, 3].map((n) => `<i class="${n <= state.whyStage ? 'on' : ''}"></i>`).join('') + `<span>${['The legacy network', 'What SASE is', 'How SASE covers it'][state.whyStage - 1]}</span>`;
+      $('whyGo').textContent = WHY_NEXT[state.whyStage - 1];
+    }
+    if (!lab && state.mode) setMode(null, false);
+    if (lab) { renderControls(); draw(); renderDetail(); }
     renderTalk();
     fit();
     if (push) history.replaceState(null, '', hashFor());
@@ -1163,8 +1350,108 @@
   if (document.fonts) document.fonts.ready.then(fit);
   const showLab = () => { state.view = 'lab'; render(); };
   function toggleIntro() { state.view = state.view === 'intro' ? 'lab' : 'intro'; render(); }
+  function toggleWhy() { if (state.view === 'why') state.view = 'lab'; else { state.view = 'why'; state.whyStage = 1; } render(); }
+  // Outside talk mode, → and ← walk: Why SASE (3 steps) → What SASE is → phase 0 … phase 3.
+  function navNext() {
+    if (state.view === 'why') { if (state.whyStage < 3) state.whyStage += 1; else state.view = 'intro'; render(); }
+    else if (state.view === 'intro') { state.phase = 0; showLab(); }
+    else { state.phase = Math.min(3, state.phase + 1); render(); }
+  }
+  function navPrev() {
+    if (state.view === 'why') { if (state.whyStage > 1) { state.whyStage -= 1; render(); } }
+    else if (state.view === 'intro') { state.view = 'why'; state.whyStage = 3; render(); }
+    else if (state.phase === 0) { state.view = 'intro'; render(); }
+    else { state.phase -= 1; render(); }
+  }
+
+  // ---------- Draw lines and edit the layout ----------
+  function setMode(m, redraw = true) {
+    state.mode = m && state.mode !== m ? m : null;
+    selLine = -1;
+    document.body.classList.toggle('mode-draw', state.mode === 'draw');
+    document.body.classList.toggle('mode-edit', state.mode === 'edit');
+    $('drawBtn').setAttribute('aria-pressed', String(state.mode === 'draw'));
+    $('editBtn').setAttribute('aria-pressed', String(state.mode === 'edit'));
+    if (state.mode && state.view !== 'lab') { state.view = 'lab'; render(); }
+    else if (redraw && state.view === 'lab') { draw(); fit(); }
+  }
+  const saveLines = () => store.set('tornog-lines', userLines);
+  function movedLayout() {
+    const out = {};
+    for (const id in N) if (N[id].x !== DEFAULT_POS[id][0] || N[id].y !== DEFAULT_POS[id][1]) out[id] = [N[id].x, N[id].y];
+    return out;
+  }
+  const saveLayout = () => store.set('tornog-layout', movedLayout());
+  function labelLine(i) {
+    const t = prompt('Label for this line (leave empty for none):', userLines[i].label || '');
+    if (t === null) return;
+    userLines[i].label = t.trim().slice(0, 40); saveLines(); draw();
+  }
+  function deleteLine(i) { userLines.splice(i, 1); selLine = -1; saveLines(); draw(); }
+  const svgPt = (e) => {
+    const q = new DOMPoint(e.clientX, e.clientY).matrixTransform(svg.getScreenCTM().inverse());
+    return { x: q.x, y: q.y };
+  };
+  const nodeUnder = (e) => {
+    const t = document.elementFromPoint(e.clientX, e.clientY), g = t && t.closest && t.closest('#topo [data-id]');
+    return g ? g.dataset.id : null;
+  };
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  let drag = null;
+  svg.addEventListener('pointerdown', (e) => {
+    if (!state.mode || e.button > 0) return;
+    const g = e.target.closest('[data-id]'), lineG = e.target.closest('[data-line]');
+    if (state.mode === 'draw' && lineG && !g) { selLine = +lineG.dataset.line; draw(); return; }
+    if (!g) { if (selLine >= 0) { selLine = -1; draw(); } return; }
+    const id = g.dataset.id, p = svgPt(e);
+    e.preventDefault();
+    try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+    if (state.mode === 'edit') drag = { kind: 'move', id, dx: N[id].x - p.x, dy: N[id].y - p.y };
+    else drag = { kind: 'line', id, line: el('line', { x1: N[id].x, y1: N[id].y, x2: p.x, y2: p.y, class: 't-temp' }, svg) };
+  });
+  svg.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    const p = svgPt(e);
+    if (drag.kind === 'move') {
+      const n = N[drag.id];
+      n.x = clamp(Math.round((p.x + drag.dx) / 5) * 5, 20, 980);
+      n.y = clamp(Math.round((p.y + drag.dy) / 5) * 5, 15, 715);
+      buildS(); draw();
+    } else { drag.line.setAttribute('x2', p.x); drag.line.setAttribute('y2', p.y); }
+  });
+  function endDrag(e, cancel) {
+    if (!drag) return;
+    const d = drag; drag = null;
+    if (d.kind === 'move') { saveLayout(); return; }
+    d.line.remove();
+    const to = cancel ? null : nodeUnder(e);
+    if (to && to !== d.id) { userLines.push({ a: d.id, b: to, label: '' }); selLine = userLines.length - 1; saveLines(); draw(); }
+  }
+  svg.addEventListener('pointerup', (e) => endDrag(e, false));
+  svg.addEventListener('pointercancel', (e) => endDrag(e, true));
+  svg.addEventListener('dblclick', (e) => {
+    const lineG = e.target.closest('[data-line]');
+    if (state.mode === 'draw' && lineG) labelLine(+lineG.dataset.line);
+  });
+  $('drawBtn').addEventListener('click', () => setMode('draw'));
+  $('editBtn').addEventListener('click', () => setMode('edit'));
+  $('clearLines').addEventListener('click', () => {
+    if (userLines.length && confirm(`Remove all ${userLines.length} of your lines?`)) { userLines = []; selLine = -1; saveLines(); draw(); }
+  });
+  $('resetLayout').addEventListener('click', () => {
+    if (!confirm('Put every box back in its original place?')) return;
+    for (const id in N) [N[id].x, N[id].y] = DEFAULT_POS[id];
+    saveLayout(); buildS(); draw();
+  });
+  $('copyLayout').addEventListener('click', () => {
+    const json = JSON.stringify(movedLayout());
+    const done = () => { $('copyLayout').textContent = 'Copied'; setTimeout(() => { $('copyLayout').textContent = 'Copy layout'; }, 1500); };
+    if (navigator.clipboard) navigator.clipboard.writeText(json).then(done, () => prompt('Copy this layout:', json));
+    else prompt('Copy this layout:', json);
+  });
 
   // ---------- Controls ----------
+  buildWhy();
   PHASES.forEach((ph, i) => {
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'phase';
@@ -1208,9 +1495,9 @@
   $('themeBtn').addEventListener('click', toggleTheme);
   $('presentBtn').addEventListener('click', togglePresent);
   $('introBtn').addEventListener('click', toggleIntro);
-  $('introGo').addEventListener('click', () => {
-    if (state.talk) goStep(state.talk.i + 1); else { state.phase = 0; showLab(); }
-  });
+  $('introGo').addEventListener('click', () => (state.talk ? goStep(state.talk.i + 1) : navNext()));
+  $('whyGo').addEventListener('click', () => (state.talk ? goStep(state.talk.i + 1) : navNext()));
+  $('whyBtn').addEventListener('click', toggleWhy);
   $('talkBtn').addEventListener('click', () => (state.talk ? endTalk() : startTalk()));
   $('talkbar').addEventListener('click', (e) => {
     const len = e.target.closest('[data-len]'), step = e.target.closest('[data-step]');
@@ -1228,19 +1515,18 @@
       // From a detour, → returns to the current step first.
       goStep(state.talk.i + (onStep() ? (next ? 1 : -1) : 0)); e.preventDefault();
     }
-    else if (next) {
-      if (state.view === 'intro') state.phase = 0; else state.phase = Math.min(3, state.phase + 1);
-      showLab(); e.preventDefault();
-    }
-    else if (prev) {
-      if (state.view === 'lab' && state.phase === 0) { state.view = 'intro'; render(); }
-      else if (state.view === 'lab') { state.phase -= 1; render(); }
-      e.preventDefault();
-    }
+    else if (next) { navNext(); e.preventDefault(); }
+    else if (prev) { navPrev(); e.preventDefault(); }
     else if (k === 'ArrowDown') { state.flow = FLOWS[(fi + 1) % FLOWS.length].id; showLab(); e.preventDefault(); }
     else if (k === 'ArrowUp') { state.flow = FLOWS[(fi + FLOWS.length - 1) % FLOWS.length].id; showLab(); e.preventDefault(); }
     else if (k === 'f' || k === 'F') { if (state.view === 'lab') { state.tab = state.tab === 'main' ? 'pits' : 'main'; render(true, true); } }
     else if (k === 'i' || k === 'I') toggleIntro();
+    else if (k === 'w' || k === 'W') toggleWhy();
+    else if (k === 'd' || k === 'D') setMode('draw');
+    else if (k === 'e' || k === 'E') setMode('edit');
+    else if ((k === 'Delete' || k === 'Backspace') && state.mode === 'draw' && selLine >= 0) { deleteLine(selLine); e.preventDefault(); }
+    else if (k === 'Enter' && state.mode === 'draw' && selLine >= 0) labelLine(selLine);
+    else if (k === 'Escape' && state.mode) setMode(null);
     else if (k === 'g' || k === 'G') (state.talk ? endTalk() : startTalk());
     else if (k === 'Escape' && state.talk && !document.fullscreenElement) endTalk();
     else if (k === 'p' || k === 'P') togglePresent();
@@ -1263,6 +1549,8 @@
       return 'done';
     }
     if (h === '#intro') { state.view = 'intro'; return true; }
+    const w = h.match(/^#why(?:\/([1-3]))?$/);
+    if (w) { state.view = 'why'; state.whyStage = +w[1] || 1; return true; }
     const m = h.match(/^#p([0-3])(?:\/([\w-]+))?$/);
     if (!m) return false;
     state.view = 'lab';
@@ -1272,7 +1560,7 @@
   }
   window.addEventListener('hashchange', () => { if (fromHash() === true) render(false); });
   if (fromHash() !== 'done') render(false);
-  window.__lab = { state, S, N, FLOWS, TALKS, render, goStep, startTalk, endTalk };
+  window.__lab = { state, S, N, FLOWS, TALKS, render, goStep, startTalk, endTalk, setMode, buildS, draw, get userLines() { return userLines; } };
 })();
 </script>
 </body>
