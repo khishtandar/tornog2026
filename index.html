@@ -519,7 +519,8 @@
 
   /* Your own lines, and the layout editor */
   .t-temp { stroke: var(--accent); stroke-width: 3; stroke-dasharray: 6 5; pointer-events: none; }
-  #topo [data-id] { cursor: crosshair; }
+  /* A drag that starts on a box traces a flow (also on touch screens); a swipe on empty space still scrolls. */
+  #topo [data-id] { cursor: crosshair; touch-action: none; }
   body.mode-edit #topo [data-id] { cursor: grab; }
   body.mode-edit #topo .t-node rect { stroke-dasharray: 5 3; }
   body.mode-trace #topo, body.mode-edit #topo { touch-action: none; }
@@ -2535,10 +2536,9 @@
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   let drag = null;
   // Edit mode moves boxes. Otherwise a drag from one box to another traces a flow
-  // (any time with a mouse; on touch screens only in trace mode, so the diagram still scrolls).
+  // (mouse, pen or finger: a drag that starts on a box; empty space still scrolls the page on a phone).
   svg.addEventListener('pointerdown', (e) => {
     if (e.button > 0) return;
-    if (!state.mode && e.pointerType !== 'mouse') return;
     const g = e.target.closest('[data-id]');
     if (!g) return;
     const id = g.dataset.id, p = svgPt(e);
@@ -2547,6 +2547,8 @@
     if (state.mode === 'edit') drag = { kind: 'move', id, dx: N[id].x - p.x, dy: N[id].y - p.y };
     else drag = { kind: 'line', id, line: el('line', { x1: N[id].x, y1: N[id].y, x2: p.x, y2: p.y, class: 't-temp' }, svg) };
   });
+  // iOS Safari ignores touch-action on SVG shapes, so stop the page from scrolling when a touch starts on a box.
+  svg.addEventListener('touchstart', (e) => { if (e.target.closest && e.target.closest('[data-id]')) e.preventDefault(); }, { passive: false });
   svg.addEventListener('pointermove', (e) => {
     if (!drag) return;
     const p = svgPt(e);
