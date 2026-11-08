@@ -407,6 +407,31 @@
   .why:not([data-stage="3"]) .wp.sase svg { opacity: 0.08; filter: grayscale(1); }
   .why:not([data-stage="3"]) .wp.sase p { visibility: hidden; }
   .why-hint { font-size: 12.5px; color: var(--muted); }
+  .wwarn { display: grid; gap: 1px; padding: 6px 10px; border-left: 4px solid var(--warn); border-radius: 6px; background: color-mix(in srgb, var(--warn) 10%, var(--surface)); font-size: 13.5px !important; }
+  .wwarn b { font: 600 11px var(--display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--warn); }
+  /* Start page */
+  .st-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.9fr); gap: 40px; align-items: center; padding: 28px 16px; min-height: 62vh; }
+  .st-text { display: grid; gap: 12px; align-content: center; }
+  .start h2 { margin: 0; font: 700 clamp(46px, 5.4vw, 80px)/1 var(--display); letter-spacing: -0.01em; }
+  .st-sub { margin: 0; font: 600 clamp(20px, 2.2vw, 32px)/1.15 var(--display); color: var(--muted); }
+  .st-who { margin: 6px 0 0; font-size: 18px; }
+  .st-what { margin: 6px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; font-size: 16.5px; }
+  .st-what li { padding-left: 18px; position: relative; }
+  .st-what li::before { content: ""; position: absolute; left: 0; top: 0.5em; width: 8px; height: 8px; border-radius: 2px; background: var(--accent); }
+  .st-note { margin: 4px 0 0; font-size: 13px; color: var(--muted); }
+  .st-text .btn.go { justify-self: start; margin-top: 6px; }
+  .st-qr { margin: 0; display: grid; gap: 14px; justify-items: center; padding: 22px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface-2); }
+  .st-qr svg { width: min(100%, 340px); height: auto; border-radius: 10px; box-shadow: var(--shadow); }
+  .st-qr figcaption { display: grid; gap: 4px; text-align: center; font-size: 14px; color: var(--muted); }
+  .st-qr figcaption b { font: 700 20px var(--display); color: var(--ink); }
+  .st-url { font: 600 19px var(--mono); color: var(--accent-ink); }
+  .st-code { margin-top: 6px; font: 700 22px var(--mono); color: var(--ink); }
+  @media (max-width: 900px) {
+    .st-grid { grid-template-columns: 1fr; min-height: 0; padding: 8px 0; gap: 20px; }
+    .start h2 { font-size: 40px; }
+    .st-qr { padding: 14px; }
+    .st-url { font-size: 15px; overflow-wrap: anywhere; }
+  }
   .wask { display: grid; gap: 1px; padding: 7px 10px; border-left: 4px solid var(--accent); border-radius: 6px; background: var(--accent-soft); font-size: 14.5px !important; font-weight: 600; color: var(--ink); }
   .wask b { font: 600 11px var(--display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent-ink); }
   /* 14 issues: a tighter list below 1000px of height */
@@ -570,6 +595,33 @@
     </div>
   </header>
 
+  <section class="panel intro start" id="start" aria-labelledby="startTitle" hidden>
+    <div class="st-grid">
+      <div class="st-text">
+        <span class="eyebrow">TorNOG Fall Meetup · November 12, 2026</span>
+        <h2 id="startTitle">SASE in Practice</h2>
+        <p class="st-sub">Lessons from the field (and what AI changes)</p>
+        <p class="st-who"><b>Pouya Khishtandar</b> · linkedin.com/in/khishtandar</p>
+        <ul class="st-what">
+          <li>Why SASE: 14 problems with the legacy network, and how SASE covers each</li>
+          <li>A migration in four phases, with 18 traffic flows you can step through</li>
+          <li>What if: a DC outage, ransomware, a DNS attack, an AI data leak</li>
+        </ul>
+        <p class="st-note">Vendor-neutral and simplified. Views are my own, not my employer's.</p>
+        <button class="btn go" id="startGo" type="button">Start →</button>
+      </div>
+      <figure class="st-qr">
+        <svg viewBox="-3 -3 35 35" role="img" aria-label="QR code for khishtandar.com/tornog2026"><rect x="-3" y="-3" width="35" height="35" fill="#FFFFFF"/><path d="M0 0.5h7m2 0h4m2 0h6m1 0h7M0 1.5h1m5 0h1m13 0h1m1 0h1m5 0h1M0 2.5h1m1 0h3m1 0h1m1 0h4m2 0h1m1 0h1m2 0h2m1 0h1m1 0h3m1 0h1M0 3.5h1m1 0h3m1 0h1m1 0h1m8 0h3m2 0h1m1 0h3m1 0h1M0 4.5h1m1 0h3m1 0h1m1 0h1m1 0h6m1 0h4m1 0h1m1 0h3m1 0h1M0 5.5h1m5 0h1m1 0h3m2 0h5m2 0h1m1 0h1m5 0h1M0 6.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M8 7.5h1m2 0h3m2 0h1m2 0h1M0 8.5h1m1 0h5m3 0h1m3 0h1m2 0h1m4 0h5M2 9.5h1m5 0h1m2 0h1m7 0h6m3 0h1M0 10.5h4m2 0h2m1 0h1m1 0h2m2 0h1m5 0h3M0 11.5h1m1 0h2m3 0h1m6 0h1m1 0h1m1 0h4m2 0h2m1 0h1M0 12.5h2m1 0h4m3 0h2m3 0h3m1 0h1m3 0h1m1 0h2M0 13.5h1m2 0h2m3 0h1m1 0h2m1 0h2m2 0h3m2 0h3m3 0h1M0 14.5h3m1 0h1m1 0h1m1 0h1m2 0h5m1 0h1m5 0h4M2 15.5h1m1 0h2m6 0h2m5 0h1m1 0h1m5 0h1M0 16.5h1m5 0h1m1 0h1m3 0h1m1 0h4m2 0h1m4 0h2M0 17.5h2m1 0h2m4 0h1m9 0h6m1 0h1m1 0h1M0 18.5h1m3 0h1m1 0h1m2 0h2m4 0h1m1 0h2m1 0h2m2 0h1m1 0h1M0 19.5h1m2 0h3m1 0h2m1 0h2m2 0h2m2 0h1m8 0h1M0 20.5h1m2 0h2m1 0h1m4 0h1m3 0h3m2 0h5m1 0h3M8 21.5h1m1 0h1m1 0h3m2 0h2m1 0h1m3 0h5M0 22.5h7m5 0h4m1 0h1m1 0h2m1 0h1m1 0h3M0 23.5h1m5 0h1m1 0h1m1 0h4m4 0h3m3 0h1m3 0h1M0 24.5h1m1 0h3m1 0h1m1 0h2m4 0h4m2 0h5m1 0h2M0 25.5h1m1 0h3m1 0h1m1 0h2m1 0h2m4 0h2m6 0h4M0 26.5h1m1 0h3m1 0h1m1 0h4m1 0h5m1 0h1m1 0h7M0 27.5h1m5 0h1m5 0h2m2 0h1m3 0h1m1 0h2m1 0h1m1 0h1M0 28.5h7m1 0h1m1 0h1m4 0h1m1 0h1m1 0h1m1 0h2m3 0h1" stroke="#000000" fill="none" shape-rendering="crispEdges"/></svg>
+        <figcaption>
+          <b>Follow along on your phone</b>
+          <span class="st-url">khishtandar.com/tornog2026</span>
+          <span>Drag between any two boxes to trace a flow, or try a "what if".</span>
+          <span class="st-code" id="stCode" hidden></span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
   <section class="panel intro why" id="why" aria-labelledby="whyTitle" data-stage="1" hidden>
     <div class="intro-head">
       <h2 id="whyTitle">Why change: what hurts in the legacy network, and how SASE covers it</h2>
@@ -592,6 +644,7 @@
             <figcaption><span class="wk">With SASE</span><span class="wq">revealed in step 3</span></figcaption>
             <svg id="whyS" viewBox="0 0 460 260" role="img" aria-label="The same network with SASE"></svg>
             <p id="whySp"></p>
+            <p class="wwarn" id="whyW" hidden></p>
           </figure>
         </div>
       </div>
@@ -1794,7 +1847,7 @@
     ['Compliance and audits', 'Proving who can reach what means exporting configs and logs from many boxes, then reconciling them by hand.', 'One policy and one log: the audit report is a query, by user, app and site.', ['one', 'anal'], 'How long does it take you to prove to an auditor who can reach what?'],
     ['Operations cost', 'Every change touches several boxes and teams, plus carrier tickets. Most of the time goes to keeping boxes alive.', 'One change in one console applies everywhere, with fewer boxes, circuits and contracts. Compare the subscription honestly with hardware, support and people time.', ['one', 'sub'], 'How long does a simple change take, from ticket to done?'],
     ['Slow to troubleshoot', '"Teams is bad" turns into a carrier ticket and logs from three different tools.', 'Loss, jitter and latency per link and per application, next to the security events, in one place.', ['qos', 'anal'], 'How long did your last "the network is slow" ticket take to close?'],
-    ['Mergers and new companies', 'Joining an acquired company takes months: new circuits, overlapping IP ranges, and firewall rules on both sides.', 'Their sites get edges, their users get agents, and both sides reach each other app by app under one policy, in days or weeks.', ['ztp', 'ztna'], 'How long did it take to connect the last company you acquired?'],
+    ['Mergers and new companies', 'Joining an acquired company takes months: new circuits, overlapping IP ranges, and firewall rules on both sides.', 'Their sites get edges, their users get agents, and both sides reach each other app by app through connectors, so overlapping ranges don\'t block day-one access. Renumber later, if you fully merge.', ['ztp', 'ztna'], 'How long did it take to connect the last company you acquired?', 'Overlap still matters site to site: server-to-server traffic and AD trusts need routing or NAT, and a full integration still means renumbering.'],
     ['Blind to SaaS data and AI', 'URL categories only allow or block. No view of tenants, uploads or prompts.', 'CASB and DLP see the data. AI tools are discovered and controlled per app and activity.', ['casb', 'dlp', 'aidisc'], 'Do you know which AI tools your users paste company data into?']
   ];
   // Tags that are not single capabilities.
@@ -1880,7 +1933,7 @@
         badges: [[230, 130, 'overlapping IPs', 'bad']] },
       sase: { nodes: [['us', 80, 130, 'Your users', ''], ['pop', 230, 130, 'PoP', '', 'pop'], ['them', 380, 130, 'Their apps', 'edge or connector', 'box', 'good']],
         links: [['us', 'pop', 'flow'], ['pop', 'them', 'ok']],
-        badges: [[230, 45, 'app by app, no IP merge', 'good'], [230, 215, 'days or weeks, not months', 'good']] } },
+        badges: [[230, 45, 'app by app: overlap doesn\'t matter', 'good'], [230, 215, 'days or weeks, not months', 'good']] } },
     { legacy: { nodes: [['u', 68, 122, 'User', ''], ['px', 215, 122, 'Proxy', 'sees a domain only'], ['ai', 385, 45, 'GenAI', 'personal account'], ['pc', 385, 200, 'Personal cloud', 'Dropbox · Gmail']],
         links: [['u', 'px', 'flow'], ['px', 'ai', 'bad', 'source code'], ['px', 'pc', 'bad', 'customer list']],
         badges: [[215, 245, 'allowed by category, nobody sees what left', 'bad']] },
@@ -1947,7 +2000,9 @@
     $('whyList').addEventListener('click', (e) => { const b = e.target.closest('[data-row]'); if (b) { state.whyRow = +b.dataset.row; render(); } });
   }
   function renderWhy() {
-    const i = state.whyRow, [t, bad, good, caps, ask] = WHY[i];
+    const i = state.whyRow, [t, bad, good, caps, ask, warn] = WHY[i];
+    $('whyW').hidden = !warn;
+    $('whyW').innerHTML = warn ? `<b>Watch out</b>${esc(warn)}` : '';
     $('whyQ').innerHTML = `<b>Your network?</b>${esc(ask)}`;
     $('whyList').querySelectorAll('.wrow').forEach((b, j) => b.setAttribute('aria-pressed', String(j === i)));
     $('whyT').textContent = t;
@@ -1959,9 +2014,10 @@
   const WHY_NEXT = ['Next: what SASE is →', 'Next: how SASE covers it →', 'Next: SD-WAN + SSE in detail →'];
 
   // ---------- Talk run orders ----------
-  // { v: 'why', s: 1-3 }, { v: 'intro' } or { p: phase, f: flow, tab: 'main' | 'pits' }, t = planned seconds, opt = "if time allows".
+  // { v: 'start' }, { v: 'why', s: 1-3 }, { v: 'intro' } or { p: phase, f: flow, tab: 'main' | 'pits' }, t = planned seconds, opt = "if time allows".
   const TALKS = {
     10: [
+      { v: 'start', t: 10, cue: 'SASE in Practice: scan to follow along' },
       { v: 'why', s: 1, t: 20, cue: 'What hurts in the legacy network' },
       { v: 'why', s: 2, t: 20, cue: 'What SASE is' },
       { v: 'why', s: 3, t: 50, cue: 'How SASE covers each issue' },
@@ -1976,6 +2032,7 @@
       { p: 2, f: 'branch-ai', t: 60, cue: 'Discover, then control by tenant and activity', opt: true }
     ],
     15: [
+      { v: 'start', t: 15, cue: 'SASE in Practice: scan to follow along' },
       { v: 'why', s: 1, t: 30, cue: 'What hurts in the legacy network' },
       { v: 'why', s: 2, t: 30, cue: 'What SASE is' },
       { v: 'why', s: 3, t: 60, cue: 'How SASE covers each issue' },
@@ -2270,6 +2327,7 @@
     if (!state.talk) return false;
     const s = steps()[state.talk.i];
     if (s.v === 'intro') return state.view === 'intro';
+    if (s.v === 'start') return state.view === 'start';
     if (s.v === 'why') return state.view === 'why' && state.whyStage === s.s;
     return state.view === 'lab' && state.phase === s.p && state.flow === s.f && state.tab === (s.tab || 'main');
   }
@@ -2278,6 +2336,7 @@
     state.talk.i = Math.max(0, Math.min(list.length - 1, i));
     const s = list[state.talk.i];
     if (s.v === 'intro') state.view = 'intro';
+    else if (s.v === 'start') state.view = 'start';
     else if (s.v === 'why') { state.view = 'why'; state.whyStage = s.s; }
     else { state.view = 'lab'; state.phase = s.p; state.flow = s.f; state.tab = s.tab || 'main'; }
     render(true, true);
@@ -2323,6 +2382,7 @@
   function hashFor() {
     if (onStep()) return `#talk${state.talk.len}/${state.talk.i + 1}`;
     if (state.view === 'intro') return '#intro';
+    if (state.view === 'start') return '#start';
     if (state.view === 'why') return `#why/${state.whyStage}`;
     return `#p${state.phase}/${state.flow}`;
   }
@@ -2330,7 +2390,7 @@
     if (!keepTab) state.tab = 'main';
     const v = state.view, lab = v === 'lab';
     document.body.classList.toggle('labview', lab);
-    $('intro').hidden = v !== 'intro'; $('why').hidden = v !== 'why'; $('phases').hidden = !lab; $('main').hidden = !lab;
+    $('start').hidden = v !== 'start'; $('intro').hidden = v !== 'intro'; $('why').hidden = v !== 'why'; $('phases').hidden = !lab; $('main').hidden = !lab;
     $('introBtn').textContent = v === 'intro' ? 'Diagram' : 'What is SASE';
     $('whyBtn').textContent = v === 'why' ? 'Diagram' : 'Why SASE';
     if (v === 'why') {
@@ -2353,7 +2413,7 @@
   // In present mode the Why and intro slides scale like a slide: laid out at a fixed design width,
   // then zoomed as a whole so the slide fills the window without scrolling.
   function fitSlide() {
-    for (const id of ['why', 'intro']) {
+    for (const id of ['start', 'why', 'intro']) {
       const w = $(id);
       w.style.zoom = ''; w.style.width = ''; w.style.justifySelf = '';
       if (state.view !== id || !document.body.classList.contains('present') || innerWidth <= 900) continue;
@@ -2390,14 +2450,17 @@
   const showLab = () => { state.view = 'lab'; render(); };
   function toggleIntro() { state.view = state.view === 'intro' ? 'lab' : 'intro'; render(); }
   function toggleWhy() { if (state.view === 'why') state.view = 'lab'; else { state.view = 'why'; state.whyStage = 1; } render(); }
-  // Outside talk mode, → and ← walk: Why SASE (3 steps) → What SASE is → phase 0 … phase 3.
+  function toggleStart() { state.view = state.view === 'start' ? 'lab' : 'start'; render(); }
+  // Outside talk mode, → and ← walk: Start → Why SASE (3 steps) → What SASE is → phase 0 … phase 3.
   function navNext() {
-    if (state.view === 'why') { if (state.whyStage < 3) state.whyStage += 1; else state.view = 'intro'; render(); }
+    if (state.view === 'start') { state.view = 'why'; state.whyStage = 1; render(); }
+    else if (state.view === 'why') { if (state.whyStage < 3) state.whyStage += 1; else state.view = 'intro'; render(); }
     else if (state.view === 'intro') { state.phase = 0; showLab(); }
     else { state.phase = Math.min(3, state.phase + 1); render(); }
   }
   function navPrev() {
-    if (state.view === 'why') { if (state.whyStage > 1) { state.whyStage -= 1; render(); } }
+    if (state.view === 'start') return;
+    if (state.view === 'why') { if (state.whyStage > 1) state.whyStage -= 1; else state.view = 'start'; render(); }
     else if (state.view === 'intro') { state.view = 'why'; state.whyStage = 3; render(); }
     else if (state.phase === 0) { state.view = 'intro'; render(); }
     else { state.phase -= 1; render(); }
@@ -2572,6 +2635,7 @@
   $('presentBtn').addEventListener('click', togglePresent);
   $('introBtn').addEventListener('click', toggleIntro);
   $('introGo').addEventListener('click', () => (state.talk ? goStep(state.talk.i + 1) : navNext()));
+  $('startGo').addEventListener('click', () => (state.talk ? goStep(state.talk.i + 1) : navNext()));
   $('whyGo').addEventListener('click', () => (state.talk ? goStep(state.talk.i + 1) : navNext()));
   $('whyBtn').addEventListener('click', toggleWhy);
   $('talkBtn').addEventListener('click', () => (state.talk ? endTalk() : startTalk()));
@@ -2604,6 +2668,7 @@
     }
     else if (k === 's' || k === 'S') { if (state.view === 'lab') setPanel(!state.panel); }
     else if (k === 'i' || k === 'I') toggleIntro();
+    else if (k === 'h' || k === 'H') toggleStart();
     else if (k === 'w' || k === 'W') toggleWhy();
     else if (k === 'd' || k === 'D') setMode('trace');
     else if (k === 'e' || k === 'E') setMode('edit');
@@ -2631,6 +2696,7 @@
       return 'done';
     }
     if (h === '#intro') { state.view = 'intro'; return true; }
+    if (h === '#start') { state.view = 'start'; return true; }
     const w = h.match(/^#why(?:\/([1-3]))?$/);
     if (w) { state.view = 'why'; state.whyStage = +w[1] || 1; return true; }
     const m = h.match(/^#p([0-3])(?:\/([\w-]+))?$/);
