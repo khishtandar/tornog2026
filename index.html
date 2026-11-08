@@ -216,6 +216,86 @@
   body.present .wrap { max-width: none; padding: 8px 12px; gap: 8px; }
   body.present svg.topo { max-height: calc(100vh - 200px); }
   body.present .detail { max-height: calc(100vh - 150px); }
+
+  /* Intro: what SASE means */
+  .intro { padding: 18px 22px 20px; display: grid; gap: 16px; align-content: start; }
+  .intro-head h2 { margin: 0; font: 700 clamp(26px, 2.6vw, 34px)/1.1 var(--display); }
+  .intro-head p { margin: 6px 0 0; color: var(--muted); font-size: 16px; max-width: 80ch; }
+  .eq { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1.1fr); gap: 12px; align-items: stretch; }
+  .op { align-self: center; font: 700 36px/1 var(--display); color: var(--muted); }
+  .half { --c: var(--c-net); border: 1px solid color-mix(in srgb, var(--c) 40%, transparent); border-top: 4px solid var(--c); border-radius: 12px; padding: 12px 14px; background: color-mix(in srgb, var(--c) 6%, var(--surface)); display: grid; gap: 8px; align-content: start; }
+  .half.sse { --c: var(--c-sec); }
+  .half.sase { --c: var(--cloud); }
+  .half .sub { font: 600 12px var(--display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .half h3 { margin: 0; font: 700 21px/1.15 var(--display); color: var(--c); }
+  .half ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 14.5px; }
+  .half li { padding-left: 14px; position: relative; }
+  .half li::before { content: ""; position: absolute; left: 0; top: 0.6em; width: 6px; height: 6px; border-radius: 2px; background: var(--c); }
+  .shift { display: grid; grid-template-columns: 170px minmax(0, 1fr) 24px minmax(0, 1fr); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; font-size: 14.5px; }
+  .shift > * { padding: 9px 12px; border-top: 1px solid var(--line); }
+  .shift > .sh { border-top: 0; font: 600 12px var(--display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); background: var(--surface-2); }
+  .shift .area { font-weight: 600; background: var(--surface-2); }
+  .shift .was { color: var(--muted); }
+  .shift .to { color: var(--accent); font-weight: 700; padding-left: 0; padding-right: 0; text-align: center; }
+  .intro-foot { display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center; justify-content: space-between; }
+  .intro-foot p { margin: 0; color: var(--muted); font-size: 13.5px; max-width: 95ch; }
+  .btn.go { border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  /* On a projector-sized screen, use the height: bigger type for the room. */
+  @media (min-width: 1400px) and (min-height: 1000px) {
+    .intro { padding: 26px 30px 28px; gap: 22px; }
+    .intro-head h2 { font-size: 46px; }
+    .intro-head p { font-size: 20px; max-width: 105ch; }
+    .half { padding: 16px 18px; gap: 10px; }
+    .half .sub { font-size: 14px; }
+    .half h3 { font-size: 28px; }
+    .half ul { font-size: 18px; gap: 9px; }
+    .op { font-size: 46px; }
+    .shift { font-size: 17.5px; grid-template-columns: 210px minmax(0, 1fr) 28px minmax(0, 1fr); }
+    .shift > * { padding: 12px 14px; }
+    .shift > .sh { font-size: 14px; }
+    .intro-foot p { font-size: 15.5px; }
+    .btn.go { font-size: 15px; padding: 11px 16px; }
+  }
+  @media (max-width: 900px) {
+    .eq { grid-template-columns: 1fr; }
+    .op { justify-self: center; font-size: 28px; }
+    .shift { grid-template-columns: 1fr; }
+    .shift > .sh, .shift .to { display: none; }
+    .shift .was::before { content: "Before: "; font-weight: 600; }
+    .shift .now::before { content: "After: "; font-weight: 600; color: var(--ink); }
+    .shift .was, .shift .now { border-top: 0; padding-top: 0; }
+  }
+
+  /* Talk mode: a fixed run order for the time slot */
+  .talkbar { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; flex: none; }
+  .seg button { font: 500 12px/1 var(--body); background: var(--surface); color: var(--muted); border: 0; padding: 8px 9px; cursor: pointer; }
+  .seg button + button { border-left: 1px solid var(--line); }
+  .seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
+  .tb-prog { display: flex; gap: 3px; width: 140px; flex: none; }
+  .tb-prog button { height: 8px; min-width: 6px; padding: 0; border: 0; border-radius: 3px; background: var(--line); cursor: pointer; }
+  .tb-prog button.opt { background: repeating-linear-gradient(90deg, var(--line) 0 3px, transparent 3px 5px); }
+  .tb-prog button.done { background: color-mix(in srgb, var(--accent) 45%, var(--surface)); }
+  .tb-prog button.cur { background: var(--accent); }
+  .tb-pos { font: 500 12.5px var(--mono); color: var(--muted); flex: none; }
+  .tb-cue { font: 600 15px/1.2 var(--display); max-width: 380px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tb-cue em { font: 500 11px var(--body); font-style: normal; color: var(--warn); border: 1px solid currentColor; border-radius: 999px; padding: 1px 6px; margin-left: 6px; vertical-align: 2px; }
+  .tb-time { font: 500 12.5px var(--mono); color: var(--muted); background: none; border: 1px solid var(--line); border-radius: 8px; padding: 7px 8px; cursor: pointer; flex: none; }
+  .tb-time.late { color: var(--bad); border-color: var(--bad); }
+  body.talk .keys, body.talk #introBtn, body.talk #themeBtn { display: none; }
+  /* Keep the header on one line while talking: the cue shortens instead of wrapping. */
+  @media (min-width: 901px) {
+    body.talk .top { flex-wrap: nowrap; }
+    body.talk .brand { flex: none; }
+    body.talk .tools, body.talk .talkbar { min-width: 0; }
+    body.talk .tb-cue { min-width: 0; flex: 0 1 auto; }
+  }
+  @media (min-width: 901px) and (max-width: 1700px) { body.talk h1 small { display: none; } }
+  @media (max-width: 900px) {
+    .tools { flex-wrap: wrap; }
+    .talkbar { flex-wrap: wrap; width: 100%; }
+    .tb-cue { max-width: none; white-space: normal; flex: 1 1 100%; order: 5; }
+  }
 </style>
 </head>
 <body>
@@ -226,15 +306,78 @@
       <h1>SASE in Practice <small>Lessons from the field, and what AI changes</small></h1>
     </div>
     <div class="tools">
-      <span class="keys"><kbd>←</kbd><kbd>→</kbd> phase · <kbd>↑</kbd><kbd>↓</kbd> flow · <kbd>F</kbd> fixes/pitfalls · <kbd>P</kbd> present · <kbd>T</kbd> theme</span>
+      <span class="keys"><kbd>←</kbd><kbd>→</kbd> phase · <kbd>↑</kbd><kbd>↓</kbd> flow · <kbd>F</kbd> fixes/pitfalls · <kbd>I</kbd> intro · <kbd>G</kbd> talk · <kbd>P</kbd> present · <kbd>T</kbd> theme</span>
+      <div class="talkbar" id="talkbar" hidden>
+        <div class="seg" role="group" aria-label="Talk length">
+          <button type="button" data-len="10">10 min</button><button type="button" data-len="15">15 min</button>
+        </div>
+        <span class="tb-prog" id="tbProg"></span>
+        <span class="tb-pos" id="tbPos"></span>
+        <span class="tb-cue" id="tbCue"></span>
+        <button class="tb-time" id="tbTime" type="button" title="Elapsed / planned end of this step. Click to restart the clock."></button>
+      </div>
+      <button class="btn" id="introBtn" type="button">What is SASE</button>
+      <button class="btn" id="talkBtn" type="button">Talk</button>
       <button class="btn" id="presentBtn" type="button">Present</button>
       <button class="btn" id="themeBtn" type="button" aria-label="Toggle light or dark theme">Theme</button>
     </div>
   </header>
 
+  <section class="panel intro" id="intro" aria-labelledby="introTitle" hidden>
+    <div class="intro-head">
+      <h2 id="introTitle">What SASE actually means</h2>
+      <p>Secure Access Service Edge: the WAN and the security stack, delivered from one cloud under one policy. Sites, users and cloud workloads connect to the nearest point of presence (PoP), and everything is inspected there.</p>
+    </div>
+    <div class="eq">
+      <div class="half">
+        <span class="sub">The network half</span>
+        <h3>SD-WAN</h3>
+        <ul>
+          <li>An edge at every site: a box, a virtual edge in the cloud, or an agent on a laptop</li>
+          <li>Any underlay: broadband, 5G, and MPLS while it lasts</li>
+          <li>Application-aware routing, QoS and loss mitigation</li>
+          <li>A provider backbone (middle mile) between PoPs</li>
+        </ul>
+      </div>
+      <span class="op" aria-hidden="true">+</span>
+      <div class="half sse">
+        <span class="sub">The security half</span>
+        <h3>SSE (Security Service Edge)</h3>
+        <ul>
+          <li>SWG: web filtering, TLS inspection, anti-malware</li>
+          <li>CASB and DLP: SaaS control and data protection</li>
+          <li>ZTNA: access to one app at a time, not the network</li>
+          <li>FWaaS and IPS: for internet and site-to-site traffic</li>
+        </ul>
+      </div>
+      <span class="op" aria-hidden="true">=</span>
+      <div class="half sase">
+        <span class="sub">Together</span>
+        <h3>SASE: one platform, one policy</h3>
+        <ul>
+          <li>The policy is written once and enforced in every PoP</li>
+          <li>The same rules for a branch, a remote user and a cloud VPC</li>
+          <li>Single-pass inspection, so no chain of boxes to size</li>
+          <li>One log for network and security events</li>
+        </ul>
+      </div>
+    </div>
+    <div class="shift" role="table" aria-label="What changes for the network operator">
+      <span class="sh" role="columnheader">For the operator</span><span class="sh" role="columnheader">Before</span><span class="sh" aria-hidden="true"></span><span class="sh" role="columnheader">After</span>
+      <span class="area">Where security runs</span><span class="was">Appliances at the DC perimeter and in branches, sized for peak and refreshed every few years</span><span class="to" aria-hidden="true">→</span><span class="now">The same inspection in every PoP, run and scaled by the provider</span>
+      <span class="area">How sites connect</span><span class="was">MPLS to the DC, IPsec as a backup, internet backhauled through the DC</span><span class="to" aria-hidden="true">→</span><span class="now">Any internet link to the nearest PoP. MPLS shrinks, then goes</span>
+      <span class="area">How users get in</span><span class="was">VPN onto the network, trusted once at login</span><span class="to" aria-hidden="true">→</span><span class="now">ZTNA to one app at a time, with identity and device posture checked every session</span>
+      <span class="area">How policy is managed</span><span class="was">A rulebase per box: router, firewall, proxy and VPN, each with its own console</span><span class="to" aria-hidden="true">→</span><span class="now">One policy and one log for network and security, from one place</span>
+    </div>
+    <div class="intro-foot">
+      <p>Gartner named SASE in 2019, and the SSE label for the security half followed in 2021. Whether it comes from one vendor or two (SD-WAN from one, SSE from another), ask where the policy lives and how many consoles you will run.</p>
+      <button class="btn go" id="introGo" type="button">Start with the legacy network →</button>
+    </div>
+  </section>
+
   <nav class="panel phases" id="phases" aria-label="Migration phase"></nav>
 
-  <div class="main">
+  <div class="main" id="main">
     <section class="panel stage" aria-label="Network diagram">
       <div class="flows" id="flows" role="group" aria-label="Traffic flow"></div>
       <div class="canvas">
@@ -705,8 +848,41 @@
 
   S['branch-cloud'] = [legacyCloud, { ...legacyCloud, note: 'Unchanged: phase 1 moved remote users only.' }, saseCloud, { ...saseCloud, pits: ['cloudHA', 'mtu'] }];
 
+  // ---------- Talk run orders ----------
+  // { v: 'intro' } or { p: phase, f: flow, tab: 'main' | 'pits' }, t = planned seconds, opt = "if time allows".
+  const TALKS = {
+    10: [
+      { v: 'intro', t: 60, cue: 'What SASE actually means: SD-WAN + SSE, one policy' },
+      { p: 0, f: 'branch-saas', t: 60, cue: 'Where most networks start: everything backhauled' },
+      { p: 1, f: 'remote-app', t: 60, cue: 'Phase 1: remote users first, VPN to ZTNA' },
+      { p: 1, f: 'remote-app', tab: 'pits', t: 45, cue: 'Field lessons: the app list, private DNS, two agents' },
+      { p: 2, f: 'branch-dc', t: 45, cue: 'Phase 2: branches in waves, next to MPLS' },
+      { p: 2, f: 'branch-dc', tab: 'pits', t: 60, cue: 'Field lesson: asymmetric return over MPLS' },
+      { p: 2, f: 'branch-saas', tab: 'pits', t: 60, cue: 'Field lessons: egress IP, TLS inspection, MTU' },
+      { p: 3, f: 'branch-branch', tab: 'pits', t: 45, cue: 'Target state: the last mile is now your WAN' },
+      { p: 0, f: 'branch-ai', t: 45, cue: 'What AI changes: allow or block is not enough', opt: true },
+      { p: 2, f: 'branch-ai', t: 60, cue: 'Discover, then control by tenant and activity', opt: true }
+    ],
+    15: [
+      { v: 'intro', t: 75, cue: 'What SASE actually means: SD-WAN + SSE, one policy' },
+      { p: 0, f: 'branch-saas', t: 90, cue: 'Where most networks start: everything backhauled' },
+      { p: 1, f: 'remote-app', t: 75, cue: 'Phase 1: remote users first, VPN to ZTNA' },
+      { p: 1, f: 'remote-app', tab: 'pits', t: 60, cue: 'Field lessons: the app list, private DNS, two agents' },
+      { p: 2, f: 'branch-dc', t: 60, cue: 'Phase 2: branches in waves, next to MPLS' },
+      { p: 2, f: 'branch-dc', tab: 'pits', t: 75, cue: 'Field lesson: asymmetric return over MPLS' },
+      { p: 2, f: 'branch-branch', tab: 'pits', t: 60, cue: 'Field lesson: the DC becomes a transit hub' },
+      { p: 2, f: 'branch-saas', t: 45, cue: 'The same SaaS flow, now inspected at the nearest PoP' },
+      { p: 2, f: 'branch-saas', tab: 'pits', t: 60, cue: 'Field lessons: egress IP, TLS inspection, MTU' },
+      { p: 3, f: 'branch-branch', tab: 'pits', t: 60, cue: 'Target state: the last mile is now your WAN' },
+      { p: 0, f: 'branch-ai', t: 60, cue: 'What AI changes: allow or block is not enough', opt: true },
+      { p: 2, f: 'branch-ai', t: 60, cue: 'Discover, then control by tenant and activity', opt: true },
+      { p: 2, f: 'branch-ai', tab: 'pits', t: 45, cue: 'AI pitfalls: TLS, AI inside SaaS, logging prompts', opt: true }
+    ]
+  };
+
   // ---------- State ----------
-  const state = { phase: 0, flow: 'branch-saas', tab: 'main' };
+  // view: 'lab' (diagram) or 'intro'. talk: null, or { len, i } while stepping through a run order.
+  const state = { phase: 0, flow: 'branch-saas', tab: 'main', view: 'lab', talk: null };
   const $ = (id) => document.getElementById(id);
   const svg = $('topo');
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -899,11 +1075,94 @@
     $('flows').querySelectorAll('.chip').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.id === state.flow)));
   }
 
+  // ---------- Talk mode ----------
+  const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+  let talkStart = 0, lastLen = 15;
+  const steps = () => TALKS[state.talk.len];
+  // True while the screen shows the current talk step (not a detour with the arrow keys).
+  function onStep() {
+    if (!state.talk) return false;
+    const s = steps()[state.talk.i];
+    if (s.v === 'intro') return state.view === 'intro';
+    return state.view === 'lab' && state.phase === s.p && state.flow === s.f && state.tab === (s.tab || 'main');
+  }
+  function goStep(i) {
+    const list = steps();
+    state.talk.i = Math.max(0, Math.min(list.length - 1, i));
+    const s = list[state.talk.i];
+    if (s.v === 'intro') state.view = 'intro';
+    else { state.view = 'lab'; state.phase = s.p; state.flow = s.f; state.tab = s.tab || 'main'; }
+    render(true, true);
+  }
+  function startTalk(len) {
+    lastLen = len || lastLen;
+    state.talk = { len: lastLen, i: 0 };
+    talkStart = Date.now();
+    goStep(0);
+  }
+  function endTalk() { state.talk = null; render(true, true); }
+  function setLen(len) {
+    if (!state.talk || state.talk.len === len) return;
+    const cur = steps()[state.talk.i];
+    lastLen = state.talk.len = len;
+    const j = steps().findIndex((s) => s.cue === cur.cue && (s.tab || 'main') === (cur.tab || 'main'));
+    goStep(j < 0 ? 0 : j);
+  }
+  function tick() {
+    if (!state.talk) return;
+    const list = steps(), plan = list.slice(0, state.talk.i + 1).reduce((a, s) => a + s.t, 0);
+    const el = (Date.now() - talkStart) / 1000;
+    $('tbTime').textContent = `${fmt(el)} / ${fmt(plan)}`;
+    $('tbTime').classList.toggle('late', el > plan + 15);
+  }
+  setInterval(tick, 1000);
+  function renderTalk() {
+    const t = state.talk;
+    document.body.classList.toggle('talk', !!t);
+    $('talkbar').hidden = !t;
+    $('talkBtn').textContent = t ? 'End talk' : 'Talk';
+    if (!t) return;
+    const list = steps(), s = list[t.i], total = list.reduce((a, x) => a + x.t, 0);
+    $('talkbar').querySelectorAll('[data-len]').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.len === t.len)));
+    $('tbProg').innerHTML = list.map((x, j) => `<button type="button" data-step="${j}" style="flex:${x.t}" class="${j < t.i ? 'done' : j === t.i ? 'cur' : ''}${x.opt ? ' opt' : ''}" title="${j + 1}. ${esc(x.cue)} (${fmt(x.t)})${x.opt ? ', if time' : ''}" aria-label="Step ${j + 1}: ${esc(x.cue)}"></button>`).join('');
+    $('tbProg').title = `Planned ${fmt(total)}`;
+    $('tbPos').textContent = `${t.i + 1}/${list.length}`;
+    $('tbCue').innerHTML = `${esc(s.cue)}${s.opt ? '<em>if time</em>' : ''}`;
+    $('tbCue').style.opacity = onStep() ? '' : '.5';
+    tick();
+  }
+
+  function hashFor() {
+    if (onStep()) return `#talk${state.talk.len}/${state.talk.i + 1}`;
+    if (state.view === 'intro') return '#intro';
+    return `#p${state.phase}/${state.flow}`;
+  }
   function render(push = true, keepTab = false) {
     if (!keepTab) state.tab = 'main';
-    renderControls(); draw(); renderDetail();
-    if (push) history.replaceState(null, '', `#p${state.phase}/${state.flow}`);
+    const intro = state.view === 'intro';
+    $('intro').hidden = !intro; $('phases').hidden = intro; $('main').hidden = intro;
+    $('introBtn').textContent = intro ? 'Diagram' : 'What is SASE';
+    if (!intro) { renderControls(); draw(); renderDetail(); }
+    renderTalk();
+    fit();
+    if (push) history.replaceState(null, '', hashFor());
   }
+  // Size the diagram and the side panel to the window, so a view never scrolls on a 1080p screen
+  // (the header, phase bar and chip rows change height with the window width and with present mode).
+  function fit() {
+    const det = $('detail');
+    svg.style.maxHeight = ''; det.style.maxHeight = '';
+    if (state.view !== 'lab' || innerWidth <= 1100) return;
+    const wrap = document.querySelector('.wrap'), main = $('main'), stage = document.querySelector('.stage');
+    const avail = innerHeight - (wrap.offsetHeight - main.offsetHeight) - 2;
+    const chrome = stage.offsetHeight - document.querySelector('.canvas').offsetHeight;
+    det.style.maxHeight = `${avail}px`;
+    svg.style.maxHeight = `${avail - chrome}px`;
+  }
+  addEventListener('resize', fit);
+  if (document.fonts) document.fonts.ready.then(fit);
+  const showLab = () => { state.view = 'lab'; render(); };
+  function toggleIntro() { state.view = state.view === 'intro' ? 'lab' : 'intro'; render(); }
 
   // ---------- Controls ----------
   PHASES.forEach((ph, i) => {
@@ -938,6 +1197,7 @@
   function togglePresent() {
     const on = document.body.classList.toggle('present');
     $('presentBtn').textContent = on ? 'Exit present' : 'Present';
+    fit();
     if (on && document.documentElement.requestFullscreen && !document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
     if (!on && document.fullscreenElement) document.exitFullscreen().catch(() => {});
   }
@@ -947,36 +1207,72 @@
   });
   $('themeBtn').addEventListener('click', toggleTheme);
   $('presentBtn').addEventListener('click', togglePresent);
+  $('introBtn').addEventListener('click', toggleIntro);
+  $('introGo').addEventListener('click', () => {
+    if (state.talk) goStep(state.talk.i + 1); else { state.phase = 0; showLab(); }
+  });
+  $('talkBtn').addEventListener('click', () => (state.talk ? endTalk() : startTalk()));
+  $('talkbar').addEventListener('click', (e) => {
+    const len = e.target.closest('[data-len]'), step = e.target.closest('[data-step]');
+    if (len) setLen(+len.dataset.len);
+    else if (step) goStep(+step.dataset.step);
+    else if (e.target.closest('#tbTime')) { talkStart = Date.now(); tick(); }
+  });
 
   document.addEventListener('keydown', (e) => {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
-    const fi = FLOWS.findIndex((f) => f.id === state.flow);
-    if (e.key === 'ArrowRight' || e.key === 'PageDown') { state.phase = Math.min(3, state.phase + 1); render(); e.preventDefault(); }
-    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { state.phase = Math.max(0, state.phase - 1); render(); e.preventDefault(); }
-    else if (e.key === 'ArrowDown') { state.flow = FLOWS[(fi + 1) % FLOWS.length].id; render(); e.preventDefault(); }
-    else if (e.key === 'ArrowUp') { state.flow = FLOWS[(fi + FLOWS.length - 1) % FLOWS.length].id; render(); e.preventDefault(); }
-    else if (e.key === 'f' || e.key === 'F') { state.tab = state.tab === 'main' ? 'pits' : 'main'; render(false, true); }
-    else if (e.key === 'p' || e.key === 'P') togglePresent();
-    else if (e.key === 't' || e.key === 'T') toggleTheme();
+    const fi = FLOWS.findIndex((f) => f.id === state.flow), k = e.key;
+    const next = k === 'ArrowRight' || k === 'PageDown' || k === ' ', prev = k === 'ArrowLeft' || k === 'PageUp';
+    // In talk mode, →, Space and a clicker's Page Down step through the run order.
+    if (state.talk && (next || prev)) {
+      // From a detour, → returns to the current step first.
+      goStep(state.talk.i + (onStep() ? (next ? 1 : -1) : 0)); e.preventDefault();
+    }
+    else if (next) {
+      if (state.view === 'intro') state.phase = 0; else state.phase = Math.min(3, state.phase + 1);
+      showLab(); e.preventDefault();
+    }
+    else if (prev) {
+      if (state.view === 'lab' && state.phase === 0) { state.view = 'intro'; render(); }
+      else if (state.view === 'lab') { state.phase -= 1; render(); }
+      e.preventDefault();
+    }
+    else if (k === 'ArrowDown') { state.flow = FLOWS[(fi + 1) % FLOWS.length].id; showLab(); e.preventDefault(); }
+    else if (k === 'ArrowUp') { state.flow = FLOWS[(fi + FLOWS.length - 1) % FLOWS.length].id; showLab(); e.preventDefault(); }
+    else if (k === 'f' || k === 'F') { if (state.view === 'lab') { state.tab = state.tab === 'main' ? 'pits' : 'main'; render(true, true); } }
+    else if (k === 'i' || k === 'I') toggleIntro();
+    else if (k === 'g' || k === 'G') (state.talk ? endTalk() : startTalk());
+    else if (k === 'Escape' && state.talk && !document.fullscreenElement) endTalk();
+    else if (k === 'p' || k === 'P') togglePresent();
+    else if (k === 't' || k === 'T') toggleTheme();
   });
   document.addEventListener('fullscreenchange', () => {
     if (!document.fullscreenElement && document.body.classList.contains('present')) {
-      document.body.classList.remove('present'); $('presentBtn').textContent = 'Present';
+      document.body.classList.remove('present'); $('presentBtn').textContent = 'Present'; fit();
     }
   });
 
   // Deep links such as #p2/branch-dc, so slides can jump straight to a view.
+  // Also #intro, and #talk10/3 or #talk15/3 for step 3 of a talk run order.
   function fromHash() {
-    const m = location.hash.match(/^#p([0-3])(?:\/([\w-]+))?$/);
+    const h = location.hash;
+    const t = h.match(/^#talk(10|15)(?:\/(\d+))?$/);
+    if (t) {
+      if (!state.talk || state.talk.len !== +t[1]) { talkStart = Date.now(); state.talk = { len: +t[1], i: 0 }; lastLen = +t[1]; }
+      goStep((+t[2] || 1) - 1);
+      return 'done';
+    }
+    if (h === '#intro') { state.view = 'intro'; return true; }
+    const m = h.match(/^#p([0-3])(?:\/([\w-]+))?$/);
     if (!m) return false;
+    state.view = 'lab';
     state.phase = +m[1];
     if (m[2] && S[m[2]]) state.flow = m[2];
     return true;
   }
-  window.addEventListener('hashchange', () => { if (fromHash()) render(false); });
-  fromHash();
-  render(false);
-  window.__lab = { state, S, N, FLOWS, render };
+  window.addEventListener('hashchange', () => { if (fromHash() === true) render(false); });
+  if (fromHash() !== 'done') render(false);
+  window.__lab = { state, S, N, FLOWS, TALKS, render, goStep, startTalk, endTalk };
 })();
 </script>
 </body>
