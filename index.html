@@ -95,6 +95,22 @@
   /* The legend is drawn inside the diagram; this row only appears for trace and edit hints. */
   body:not(.mode-trace):not(.mode-edit) .legend { display: none; }
   .t-legend text { font: 500 12px var(--body); fill: var(--muted); }
+  .t-legend .ph { font: 700 17px var(--display); fill: var(--ink); }
+  .t-legend .pdx { font: 400 13.5px var(--body); fill: var(--ink); }
+  .t-legend .disc { font: 400 11px var(--body); fill: var(--muted); font-style: italic; }
+  body.labview .foot { display: none; }
+  #whatSel.on { border-color: var(--bad); color: var(--bad); background: color-mix(in srgb, var(--bad) 8%, var(--surface)); }
+  /* Short windows (a laptop at 125-150% scaling) and present mode: a slimmer header, so the diagram gets the height. */
+  @media (max-height: 820px) {
+    .eyebrow, h1 small, .keys { display: none; }
+    h1 { font-size: 24px; }
+    .top { align-items: center; }
+    .btn { padding: 6px 10px; }
+    .wrap { padding-top: 6px; padding-bottom: 6px; gap: 6px; }
+  }
+  body.present .eyebrow, body.present h1 small { display: none; }
+  body.present h1 { font-size: 24px; }
+  body.present .top { align-items: center; }
   .t-legend .lt { font: 600 11px var(--display); letter-spacing: 0.12em; text-transform: uppercase; }
   @media (max-width: 900px) {
     .flows { flex-wrap: wrap; }
@@ -530,15 +546,17 @@
       </div>
       <div class="board" id="board">
         <div class="tiles" id="tiles"></div>
-        <div class="whatif" role="group" aria-label="What if">
-          <span class="label">What if</span>
-          <button class="mini" type="button" data-what="dc">DC outage</button>
-          <button class="mini" type="button" data-what="mpls">MPLS cut</button>
-          <button class="mini" type="button" data-what="pop">PoP down</button>
-          <button class="mini" type="button" data-what="ransom">Ransomware</button>
-          <button class="mini" type="button" data-what="ai">AI data leak</button>
-          <button class="mini" type="button" data-what="dns">DNS attack</button>
-        </div>
+        <label class="whatif flowpick"><span class="label">What if</span>
+          <select id="whatSel" aria-label="What if">
+            <option value="">nothing breaks</option>
+            <option value="dc">the DC goes down</option>
+            <option value="mpls">MPLS is cut</option>
+            <option value="pop">a PoP goes down</option>
+            <option value="ransom">ransomware in Branch 1</option>
+            <option value="ai">data leaks to AI</option>
+            <option value="dns">a DNS attack</option>
+          </select>
+        </label>
         <span class="edb">
           <button class="mini" id="traceBtn" type="button" title="Drag from a source to a destination to see its path in every phase (D). With a mouse, dragging works at any time.">Trace</button>
           <button class="mini" id="editBtn" type="button" title="Move boxes around (E)">Edit</button>
@@ -1568,12 +1586,13 @@
     const p = state.phase, m = metrics(p), m0 = metrics(0);
     const tile = (label, v, v0, of) => {
       const d = v - v0, cls = d < 0 ? 'good' : d > 0 ? 'bad' : '';
-      return `<div class="tile"><span class="tl">${label}</span><b>${v}${of ? `<small> / ${of}</small>` : ''}</b><span class="td ${cls}" title="Compared with phase 0 (legacy)">${p === 0 || d === 0 ? '' : `(${d > 0 ? '+' : '−'}${Math.abs(d)})`}</span></div>`;
+      return `<div class="tile" title="${label === 'Boxes' ? 'Appliances you run and patch yourself' : label === 'Consoles' ? 'Places where policy is managed' : label === 'Via the DC' ? 'Flows that pass through the data center without starting or ending there' : 'Flows that use MPLS'}"><span class="tl">${label}</span><b>${v}${of ? `<small> / ${of}</small>` : ''}</b><span class="td ${cls}" title="Compared with phase 0 (legacy)">${p === 0 || d === 0 ? '' : `(${d > 0 ? '+' : '−'}${Math.abs(d)})`}</span></div>`;
     };
-    $('tiles').innerHTML = tile('Boxes you patch', m.boxes, m0.boxes) + tile('Consoles', m.consoles, m0.consoles)
+    $('tiles').innerHTML = tile('Boxes', m.boxes, m0.boxes) + tile('Consoles', m.consoles, m0.consoles)
       + tile('Via the DC', m.viaDC, m0.viaDC, m.notDC) + tile('On MPLS', m.onMpls, m0.onMpls, FLOWS.length)
-      + `<div class="tile"><span class="tl">New site in</span><b>${p < 2 ? '~3 months' : 'days'}</b><span class="td ${p < 2 ? '' : 'good'}">${p < 2 ? '(MPLS circuit)' : '(zero-touch)'}</span></div>`;
-    $('board').querySelectorAll('[data-what]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.what === state.what)));
+      + `<div class="tile" title="Time to bring up a new site: MPLS circuits take months, an SD-WAN edge on any ISP takes days"><span class="tl">New site</span><b>${p < 2 ? '~3 months' : 'days'}</b></div>`;
+    $('whatSel').value = state.what || '';
+    $('whatSel').classList.toggle('on', !!state.what);
     $('board').querySelectorAll('[data-dia]').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.dia === +OPT.dia)));
   }
 
@@ -1828,15 +1847,19 @@
 
     // Legend, in the empty corner under the services (the what-if card uses the same corner).
     if (!scn) {
-      const g = el('g', { class: 't-legend' }, svg), x0 = 22, y0 = BUS_Y + 30;
+      // The phase and what it means, then the legend, then the disclaimer (the page footer is hidden on this view).
+      const g = el('g', { class: 't-legend' }, svg), x0 = 22, y0 = BUS_Y + 34;
       const item = (x, y, cls, label) => {
         if (cls) el('path', { d: `M${x},${y - 4} h26`, class: cls }, g);
         el('text', { x: x + (cls ? 32 : 0), y }, g).textContent = label;
       };
-      el('text', { x: x0, y: y0, class: 'lt' }, g).textContent = 'Legend';
-      item(x0, y0 + 22, 't-flow', 'This flow'); item(x0 + 130, y0 + 22, 't-risk', 'What can go wrong'); item(x0 + 315, y0 + 22, 't-link tunnel', 'SASE tunnel (over the internet)');
-      item(x0, y0 + 44, 't-link mpls', 'MPLS'); item(x0 + 130, y0 + 44, 't-link ipsec', 'IPsec or VPN'); item(x0 + 315, y0 + 44, 't-link core', 'PoP to the policy core');
-      item(x0, y0 + 66, null, 'Faded = not deployed yet, or retired. Drag from one box to another to trace any flow.');
+      el('text', { x: x0, y: y0, class: 'ph' }, g).textContent = `Phase ${p} · ${PHASES[p].name}`;
+      wrap(PHASES[p].desc, 88).forEach((t, i) => { el('text', { x: x0, y: y0 + 21 + i * 17, class: 'pdx' }, g).textContent = t; });
+      const ly = y0 + 21 + wrap(PHASES[p].desc, 88).length * 17 + 8;
+      item(x0, ly, 't-flow', 'This flow'); item(x0 + 130, ly, 't-risk', 'What can go wrong'); item(x0 + 315, ly, 't-link tunnel', 'SASE tunnel (over the internet)');
+      item(x0, ly + 19, 't-link mpls', 'MPLS'); item(x0 + 130, ly + 19, 't-link ipsec', 'IPsec or VPN'); item(x0 + 315, ly + 19, 't-link core', 'PoP to the policy core');
+      item(x0, ly + 38, null, 'Faded = not deployed yet, or retired. Drag from one box to another to trace any flow.');
+      el('text', { x: x0, y: ly + 56, class: 'disc' }, g).textContent = 'Vendor-neutral and simplified. The network is fictional. Views are my own, not my employer\'s.';
     }
 
     // What if: marks on what failed or got hit, stop signs where a PoP blocked it, and the explanation card.
@@ -1853,10 +1876,11 @@
       scn.infected.forEach((id) => mark(id, 'x'));
       [...new Set(scn.blocked)].forEach((id) => mark(id, 'block'));
       const text = scn.lines.flatMap((t) => wrap(t, 96)), top = BUS_Y + 12;
-      const g = el('g', { class: 't-card' }, svg), h = 40 + text.length * 17 + 22;
+      const g = el('g', { class: 't-card' }, svg), h = 40 + text.length * 17 + 38;
       el('rect', { x: 12, y: top, width: 660, height: h, rx: 12 }, g);
       el('text', { x: 26, y: top + 26, class: 'tt' }, g).textContent = scn.title;
       text.forEach((t, i) => { el('text', { x: 26, y: top + 48 + i * 17, class: 'tx' }, g).textContent = t; });
+      el('text', { x: 26, y: top + 48 + text.length * 17 + 22, class: 'tk' }, g).textContent = 'Vendor-neutral and simplified. The network is fictional. Views are my own, not my employer\'s.';
       el('text', { x: 26, y: top + 48 + text.length * 17 + 6, class: 'tk' }, g).textContent = 'Red: stops, spreads or leaks · green: keeps working · amber: degraded · bar: blocked in the PoP';
     }
 
@@ -1918,7 +1942,6 @@
     $('phases').querySelectorAll('.phase').forEach((b, i) => b.setAttribute('aria-pressed', String(i === state.phase)));
     $('traceSlot').innerHTML = trace ? `<button type="button" class="chip x" data-untrace aria-label="Remove the traced flow" title="Remove the traced flow (${esc(trace.label)})">✕ traced</button>` : '';
     fillFlowSel();
-    $('phDesc').textContent = PHASES[state.phase].desc;
   }
 
   // ---------- Talk mode ----------
@@ -1989,6 +2012,7 @@
   function render(push = true, keepTab = false) {
     if (!keepTab) state.tab = 'main';
     const v = state.view, lab = v === 'lab';
+    document.body.classList.toggle('labview', lab);
     $('intro').hidden = v !== 'intro'; $('why').hidden = v !== 'why'; $('phases').hidden = !lab; $('main').hidden = !lab;
     $('introBtn').textContent = v === 'intro' ? 'Diagram' : 'What is SASE';
     $('whyBtn').textContent = v === 'why' ? 'Diagram' : 'Why SASE';
@@ -2016,7 +2040,9 @@
     const avail = innerHeight - (wrap.offsetHeight - main.offsetHeight) - 2;
     const chrome = stage.offsetHeight - document.querySelector('.canvas').offsetHeight;
     det.style.maxHeight = `${avail}px`;
-    svg.style.maxHeight = `${avail - chrome}px`;
+    const natural = document.querySelector('.canvas').clientWidth * VIEW_H / VIEW_W;
+    const h = innerHeight < 800 ? Math.max(avail - chrome, 0.8 * natural) : avail - chrome;
+    svg.style.maxHeight = `${h}px`;
   }
   addEventListener('resize', fit);
   if (document.fonts) document.fonts.ready.then(fit);
@@ -2145,14 +2171,14 @@
     $('flowSel').value = state.flow;
   }
   $('board').addEventListener('click', (e) => {
-    const w = e.target.closest('[data-what]'), d = e.target.closest('[data-dia]');
-    if (w) { state.what = state.what === w.dataset.what ? null : w.dataset.what; render(true, true); }
+    const d = e.target.closest('[data-dia]');
     if (d) {
       OPT.dia = d.dataset.dia === '1';
       try { localStorage.setItem('tornog-dia', OPT.dia ? '1' : '0'); } catch (err) {}
       buildS(); render(true, true);
     }
   });
+  $('whatSel').addEventListener('change', (e) => { state.what = e.target.value || null; render(true, true); e.target.blur(); });
   function setPanel(open) {
     state.panel = open;
     try { localStorage.setItem('tornog-panel', open ? 'open' : 'closed'); } catch (e) {}
@@ -2161,9 +2187,9 @@
   const slot = document.createElement('span');
   slot.id = 'traceSlot'; slot.style.display = 'contents';
   $('flows').appendChild(slot);
-  const desc = document.createElement('span');
-  desc.className = 'phdesc'; desc.id = 'phDesc';
-  $('flows').appendChild(desc);
+  const spacer = document.createElement('span');
+  spacer.className = 'phdesc';
+  $('flows').appendChild(spacer);
   const panelBtn = document.createElement('button');
   panelBtn.type = 'button'; panelBtn.className = 'mini'; panelBtn.id = 'panelBtn';
   panelBtn.title = 'Show or hide the steps, capabilities, issues and pitfalls (S)';
