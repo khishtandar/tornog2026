@@ -102,6 +102,10 @@
   @media (max-width: 1100px) { .main { grid-template-columns: 1fr; } }
 
   .stage { display: flex; flex-direction: column; min-width: 0; }
+  /* The side panel is hidden until you open it (Details, or S); the diagram takes the full width. */
+  .main.collapsed { grid-template-columns: minmax(0, 1fr); }
+  .main.collapsed .detail { display: none; }
+  #panelBtn { margin-left: auto; }
   .flows { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 6px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
   .label { font: 600 12.5px var(--display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 2px 0 6px; }
   .chip { font: 500 12px/1 var(--body); color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; padding: 7px 9px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
@@ -374,7 +378,7 @@
       <h1>SASE in Practice <small>Lessons from the field, and what AI changes</small></h1>
     </div>
     <div class="tools">
-      <span class="keys"><kbd>←</kbd><kbd>→</kbd> phase · <kbd>↑</kbd><kbd>↓</kbd> flow · <kbd>F</kbd> pitfalls · <kbd>G</kbd> talk · <kbd>D</kbd> trace · <kbd>E</kbd> edit · <kbd>P</kbd> present</span>
+      <span class="keys"><kbd>←</kbd><kbd>→</kbd> phase · <kbd>↑</kbd><kbd>↓</kbd> flow · <kbd>S</kbd> details · <kbd>F</kbd> pitfalls · <kbd>G</kbd> talk · <kbd>D</kbd> trace · <kbd>E</kbd> edit · <kbd>P</kbd> present</span>
       <div class="talkbar" id="talkbar" hidden>
         <div class="seg" role="group" aria-label="Talk length">
           <button type="button" data-len="10">10 min</button><button type="button" data-len="15">15 min</button>
@@ -1209,7 +1213,8 @@
 
   // ---------- State ----------
   // view: 'lab' (diagram), 'why' (whyStage 1-3) or 'intro'. mode: null, 'trace' or 'edit'. talk: null, or { len, i } while stepping through a run order.
-  const state = { phase: 0, flow: 'branch-saas', tab: 'main', view: 'lab', whyStage: 1, talk: null, mode: null };
+  const state = { phase: 0, flow: 'branch-saas', tab: 'main', view: 'lab', whyStage: 1, talk: null, mode: null, panel: false };
+  try { state.panel = localStorage.getItem('tornog-panel') === 'open'; } catch (e) {}
   const $ = (id) => document.getElementById(id);
   const svg = $('topo');
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -1501,6 +1506,9 @@
       $('whyGo').textContent = WHY_NEXT[state.whyStage - 1];
     }
     if (!lab && state.mode) setMode(null, false);
+    $('main').classList.toggle('collapsed', !state.panel);
+    $('panelBtn').textContent = state.panel ? 'Hide details ▸' : '◂ Details';
+    $('panelBtn').setAttribute('aria-expanded', String(state.panel));
     if (lab) { renderControls(); draw(); renderDetail(); }
     renderTalk();
     fit();
@@ -1642,9 +1650,20 @@
     b.addEventListener('click', () => { state.flow = f.id; render(); });
     $('flows').appendChild(b);
   });
+  function setPanel(open) {
+    state.panel = open;
+    try { localStorage.setItem('tornog-panel', open ? 'open' : 'closed'); } catch (e) {}
+    render(true, true);
+  }
   const slot = document.createElement('span');
   slot.id = 'traceSlot'; slot.style.display = 'contents';
   $('flows').appendChild(slot);
+  const panelBtn = document.createElement('button');
+  panelBtn.type = 'button'; panelBtn.className = 'mini'; panelBtn.id = 'panelBtn';
+  panelBtn.title = 'Show or hide the steps, capabilities, issues and pitfalls (S)';
+  panelBtn.setAttribute('aria-controls', 'detail');
+  panelBtn.addEventListener('click', () => setPanel(!state.panel));
+  $('flows').appendChild(panelBtn);
   slot.addEventListener('click', (e) => {
     if (e.target.closest('[data-untrace]')) {
       if (state.flow === trace.id) state.flow = trace.src === 'remote' ? 'remote-app' : 'branch-saas';
@@ -1703,7 +1722,12 @@
     else if (prev) { navPrev(); e.preventDefault(); }
     else if (k === 'ArrowDown') { state.flow = FLOWS[(fi + 1) % FLOWS.length].id; showLab(); e.preventDefault(); }
     else if (k === 'ArrowUp') { state.flow = FLOWS[(fi + FLOWS.length - 1) % FLOWS.length].id; showLab(); e.preventDefault(); }
-    else if (k === 'f' || k === 'F') { if (state.view === 'lab') { state.tab = state.tab === 'main' ? 'pits' : 'main'; render(true, true); } }
+    else if (k === 'f' || k === 'F') {
+      if (state.view !== 'lab') return;
+      if (!state.panel) { state.tab = 'pits'; setPanel(true); }
+      else { state.tab = state.tab === 'main' ? 'pits' : 'main'; render(true, true); }
+    }
+    else if (k === 's' || k === 'S') { if (state.view === 'lab') setPanel(!state.panel); }
     else if (k === 'i' || k === 'I') toggleIntro();
     else if (k === 'w' || k === 'W') toggleWhy();
     else if (k === 'd' || k === 'D') setMode('trace');
@@ -1744,7 +1768,7 @@
   }
   window.addEventListener('hashchange', () => { if (fromHash() === true) render(false); });
   if (fromHash() !== 'done') render(false);
-  window.__lab = { state, S, N, FLOWS, TALKS, render, goStep, startTalk, endTalk, setMode, buildS, draw, traceBetween, route, get trace() { return trace; } };
+  window.__lab = { state, S, N, FLOWS, TALKS, render, goStep, startTalk, endTalk, setMode, setPanel, buildS, draw, traceBetween, route, get trace() { return trace; } };
 })();
 </script>
 </body>

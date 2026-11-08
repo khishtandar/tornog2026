@@ -6,7 +6,7 @@ Step through a typical migration (legacy hub and spoke, remote users first, bran
 
 A "Why SASE" slide (`W`) builds in three steps: the legacy network's issues, what SASE is, and how SASE covers each issue. A one-screen intro (`I`, or ← from phase 0) then explains what SASE means (SD-WAN + SSE under one policy, and what changes for the operator).
 
-Keys: `←` `→` phase, `↑` `↓` flow, `F` SASE fixes or migration pitfalls, `I` what SASE means, `G` talk mode, `P` present (full screen), `T` theme. Links such as `#p2/branch-dc` open a specific phase and flow, and `#intro` the intro.
+Keys: `←` `→` phase, `↑` `↓` flow, `S` show or hide the side panel (hidden by default), `F` SASE fixes or migration pitfalls, `I` what SASE means, `G` talk mode, `P` present (full screen), `T` theme. Links such as `#p2/branch-dc` open a specific phase and flow, and `#intro` the intro.
 
 Talk mode (`G`, or the Talk button) steps through a fixed run order for a 10- or 15-minute slot with `→`, Space or a presentation clicker, and shows the step, a progress bar and a clock. `#talk15/3` opens step 3 of the 15-minute run.
 
