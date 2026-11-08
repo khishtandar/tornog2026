@@ -407,6 +407,18 @@
   .why:not([data-stage="3"]) .wp.sase svg { opacity: 0.08; filter: grayscale(1); }
   .why:not([data-stage="3"]) .wp.sase p { visibility: hidden; }
   .why-hint { font-size: 12.5px; color: var(--muted); }
+  .wask { display: grid; gap: 1px; padding: 7px 10px; border-left: 4px solid var(--accent); border-radius: 6px; background: var(--accent-soft); font-size: 14.5px !important; font-weight: 600; color: var(--ink); }
+  .wask b { font: 600 11px var(--display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent-ink); }
+  /* 14 issues: a tighter list below 1000px of height */
+  @media (max-height: 1000px) {
+    .why-list { gap: 4px; }
+    .why .wrow { padding: 4px 9px; }
+    .why .wrow .wn { width: 20px; height: 20px; font-size: 11px; }
+    .why .wrow .wi { font-size: 13.5px; line-height: 1.25; }
+    .why-def > div { padding: 6px 12px; }
+    .why-def b { font-size: 17px; }
+    .why-def span { font-size: 13px; }
+  }
   /* Short windows: a tighter Why slide (the tags still show under the SASE diagram). */
   @media (max-height: 820px) {
     .intro { padding: 12px 16px 14px; gap: 10px; }
@@ -421,6 +433,7 @@
     .why .wrow .caps { display: none !important; }
     .wp { padding: 8px 10px 10px; gap: 4px; }
     .wp p { font-size: 13px; line-height: 1.35; }
+    .wask { padding: 4px 8px; font-size: 13px !important; }
   }
   /* Mini-diagrams */
   .m-n rect, .m-n ellipse, .m-n circle { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
@@ -573,6 +586,7 @@
             <figcaption><span class="wk">Legacy</span><span id="whyT"></span></figcaption>
             <svg id="whyL" viewBox="0 0 460 260" role="img" aria-label="Legacy network for this issue"></svg>
             <p id="whyLp"></p>
+            <p class="wask" id="whyQ"></p>
           </figure>
           <figure class="wp sase">
             <figcaption><span class="wk">With SASE</span><span class="wq">revealed in step 3</span></figcaption>
@@ -1768,17 +1782,20 @@
   // ---------- Why SASE: legacy issue → how SASE covers it ----------
   // [issue, what hurts, how SASE covers it, capability tags (CAP keys, or 'one' for one policy)]
   const WHY = [
-    ['Everything hairpins through the DC', 'Internet and SaaS ride MPLS to the DC and back out. Far branches and remote users feel it most.', 'Each site and user breaks out at the nearest PoP and is inspected there.', ['sdwan', 'swg']],
-    ['A WAN that is slow to change and costly', 'MPLS takes months to deliver and is the priciest bandwidth. The IPsec backup sits idle and untested.', 'Any internet link, all links active, zero-touch sites, and a provider backbone between PoPs.', ['sdwan', 'mm', 'qos']],
-    ['The VPN gives the whole network', 'Users get routes to whole subnets, and the VPN gateway is exposed on the internet.', 'ZTNA gives one app at a time, by identity and device posture. Nothing listens inbound.', ['ztna', 'idp']],
-    ['Nothing inspects the WAN', 'Any-to-any MPLS is "trusted", so ransomware moves from site to site.', 'A firewall and IPS between every pair of sites, under the same policy as internet traffic.', ['fwaas', 'ips']],
-    ['Security capped by the box', 'Appliances are sized for the peak someone guessed years ago. TLS inspection costs throughput, so it is often left off.', 'Single-pass inspection in every PoP, scaled by the provider, so TLS inspection stays on.', ['tls', 'swg', 'ips']],
-    ['Hardware to replace every 5 years', 'Firewalls, proxies, VPN concentrators and routers reach end of life together: a forklift project and a capital spike every cycle.', 'The security stack is a cloud service, upgraded continuously. Only a thin edge stays on site, and it is swapped zero-touch.', ['sub', 'ztp']],
-    ['Emergency patching of edge boxes', 'Internet-facing VPN gateways and firewalls are favourite targets: a new CVE means patching tonight, sometimes before a fix exists.', 'The provider patches every PoP. Private apps sit behind connectors that dial out, so there is nothing listening to attack.', ['ztna', 'ips']],
-    ['A different policy everywhere', 'HQ, branches, remote users and the cloud each have their own rules, consoles and logs.', 'One policy and one log for every site, user and cloud workload.', ['one']],
-    ['Operations cost', 'Every change touches several boxes and teams, plus carrier tickets. Most of the time goes to keeping boxes alive.', 'One change in one console applies everywhere, with fewer boxes, circuits and contracts. Compare the subscription honestly with hardware, support and people time.', ['one', 'sub']],
-    ['Slow to troubleshoot', '"Teams is bad" turns into a carrier ticket and logs from three different tools.', 'Loss, jitter and latency per link and per application, next to the security events, in one place.', ['qos', 'anal']],
-    ['Blind to SaaS data and AI', 'URL categories only allow or block. No view of tenants, uploads or prompts.', 'CASB and DLP see the data. AI tools are discovered and controlled per app and activity.', ['casb', 'dlp', 'aidisc']]
+    ['Everything hairpins through the DC', 'Internet and SaaS ride MPLS to the DC and back out. Far branches and remote users feel it most.', 'Each site and user breaks out at the nearest PoP and is inspected there.', ['sdwan', 'swg'], 'How far is your farthest branch from the DC, in milliseconds?'],
+    ['A WAN that is slow to change and costly', 'MPLS takes months to deliver and is the priciest bandwidth. The IPsec backup sits idle and untested.', 'Any internet link, all links active, zero-touch sites, and a provider backbone between PoPs.', ['sdwan', 'mm', 'qos'], 'How long did your last new site wait for its circuit?'],
+    ['The VPN gives the whole network', 'Users get routes to whole subnets, and the VPN gateway is exposed on the internet.', 'ZTNA gives one app at a time, by identity and device posture. Nothing listens inbound.', ['ztna', 'idp'], 'If a VPN account were stolen today, what could it reach?'],
+    ['VPN capacity in a crisis', 'Concentrators were sized for a few remote users. When everyone went home, the VPN and the DC link became the bottleneck overnight.', 'Users connect to the nearest of many PoPs. Capacity grows with the provider, not with a box you have to order.', ['ztna', 'sub'], 'What happened to your VPN when everyone went home in 2020?'],
+    ['Nothing inspects the WAN', 'Any-to-any MPLS is "trusted", so ransomware moves from site to site.', 'A firewall and IPS between every pair of sites, under the same policy as internet traffic.', ['fwaas', 'ips'], 'Do you inspect traffic between your sites, or only to the internet?'],
+    ['Security capped by the box', 'Appliances are sized for the peak someone guessed years ago. TLS inspection costs throughput, so it is often left off.', 'Single-pass inspection in every PoP, scaled by the provider, so TLS inspection stays on.', ['tls', 'swg', 'ips'], 'Is TLS inspection on for everything? If not, why not?'],
+    ['Hardware to replace every 5 years', 'Firewalls, proxies, VPN concentrators and routers reach end of life together: a forklift project and a capital spike every cycle.', 'The security stack is a cloud service, upgraded continuously. Only a thin edge stays on site, and it is swapped zero-touch.', ['sub', 'ztp'], 'When is your next firewall refresh, and how big is the bill?'],
+    ['Emergency patching of edge boxes', 'Internet-facing VPN gateways and firewalls are favourite targets: a new CVE means patching tonight, sometimes before a fix exists.', 'The provider patches every PoP. Private apps sit behind connectors that dial out, so there is nothing listening to attack.', ['ztna', 'ips'], 'How much time does your team spend patching and upgrading firewalls and routers?'],
+    ['A different policy everywhere', 'HQ, branches, remote users and the cloud each have their own rules, consoles and logs.', 'One policy and one log for every site, user and cloud workload.', ['one'], 'How many consoles do you log into to change one rule everywhere?'],
+    ['Compliance and audits', 'Proving who can reach what means exporting configs and logs from many boxes, then reconciling them by hand.', 'One policy and one log: the audit report is a query, by user, app and site.', ['one', 'anal'], 'How long does it take you to prove to an auditor who can reach what?'],
+    ['Operations cost', 'Every change touches several boxes and teams, plus carrier tickets. Most of the time goes to keeping boxes alive.', 'One change in one console applies everywhere, with fewer boxes, circuits and contracts. Compare the subscription honestly with hardware, support and people time.', ['one', 'sub'], 'How long does a simple change take, from ticket to done?'],
+    ['Slow to troubleshoot', '"Teams is bad" turns into a carrier ticket and logs from three different tools.', 'Loss, jitter and latency per link and per application, next to the security events, in one place.', ['qos', 'anal'], 'How long did your last "the network is slow" ticket take to close?'],
+    ['Mergers and new companies', 'Joining an acquired company takes months: new circuits, overlapping IP ranges, and firewall rules on both sides.', 'Their sites get edges, their users get agents, and both sides reach each other app by app under one policy, in days or weeks.', ['ztp', 'ztna'], 'How long did it take to connect the last company you acquired?'],
+    ['Blind to SaaS data and AI', 'URL categories only allow or block. No view of tenants, uploads or prompts.', 'CASB and DLP see the data. AI tools are discovered and controlled per app and activity.', ['casb', 'dlp', 'aidisc'], 'Do you know which AI tools your users paste company data into?']
   ];
   // Tags that are not single capabilities.
   const WHY_TAG = { one: ['One policy, one log', 'core'], sub: ['Delivered as a cloud service', 'core'], ztp: ['Zero-touch edge', 'net'], anal: ['One view of network and security', 'core'] };
@@ -1793,7 +1810,7 @@
       sase: { nodes: [['saas', 80, 38, 'SaaS', 'M365 · Teams'], ['pop', 80, 122, 'PoP', '', 'pop'], ['br', 80, 205, 'Branch', 'SD-WAN edge'], ['dc', 395, 122, 'DC firewall', 'not in the path', 'box', 'dim']],
         links: [['br', 'pop', 'flow'], ['pop', 'saas', 'flow']],
         badges: [[222, 122, 'straight to the nearest PoP', 'good']] } },
-    { legacy: { nodes: [['br', 75, 122, 'Branch', 'router'], ['mpls', 240, 50, 'MPLS', '$$$ per Mbps', 'cloud'], ['inet', 240, 188, 'Internet', 'IPsec backup, idle', 'cloud'], ['dc', 395, 122, 'DC', 'WAN hub']],
+    { legacy: { nodes: [['br', 75, 122, 'Branch', 'router'], ['mpls', 240, 50, 'MPLS', '$$ per Mbps', 'cloud'], ['inet', 240, 188, 'Internet', 'IPsec backup, idle', 'cloud'], ['dc', 395, 122, 'DC', 'WAN hub']],
         links: [['br', 'mpls', 'flow', 'primary'], ['mpls', 'dc', 'flow'], ['br', 'inet', 'idle'], ['inet', 'dc', 'idle']],
         badges: [[230, 243, 'new site: ~3 months, waiting for the circuit', 'bad']] },
       sase: { nodes: [['br', 75, 122, 'Branch', 'SD-WAN edge'], ['isp', 230, 50, 'Broadband', '', 'cloud'], ['g5', 230, 188, '5G', '', 'cloud'], ['pop', 390, 122, 'PoP', '', 'pop']],
@@ -1805,6 +1822,12 @@
       sase: { nodes: [['lap', 68, 122, 'Laptop', 'agent'], ['pop', 205, 122, 'PoP', '', 'pop'], ['a1', 385, 40, 'App A', 'allowed', 'box', 'good'], ['a2', 385, 122, 'File server', '', 'box', 'dim'], ['a3', 385, 204, 'Domain controller', '', 'box', 'dim']],
         links: [['lap', 'pop', 'flow'], ['pop', 'a1', 'ok']],
         badges: [[205, 243, 'one app, by identity and device posture', 'good']] } },
+    { legacy: { nodes: [['u1', 70, 45, 'Users', 'at home'], ['u2', 70, 130, 'Users', 'at home'], ['u3', 70, 215, 'Users', 'at home'], ['vpn', 245, 120, 'VPN concentrator', 'sized for 20%', 'box', 'bad'], ['dc', 395, 120, 'DC link', 'full']],
+        links: [['u1', 'vpn', 'bad'], ['u2', 'vpn', 'bad'], ['u3', 'vpn', 'bad'], ['vpn', 'dc', 'flow']],
+        meters: [[245, 172, 0.98, 'bad', 'sessions 98%']], badges: [[245, 30, 'everyone went home overnight', 'bad']] },
+      sase: { nodes: [['u1', 70, 45, 'Users', 'at home'], ['u2', 70, 130, 'Users', 'at home'], ['u3', 70, 215, 'Users', 'at home'], ['p1', 240, 45, 'PoP', '', 'pop'], ['p2', 240, 130, 'PoP', '', 'pop'], ['p3', 240, 215, 'PoP', '', 'pop'], ['app', 390, 130, 'Apps', 'any location', 'box', 'good']],
+        links: [['u1', 'p1', 'flow'], ['u2', 'p2', 'flow'], ['u3', 'p3', 'flow'], ['p1', 'app', 'okline'], ['p2', 'app', 'okline'], ['p3', 'app', 'okline']],
+        badges: [[300, 248, 'nearest PoP; capacity grows with demand', 'good']] } },
     { legacy: { nodes: [['b1', 80, 45, 'Branch 1', 'infected laptop', 'box', 'bad'], ['mpls', 230, 125, 'MPLS', '"trusted"', 'cloud'], ['b2', 380, 45, 'Branch 2', ''], ['hq', 80, 205, 'HQ', ''], ['dc', 380, 205, 'DC', '']],
         links: [['b1', 'mpls', 'bad'], ['mpls', 'b2', 'bad'], ['mpls', 'hq', 'bad'], ['mpls', 'dc', 'bad']],
         marks: [['b2', 'x'], ['hq', 'x'], ['dc', 'x']], badges: [[230, 245, 'spreads site to site', 'bad']] },
@@ -1834,6 +1857,12 @@
       sase: { nodes: [['core', 230, 125, 'ONE POLICY', '', 'core'], ['b', 85, 45, 'Branches', ''], ['h', 375, 45, 'HQ / DC', ''], ['r', 85, 205, 'Remote users', ''], ['cl', 375, 205, 'Cloud', '']],
         links: [['core', 'b', 'okline'], ['core', 'h', 'okline'], ['core', 'r', 'okline'], ['core', 'cl', 'okline']],
         badges: [[230, 245, 'one policy, one log, to the SOC', 'good']] } },
+    { legacy: { nodes: [['aud', 75, 130, 'Auditor', '"who can reach what?"'], ['f', 330, 45, 'Firewall export', ''], ['p', 330, 130, 'Proxy logs', ''], ['v', 330, 215, 'VPN accounts', '']],
+        links: [['aud', 'f', 'idle'], ['aud', 'p', 'idle'], ['aud', 'v', 'idle']],
+        badges: [[190, 248, 'weeks of spreadsheets', 'bad']] },
+      sase: { nodes: [['aud', 75, 120, 'Auditor', '"who can reach what?"'], ['q', 315, 120, 'One policy, one log', 'by user, app and site', 'box', 'good']],
+        links: [['aud', 'q', 'flow', 'one query']],
+        badges: [[230, 205, 'the audit report is a query', 'good']] } },
     { legacy: { nodes: [['adm', 230, 130, 'Admin team', ''], ['f', 80, 60, 'Firewall change', ''], ['p', 380, 60, 'Proxy rule', ''], ['v', 80, 205, 'VPN accounts', ''], ['c', 380, 205, 'Carrier ticket', 'days', 'box', 'bad']],
         links: [['adm', 'f', 'idle'], ['adm', 'p', 'idle'], ['adm', 'v', 'idle'], ['adm', 'c', 'idle']],
         meters: [[230, 14, 0.85, 'bad', 'effort per change']], badges: [[230, 245, 'several teams, change windows, tickets', 'bad']] },
@@ -1846,6 +1875,12 @@
       sase: { nodes: [['u', 75, 120, 'User', '"Teams is bad"'], ['con', 300, 60, 'One console', 'per link, per app', 'box', 'good']],
         links: [['u', 'con', 'flow']],
         meters: [[300, 130, 0.08, 'good', 'loss 0.1% on ISP 1'], [300, 185, 0.7, 'bad', 'loss 7% on ISP 2: steered away']] } },
+    { legacy: { nodes: [['us', 80, 130, 'Your network', '10.0.0.0/8'], ['them', 380, 130, 'Acquired company', 'also 10.0.0.0/8', 'box', 'bad'], ['c', 230, 40, 'New circuits', 'months'], ['fw', 230, 220, 'Firewall rules', 'on both sides']],
+        links: [['us', 'c', 'idle'], ['c', 'them', 'idle'], ['us', 'fw', 'idle'], ['fw', 'them', 'idle']],
+        badges: [[230, 130, 'overlapping IPs', 'bad']] },
+      sase: { nodes: [['us', 80, 130, 'Your users', ''], ['pop', 230, 130, 'PoP', '', 'pop'], ['them', 380, 130, 'Their apps', 'edge or connector', 'box', 'good']],
+        links: [['us', 'pop', 'flow'], ['pop', 'them', 'ok']],
+        badges: [[230, 45, 'app by app, no IP merge', 'good'], [230, 215, 'days or weeks, not months', 'good']] } },
     { legacy: { nodes: [['u', 68, 122, 'User', ''], ['px', 215, 122, 'Proxy', 'sees a domain only'], ['ai', 385, 45, 'GenAI', 'personal account'], ['pc', 385, 200, 'Personal cloud', 'Dropbox · Gmail']],
         links: [['u', 'px', 'flow'], ['px', 'ai', 'bad', 'source code'], ['px', 'pc', 'bad', 'customer list']],
         badges: [[215, 245, 'allowed by category, nobody sees what left', 'bad']] },
@@ -1912,7 +1947,8 @@
     $('whyList').addEventListener('click', (e) => { const b = e.target.closest('[data-row]'); if (b) { state.whyRow = +b.dataset.row; render(); } });
   }
   function renderWhy() {
-    const i = state.whyRow, [t, bad, good, caps] = WHY[i];
+    const i = state.whyRow, [t, bad, good, caps, ask] = WHY[i];
+    $('whyQ').innerHTML = `<b>Ask the room</b>${esc(ask)}`;
     $('whyList').querySelectorAll('.wrow').forEach((b, j) => b.setAttribute('aria-pressed', String(j === i)));
     $('whyT').textContent = t;
     mini($('whyL'), WHY_DIAG[i].legacy, 'wl');
