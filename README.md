@@ -10,7 +10,7 @@ Keys: `←` `→` phase, `↑` `↓` flow, `F` SASE fixes or migration pitfalls,
 
 Talk mode (`G`, or the Talk button) steps through a fixed run order for a 10- or 15-minute slot with `→`, Space or a presentation clicker, and shows the step, a progress bar and a clock. `#talk15/3` opens step 3 of the 15-minute run.
 
-On the diagram, `D` (Draw lines) lets you drag arrows between boxes and label them, and `E` (Edit layout) lets you drag boxes around while links and flows follow. Both are saved in your browser only. Copy layout exports the moved positions.
+On the diagram, drag from a source (a user, a branch, the DC or the cloud) to a destination to trace that flow: the path is drawn and the panel shows how it passes in each phase (`D` turns on trace mode for touch screens). `E` (Edit layout) lets you drag boxes around while links and flows follow; it is saved in your browser only, and Copy layout exports the moved positions.
 
 Vendor-neutral and simplified, for discussion. The network is fictional. Views are my own, not my employer's.
 

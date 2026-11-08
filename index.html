@@ -309,27 +309,29 @@
   }
 
   /* Your own lines, and the layout editor */
-  .t-user .ln { fill: none; stroke: var(--ink); stroke-width: 3; stroke-linecap: round; }
-  .t-user .hit { fill: none; stroke: transparent; stroke-width: 18; }
-  .t-user.sel .ln { stroke: var(--accent); stroke-dasharray: 9 5; }
-  .t-arrow-user { fill: var(--ink); }
-  .t-user-label rect { fill: var(--ink); }
-  .t-user-label text { font: 600 12px var(--body); fill: var(--surface); }
   .t-temp { stroke: var(--accent); stroke-width: 3; stroke-dasharray: 6 5; pointer-events: none; }
-  body.mode-draw .t-user { cursor: pointer; }
-  body.mode-draw #topo [data-id] { cursor: crosshair; }
+  #topo [data-id] { cursor: crosshair; }
   body.mode-edit #topo [data-id] { cursor: grab; }
   body.mode-edit #topo .t-node rect { stroke-dasharray: 5 3; }
-  body.mode-draw #topo, body.mode-edit #topo { touch-action: none; }
-  body.mode-draw .canvas, body.mode-edit .canvas { outline: 2px dashed var(--accent); outline-offset: -4px; border-radius: 6px; }
+  body.mode-trace #topo, body.mode-edit #topo { touch-action: none; }
+  body.mode-trace .canvas, body.mode-edit .canvas { outline: 2px dashed var(--accent); outline-offset: -4px; border-radius: 6px; }
   .legend .ed { margin-left: auto; display: inline-flex; gap: 6px; }
   .mini { font: 500 12px/1 var(--body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 7px; padding: 6px 9px; cursor: pointer; }
   .mini:hover { border-color: var(--accent); }
   .mini[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
   .modehint { color: var(--ink); }
+  /* Traced flow: chip, and the route in every phase */
+  .chip.x { padding: 7px 8px; color: var(--muted); }
+  .phx { display: grid; gap: 4px; }
+  .phx button { display: grid; grid-template-columns: 58px minmax(0, 1fr) 10px; gap: 8px; align-items: center; text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 6px 9px; font: 13px/1.35 var(--body); color: var(--ink); cursor: pointer; }
+  .phx button:hover { border-color: var(--accent); }
+  .phx button[aria-current="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .phx .pn { font: 600 11.5px var(--display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  .phx .dot { width: 10px; height: 10px; border-radius: 50%; background: currentColor; }
+  .phx .dot.v-legacy { color: var(--c-legacy); } .phx .dot.v-good { color: var(--ok); } .phx .dot.v-warn { color: var(--warn); }
   .modehint b { color: var(--accent-ink); }
-  body.mode-draw .legend .lg, body.mode-edit .legend .lg { display: none; }
-  body:not(.mode-draw):not(.mode-edit) .modehint, body:not(.mode-draw) .m-draw, body:not(.mode-edit) .m-edit { display: none; }
+  body.mode-trace .legend .lg, body.mode-edit .legend .lg { display: none; }
+  body:not(.mode-trace):not(.mode-edit) .modehint, body:not(.mode-trace) .m-trace, body:not(.mode-edit) .m-edit { display: none; }
 
   /* Talk mode: a fixed run order for the time slot */
   .talkbar { display: flex; align-items: center; gap: 10px; min-width: 0; }
@@ -372,7 +374,7 @@
       <h1>SASE in Practice <small>Lessons from the field, and what AI changes</small></h1>
     </div>
     <div class="tools">
-      <span class="keys"><kbd>←</kbd><kbd>→</kbd> phase · <kbd>↑</kbd><kbd>↓</kbd> flow · <kbd>F</kbd> pitfalls · <kbd>G</kbd> talk · <kbd>D</kbd> draw · <kbd>E</kbd> edit · <kbd>P</kbd> present</span>
+      <span class="keys"><kbd>←</kbd><kbd>→</kbd> phase · <kbd>↑</kbd><kbd>↓</kbd> flow · <kbd>F</kbd> pitfalls · <kbd>G</kbd> talk · <kbd>D</kbd> trace · <kbd>E</kbd> edit · <kbd>P</kbd> present</span>
       <div class="talkbar" id="talkbar" hidden>
         <div class="seg" role="group" aria-label="Talk length">
           <button type="button" data-len="10">10 min</button><button type="button" data-len="15">15 min</button>
@@ -468,13 +470,12 @@
         <span class="lg"><i class="sw mp"></i> MPLS</span>
         <span class="lg"><i class="sw ip"></i> IPsec over the internet</span>
         <span class="lg">Faded = not deployed yet, or retired</span>
-        <span class="modehint m-draw"><b>Draw:</b> drag from one box to another. Click a line to select it, <kbd>Del</kbd> removes it, double-click labels it.</span>
+        <span class="modehint m-trace" id="traceHint"><b>Trace:</b> drag from where the traffic starts (a user, a branch, the DC or the cloud) to where it goes. Then <kbd>←</kbd> <kbd>→</kbd> shows how it passes in each phase.</span>
         <span class="modehint m-edit"><b>Edit layout:</b> drag any box, PoP or the policy core. Links and flows follow. Saved in this browser.</span>
         <span class="ed">
-          <button class="mini m-draw" id="clearLines" type="button">Clear lines</button>
           <button class="mini m-edit" id="copyLayout" type="button">Copy layout</button>
           <button class="mini m-edit" id="resetLayout" type="button">Reset layout</button>
-          <button class="mini" id="drawBtn" type="button" title="Draw your own lines between boxes (D)">Draw lines</button>
+          <button class="mini" id="traceBtn" type="button" title="Drag from a source to a destination to see its path in every phase (D). With a mouse, dragging works at any time.">Trace a flow</button>
           <button class="mini" id="editBtn" type="button" title="Move boxes around (E)">Edit layout</button>
         </span>
       </div>
@@ -639,9 +640,6 @@
   const DEFAULT_POS = Object.fromEntries(Object.entries(N).map(([id, n]) => [id, [n.x, n.y]]));
   const savedPos = store.get('tornog-layout', {});
   for (const id in savedPos) if (N[id] && Array.isArray(savedPos[id])) [N[id].x, N[id].y] = savedPos[id];
-  // [{ a, b, label }], drawn on every view.
-  let userLines = store.get('tornog-lines', []).filter((l) => l && N[l.a] && N[l.b]);
-  let selLine = -1;
 
   // Labels that change as the migration progresses.
   function phaseLabels(p) {
@@ -728,10 +726,11 @@
   // SCN[flowId][phase] = { path, risk, riskLabel, verdict, vclass, note, steps: [[where, text]], caps, pits }
   // Paths hold waypoints computed from node positions, so buildS() runs again whenever the layout changes.
   const S = {};
-  function buildS() {
   const mpls = (a, b) => [[upX(a, 'mpls'), Y(a)], [upX(a, 'mpls'), MPLS_Y], [upX(b, 'mpls'), MPLS_Y], [upX(b, 'mpls'), Y(b)]];
   const dcOut = (dst) => ['dcfw', [LEFT_X, Y('dcfw')], [LEFT_X, BUS_Y], [X(dst), BUS_Y], dst];
   const coreOut = (dst) => ['core', [X('core'), BUS_Y], [X(dst), BUS_Y], dst];
+  let trace = null;   // a flow you traced by dragging: { id, src, dst, analog, label, title, group }
+  function buildS() {
   const backhaul1 = ['users1', 'edge1', ...mpls('edge1', 'dcedge'), 'dcedge'];
   const roadRisk = (dst) => ['remote', [laneX(), Y('remote')], [laneX(), BUS_Y], [X(dst), BUS_Y], dst];
   const roadRiskAt = () => [X('remote') + 50, Y('remote') - 75];
@@ -958,8 +957,194 @@
   S['dc-web'] = [legacyDcWeb, legacyDcWeb, saseDcWeb, { ...saseDcWeb, pits: ['egressIP'] }];
 
   S['branch-cloud'] = [legacyCloud, { ...legacyCloud, note: 'Unchanged: phase 1 moved remote users only.' }, saseCloud, { ...saseCloud, pits: ['cloudHA', 'mtu'] }];
+  if (trace) S[trace.id] = [0, 1, 2, 3].map((p) => traceScenario(trace.src, trace.dst, p, trace.analog));
   }
   buildS();
+
+  // ---------- Trace any flow: drag from where traffic starts to where it goes ----------
+  // The path in each phase is worked out from the same rules the hand-written flows follow.
+  const NET = ['web', 'saas', 'genai'];
+  // Dropping on a device means the endpoint behind it.
+  const ENDPOINT = { users1: 'users1', edge1: 'users1', users2: 'users2', edge2: 'users2', remote: 'remote', apps: 'apps', dcedge: 'apps', dcfw: 'apps', conn: 'apps', cloudapp: 'cloudapp', vgw: 'cloudapp', web: 'web', saas: 'saas', genai: 'genai' };
+  const NAME = { users1: 'Branch 1 user', users2: 'Branch 2 user', remote: 'Remote user', apps: 'DC app', cloudapp: 'Cloud app', web: 'the internet', saas: 'SaaS', genai: 'a generative AI tool' };
+  const SHORT = { users1: 'Branch 1', users2: 'Branch 2', remote: 'Remote', apps: 'DC app', cloudapp: 'Cloud app', web: 'Internet', saas: 'SaaS', genai: 'GenAI' };
+  const EDGE = { users1: 'edge1', users2: 'edge2' };
+  const rev = (list) => list.slice().reverse();
+  // When each endpoint is on SASE. DC apps are reachable through ZTNA from phase 1, and site to site from phase 2.
+  function onSase(e, p, peer) {
+    if (e === 'apps') return p >= 2 || (peer === 'remote' && p >= 1);
+    return { users1: p >= 2, users2: p >= 3, remote: p >= 1, cloudapp: p >= 2 }[e];
+  }
+  // From an endpoint on SASE up to the policy core.
+  function upToCore(e, peer) {
+    return {
+      users1: ['users1', 'edge1', 'popB1', 'core'], users2: ['users2', 'edge2', 'popB2', 'core'],
+      remote: ['remote', 'popU', 'core'], cloudapp: ['cloudapp', 'vgw', 'popB2', 'core'],
+      apps: peer === 'remote' ? ['apps', 'conn', 'popD', 'core'] : ['apps', 'dcedge', 'popD', 'core']
+    }[e];
+  }
+  // From a legacy endpoint to the DC (ends at the WAN edge or the perimeter firewall).
+  function toDC(e) {
+    if (EDGE[e]) return [e, EDGE[e], ...mpls(EDGE[e], 'dcedge'), 'dcedge'];
+    if (e === 'remote') return ['remote', 'dcfw'];
+    if (e === 'cloudapp') return ['cloudapp', ...rev(dcOut('vgw'))];
+    return ['apps'];
+  }
+  // Join two paths that meet in the DC, where the WAN edge, the firewall and the app servers are linked to each other.
+  function joinDC(a, b) {
+    const x = a[a.length - 1], y = b[0];
+    if (x === y) return [...a, ...b.slice(1)];
+    if (x === 'conn' && y === 'dcedge') return [...a, 'dcfw', ...b];
+    return [...a, ...b];
+  }
+  function route(src, dst, p) {
+    if (NET.includes(dst)) {
+      if (onSase(src, p, null)) return [...upToCore(src, null), ...coreOut(dst).slice(1)];
+      if (src === 'apps') return ['apps', ...dcOut(dst)];
+      // From phase 2 the DC itself leaves through its PoP, so a branch still on MPLS is backhauled to the DC and goes out there.
+      if (p >= 2 && EDGE[src]) return [...toDC(src), 'popD', ...coreOut(dst)];
+      return joinDC(toDC(src), dcOut(dst));
+    }
+    const sa = onSase(src, p, dst), sb = onSase(dst, p, src);
+    if (sa && sb) {
+      const a = upToCore(src, dst), b = rev(upToCore(dst, src));
+      // Both ends on the same PoP: it turns around there (the policy runs in every PoP).
+      if (a[a.length - 2] === b[1]) return [...a.slice(0, -1), ...b.slice(2)];
+      return [...a, ...b.slice(1)];
+    }
+    if (!sa && !sb) {
+      if (EDGE[src] && EDGE[dst]) return [src, EDGE[src], ...mpls(EDGE[src], EDGE[dst]), EDGE[dst], dst];
+      return joinDC(toDC(src), rev(toDC(dst)));
+    }
+    // One end on SASE, the other not yet: the two worlds meet at the DC.
+    const sEnd = sa ? src : dst, lEnd = sa ? dst : src;
+    const path = sEnd === 'apps' ? joinDC(['apps'], rev(toDC(lEnd)))
+      : joinDC([...upToCore(sEnd, lEnd), ...(p >= 2 ? ['popD', 'dcedge'] : ['popD', 'conn'])], rev(toDC(lEnd)));
+    return sa ? path : rev(path);
+  }
+  const isPop = (x) => typeof x === 'string' && N[x].kind === 'pop';
+  const atMpls = (path, i) => Array.isArray(path[i]) && path[i][1] === MPLS_Y;
+  // Numbered steps for a traced path.
+  function describe(path, p, src, dst) {
+    const L = phaseLabels(p), net = NET.includes(dst), out = [];
+    const ztna = (src === 'remote' || dst === 'remote') && !net;
+    let pops = 0;
+    path.forEach((x, i) => {
+      if (typeof x !== 'string') return;
+      const prev = path[i - 1], next = path[i + 1];
+      if (i === 0) {
+        if (x === 'remote') out.push(next === 'popU' ? ['Agent', 'Signs in through the IdP with a device-posture check, and tunnels to the nearest PoP.'] : ['VPN client', 'Tunnels over the internet to the VPN concentrator in the DC.']);
+        return;
+      }
+      if (i === path.length - 1) return;
+      if (x === 'edge1' || x === 'edge2' || x === 'dcedge') {
+        const sd = (L[x] || {}).cls === 'sdwan';
+        const where = x === 'dcedge' ? (sd ? 'DC SD-WAN edge' : 'DC WAN edge') : (sd ? 'SD-WAN edge' : 'Branch router');
+        if (atMpls(path, i + 2)) out.push([where, isPop(prev) ? 'The gateway between SASE and MPLS: hands it on over MPLS.' : 'Sends it into the carrier\'s MPLS VPN.']);
+        else if (isPop(next)) out.push([where, 'Tunnels to the nearest PoP over the internet underlay.']);
+        else if (atMpls(path, i - 2) && next === 'dcfw') out.push([where, 'Hands it to the perimeter firewall.']);
+        else if (atMpls(path, i - 2) && i === path.length - 2 && x !== 'dcedge') out.push([where, 'Receives it from MPLS and delivers it.']);
+        return;
+      }
+      if (x === 'dcfw') {
+        if (Array.isArray(next) && next[0] === LEFT_X) out.push(['DC perimeter', 'NGFW and web proxy inspect it, then out the DC internet link.']);
+        else if (path.includes('vgw') && path.indexOf('vgw') > i) out.push(['DC perimeter', 'Routes it into the IPsec tunnel over the internet to the VPC.']);
+        else if (path.includes('vgw')) out.push(['DC perimeter', 'Takes it out of the IPsec tunnel from the VPC and routes it on.']);
+        else if (prev === 'remote') out.push(['DC perimeter', 'Terminates the VPN, with routes to whole internal subnets.']);
+        else if (prev === 'conn') out.push(['DC perimeter', 'The connector reaches the rest of the network through the DC firewall.']);
+        else out.push(['DC perimeter', 'Inspects it on the way through the DC.']);
+        return;
+      }
+      if (x === 'conn') { out.push(['ZTNA connector', 'Sits in the DC and dials out to the PoP. No inbound ports are open.']); return; }
+      if (isPop(x)) {
+        pops += 1;
+        if (pops === 1) out.push(['PoP', net ? 'FWaaS, SWG, TLS inspection and IPS in one pass, under the shared policy.' : ztna ? 'User, group and device posture decide access to this one app. FWaaS and IPS inspect it.' : 'WAN firewall and IPS under the same policy as internet traffic.']);
+        else if (pops === 2) out.push(['PoP', 'The provider middle mile carries it to the PoP nearest the destination.']);
+        return;
+      }
+      if (x === 'core' && Array.isArray(next)) { out.push(['Egress', 'Leaves from a provider IP near the user, not from the DC.']); return; }
+      if (x === 'vgw') out.push(onSase('cloudapp', p) ? ['Virtual SD-WAN edge', 'Runs inside the VPC and tunnels to the nearest PoP.'] : ['Cloud VPN GW', 'Ends the IPsec tunnel to the DC firewall.']);
+    });
+    return out;
+  }
+  // A short "A → B → C" line for the phase list.
+  function hops(path, p) {
+    // Repeats of the same thing collapse (MPLS waypoints); two different PoPs both show.
+    const out = [];
+    let last = null;
+    const push = (t, key = t) => { if (t && key !== last) { out.push(t); last = key; } };
+    path.forEach((x, i) => {
+      if (Array.isArray(x)) { if (x[1] === MPLS_Y) push('MPLS'); return; }
+      if ((x === 'dcfw' && path[i - 1] === 'remote') || (x === 'remote' && path[i - 1] === 'dcfw')) push('VPN');
+      if (isPop(x)) { push('PoP', x); return; }
+      if (x === 'core') return;
+      if (x === 'vgw') { if (!onSase('cloudapp', p)) push('IPsec'); return; }
+      push({ users1: 'Branch 1', users2: 'Branch 2', remote: 'Remote user', apps: 'DC app', cloudapp: 'Cloud app', web: 'Internet', saas: 'SaaS', genai: 'GenAI',
+        dcfw: 'DC firewall', dcedge: 'DC edge', conn: 'Connector', popU: 'PoP', popD: 'PoP', popB1: 'PoP', popB2: 'PoP' }[x]);
+    });
+    return out.join(' → ');
+  }
+  // The hand-written flow closest to a traced one lends its legacy issues and pitfalls.
+  function analogFor(src, dst) {
+    const k = (e) => (EDGE[e] ? 'branch' : e);
+    return {
+      branch: { saas: 'branch-saas', web: 'branch-web', genai: 'branch-ai', apps: 'branch-dc', branch: 'branch-branch', cloudapp: 'branch-cloud', remote: 'remote-app' },
+      remote: { saas: 'remote-saas', web: 'remote-saas', genai: 'remote-ai', apps: 'remote-app', cloudapp: 'remote-cloud', branch: 'remote-app' },
+      apps: { saas: 'dc-web', web: 'dc-web', genai: 'dc-web', branch: 'branch-dc', cloudapp: 'branch-cloud', remote: 'remote-app' },
+      cloudapp: { apps: 'branch-cloud', branch: 'branch-cloud', remote: 'remote-cloud' }
+    }[k(src)][k(dst)];
+  }
+  function traceScenario(src, dst, p, analog) {
+    const path = route(src, dst, p), nodes = path.filter((x) => typeof x === 'string'), net = NET.includes(dst);
+    const viaCore = nodes.some(isPop), usesMpls = path.some((x) => Array.isArray(x) && x[1] === MPLS_Y);
+    const vclass = !viaCore ? 'legacy' : usesMpls || nodes.includes('dcfw') ? 'warn' : 'good';
+    const verdict = vclass === 'warn' ? (net ? 'Backhauled, then out at the DC\'s PoP' : 'Via the DC: one end not migrated yet')
+      : vclass === 'good' ? (net ? 'Inspected at the nearest PoP' : (src === 'remote' || dst === 'remote') ? 'ZTNA, one app at a time' : 'Over the SASE backbone')
+      : net ? (src === 'apps' ? 'Out through the DC perimeter' : 'Backhauled to the DC')
+      : nodes.includes('dcfw') || nodes.includes('dcedge') ? 'Through the DC' : 'Over MPLS';
+    const caps = new Set();
+    if (usesMpls) caps.add('mpls');
+    if (nodes.includes('vgw') && !onSase('cloudapp', p)) caps.add('ipsec');
+    if (nodes[0] === 'remote' && nodes[1] === 'dcfw') caps.add('vpn');
+    if (nodes.includes('dcfw')) caps.add('ngfw');
+    if (nodes.includes('dcfw') && net) caps.add('proxy');
+    const L = phaseLabels(p);
+    if (['edge1', 'edge2', 'dcedge'].some((e) => nodes.includes(e) && (L[e] || {}).cls === 'sdwan' && nodes.some((x) => isPop(x)))) caps.add('sdwan');
+    if (new Set(nodes.filter(isPop)).size > 1) caps.add('mm');
+    if (viaCore) {
+      if (!net && (src === 'remote' || dst === 'remote')) { caps.add('ztna'); caps.add('idp'); }
+      caps.add('fwaas');
+      if (net) { caps.add('swg'); caps.add('tls'); }
+      caps.add('ips');
+      if (dst === 'saas') caps.add('casb');
+      if (dst === 'genai') { caps.add('aidisc'); caps.add('aictl'); caps.add('dlp'); }
+    }
+    const a = S[analog][p];
+    const pits = vclass === 'warn' ? (net ? ['hubTransit', 'egressIP'] : ['hubTransit', 'asym']) : vclass === 'legacy' ? [] : a.vclass === 'good' ? a.pits : net ? ['egressIP', 'tlsBreak'] : ['mtu', 'lastMile'];
+    return { path, verdict, vclass, steps: describe(path, p, src, dst), caps: [...caps], pits, hops: hops(path, p),
+      issuesOpen: vclass === 'warn' ? 'one end not migrated yet' : undefined,
+      note: 'Traced from the topology; issues and pitfalls come from the closest hand-written flow.' };
+  }
+  // Returns the flow id to show: a hand-written flow when one exists, otherwise a traced one.
+  function setTrace(src, dst) {
+    const known = FLOWS.find((f) => f.src === src && f.dst === dst);
+    if (known) return known.id;
+    if (trace) delete S[trace.id];
+    trace = { id: `t-${src}-${dst}`, group: 'Traced', label: `${SHORT[src]} → ${SHORT[dst]}`, title: `${NAME[src]} to ${NAME[dst]}`, src, dst, analog: analogFor(src, dst) };
+    ISSUES[trace.id] = ISSUES[trace.analog];
+    S[trace.id] = [0, 1, 2, 3].map((p) => traceScenario(src, dst, p, trace.analog));
+    return trace.id;
+  }
+  // Checks a drag from one node to another. Returns the flow id, or a message saying why it can't be traced.
+  function traceBetween(a, b) {
+    let src = ENDPOINT[a], dst = ENDPOINT[b];
+    if (!src || !dst) return { msg: 'Start and end on a user, a site, an app or a service, not on a PoP or the policy core.' };
+    if (NET.includes(src) && !NET.includes(dst)) [src, dst] = [dst, src];
+    if (src === dst) return { msg: 'Pick two different places.' };
+    if (NET.includes(src)) return { msg: 'Both ends are on the internet. Start from a user, a site or the DC.' };
+    if (src === 'cloudapp' && NET.includes(dst)) return { msg: 'The VPC\'s own internet exit is not in this model. Try a user or a site.' };
+    return { id: setTrace(src, dst) };
+  }
 
   // ---------- Why SASE: legacy issue → how SASE covers it ----------
   // [issue, what hurts, how SASE covers it, capability tags (CAP keys, or 'one' for one policy)]
@@ -1023,7 +1208,7 @@
   };
 
   // ---------- State ----------
-  // view: 'lab' (diagram), 'why' (whyStage 1-3) or 'intro'. mode: null, 'draw' or 'edit'. talk: null, or { len, i } while stepping through a run order.
+  // view: 'lab' (diagram), 'why' (whyStage 1-3) or 'intro'. mode: null, 'trace' or 'edit'. talk: null, or { len, i } while stepping through a run order.
   const state = { phase: 0, flow: 'branch-saas', tab: 'main', view: 'lab', whyStage: 1, talk: null, mode: null };
   const $ = (id) => document.getElementById(id);
   const svg = $('topo');
@@ -1092,7 +1277,7 @@
     const defs = el('defs', {}, svg);
     const pat = el('pattern', { id: 'dots', width: 22, height: 22, patternUnits: 'userSpaceOnUse' }, defs);
     el('circle', { cx: 2, cy: 2, r: 1.2, class: 't-grid' }, pat);
-    for (const [id, cls] of [['arrow', 't-arrow'], ['arrowRisk', 't-arrow-risk'], ['arrowUser', 't-arrow-user']]) {
+    for (const [id, cls] of [['arrow', 't-arrow'], ['arrowRisk', 't-arrow-risk']]) {
       const mk = el('marker', { id, viewBox: '0 0 10 10', refX: 7, refY: 5, markerWidth: 4.5, markerHeight: 4.5, orient: 'auto-start-reverse' }, defs);
       el('path', { d: 'M0,0 L10,5 L0,10 z', class: cls }, mk);
     }
@@ -1152,14 +1337,6 @@
     el('path', { d, class: 't-flow-glow' }, svg);
     el('path', { d, class: 't-flow', 'marker-end': 'url(#arrow)' }, svg);
 
-    // Your own lines: under the nodes, so they start at a box edge.
-    userLines.forEach((l, i) => {
-      const d = pathD([l.a, l.b]);
-      const g = el('g', { class: `t-user${i === selLine ? ' sel' : ''}`, 'data-line': i }, svg);
-      el('path', { d, class: 'hit' }, g);
-      el('path', { d, class: 'ln', 'marker-end': 'url(#arrowUser)' }, g);
-    });
-
     for (const [at, anchor, label] of linkLabels) el('text', { x: at.x, y: at.y, 'text-anchor': anchor, class: 't-link-label' }, svg).textContent = label;
 
     // Nodes
@@ -1186,15 +1363,6 @@
         el('text', { x: n.x, y: n.y + 14, 'text-anchor': 'middle', class: 'n2' }, g).textContent = lb.s;
       }
     }
-
-    // Labels on your own lines
-    userLines.forEach((l, i) => {
-      if (!l.label) return;
-      const m = { x: (N[l.a].x + N[l.b].x) / 2, y: (N[l.a].y + N[l.b].y) / 2 }, w = l.label.length * 6.8 + 16;
-      const g = el('g', { class: 't-user-label t-user', 'data-line': i }, svg);
-      el('rect', { x: m.x - w / 2, y: m.y - 11, width: w, height: 22, rx: 6 }, g);
-      el('text', { x: m.x, y: m.y + 4, 'text-anchor': 'middle' }, g).textContent = l.label;
-    });
 
     // Risk label on top of everything
     if (sc.risk && sc.riskLabel) {
@@ -1230,14 +1398,17 @@
       </div>${tab === 'main' ? issuesHTML(flow, sc, true) : pitsHTML}`;
   }
 
+  const flowById = (id) => FLOWS.find((x) => x.id === id) || (trace && trace.id === id ? trace : null);
   function renderDetail() {
-    const f = FLOWS.find((x) => x.id === state.flow), sc = S[f.id][state.phase];
+    const f = flowById(state.flow), sc = S[f.id][state.phase];
+    const strip = f === trace ? `<div class="sect"><h3>How it passes in each phase</h3><div class="phx">${S[f.id].map((x, i) =>
+      `<button type="button" data-phase="${i}" aria-current="${i === state.phase}"><span class="pn">Phase ${i}</span><span>${esc(x.hops)}</span><span class="dot v-${x.vclass}" title="${esc(x.verdict)}"></span></button>`).join('')}</div></div>` : '';
     const ph = PHASES[state.phase];
     $('detail').innerHTML = `
       <div class="d-head">
         <div class="d-title"><h2>${esc(f.title)}</h2><span class="verdict v-${sc.vclass}">${esc(sc.verdict)}</span></div>
         <p class="d-note">Phase ${state.phase}: ${esc(ph.name)}.${sc.note ? ' ' + esc(sc.note) : ''}</p>
-      </div>
+      </div>${strip}
       <div class="sect"><h3>How the packet gets there</h3>
         <ol class="steps">${sc.steps.map(([w, t], i) => `<li><span class="num">${i + 1}</span><span><span class="where">${esc(w)}</span>${esc(t)}</span></li>`).join('')}</ol>
       </div>
@@ -1249,7 +1420,8 @@
 
   function renderControls() {
     $('phases').querySelectorAll('.phase').forEach((b, i) => b.setAttribute('aria-pressed', String(i === state.phase)));
-    $('flows').querySelectorAll('.chip').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.id === state.flow)));
+    $('traceSlot').innerHTML = trace ? `<span class="label">Traced →</span><button type="button" class="chip" data-id="${trace.id}">${esc(trace.label)}</button><button type="button" class="chip x" data-untrace aria-label="Remove the traced flow" title="Remove the traced flow">✕</button>` : '';
+    $('flows').querySelectorAll('.chip[data-id]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.id === state.flow)));
   }
 
   // ---------- Talk mode ----------
@@ -1364,30 +1536,30 @@
     else { state.phase -= 1; render(); }
   }
 
-  // ---------- Draw lines and edit the layout ----------
+  // ---------- Trace a flow, and edit the layout ----------
   function setMode(m, redraw = true) {
     state.mode = m && state.mode !== m ? m : null;
-    selLine = -1;
-    document.body.classList.toggle('mode-draw', state.mode === 'draw');
+    document.body.classList.toggle('mode-trace', state.mode === 'trace');
     document.body.classList.toggle('mode-edit', state.mode === 'edit');
-    $('drawBtn').setAttribute('aria-pressed', String(state.mode === 'draw'));
+    $('traceBtn').setAttribute('aria-pressed', String(state.mode === 'trace'));
     $('editBtn').setAttribute('aria-pressed', String(state.mode === 'edit'));
     if (state.mode && state.view !== 'lab') { state.view = 'lab'; render(); }
     else if (redraw && state.view === 'lab') { draw(); fit(); }
   }
-  const saveLines = () => store.set('tornog-lines', userLines);
   function movedLayout() {
     const out = {};
     for (const id in N) if (N[id].x !== DEFAULT_POS[id][0] || N[id].y !== DEFAULT_POS[id][1]) out[id] = [N[id].x, N[id].y];
     return out;
   }
   const saveLayout = () => store.set('tornog-layout', movedLayout());
-  function labelLine(i) {
-    const t = prompt('Label for this line (leave empty for none):', userLines[i].label || '');
-    if (t === null) return;
-    userLines[i].label = t.trim().slice(0, 40); saveLines(); draw();
+  const HINT = $('traceHint').innerHTML;
+  let hintTimer = 0;
+  function flashHint(msg) {
+    if (state.mode !== 'trace') setMode('trace');
+    $('traceHint').innerHTML = `<b>Trace:</b> ${esc(msg)}`;
+    clearTimeout(hintTimer);
+    hintTimer = setTimeout(() => { $('traceHint').innerHTML = HINT; }, 4500);
   }
-  function deleteLine(i) { userLines.splice(i, 1); selLine = -1; saveLines(); draw(); }
   const svgPt = (e) => {
     const q = new DOMPoint(e.clientX, e.clientY).matrixTransform(svg.getScreenCTM().inverse());
     return { x: q.x, y: q.y };
@@ -1398,11 +1570,13 @@
   };
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   let drag = null;
+  // Edit mode moves boxes. Otherwise a drag from one box to another traces a flow
+  // (any time with a mouse; on touch screens only in trace mode, so the diagram still scrolls).
   svg.addEventListener('pointerdown', (e) => {
-    if (!state.mode || e.button > 0) return;
-    const g = e.target.closest('[data-id]'), lineG = e.target.closest('[data-line]');
-    if (state.mode === 'draw' && lineG && !g) { selLine = +lineG.dataset.line; draw(); return; }
-    if (!g) { if (selLine >= 0) { selLine = -1; draw(); } return; }
+    if (e.button > 0) return;
+    if (!state.mode && e.pointerType !== 'mouse') return;
+    const g = e.target.closest('[data-id]');
+    if (!g) return;
     const id = g.dataset.id, p = svgPt(e);
     e.preventDefault();
     try { svg.setPointerCapture(e.pointerId); } catch (err) {}
@@ -1425,19 +1599,16 @@
     if (d.kind === 'move') { saveLayout(); return; }
     d.line.remove();
     const to = cancel ? null : nodeUnder(e);
-    if (to && to !== d.id) { userLines.push({ a: d.id, b: to, label: '' }); selLine = userLines.length - 1; saveLines(); draw(); }
+    if (!to || to === d.id) return;
+    const r = traceBetween(d.id, to);
+    if (r.msg) { flashHint(r.msg); return; }
+    state.flow = r.id; state.tab = 'main';
+    render(true, true);
   }
   svg.addEventListener('pointerup', (e) => endDrag(e, false));
   svg.addEventListener('pointercancel', (e) => endDrag(e, true));
-  svg.addEventListener('dblclick', (e) => {
-    const lineG = e.target.closest('[data-line]');
-    if (state.mode === 'draw' && lineG) labelLine(+lineG.dataset.line);
-  });
-  $('drawBtn').addEventListener('click', () => setMode('draw'));
+  $('traceBtn').addEventListener('click', () => setMode('trace'));
   $('editBtn').addEventListener('click', () => setMode('edit'));
-  $('clearLines').addEventListener('click', () => {
-    if (userLines.length && confirm(`Remove all ${userLines.length} of your lines?`)) { userLines = []; selLine = -1; saveLines(); draw(); }
-  });
   $('resetLayout').addEventListener('click', () => {
     if (!confirm('Put every box back in its original place?')) return;
     for (const id in N) [N[id].x, N[id].y] = DEFAULT_POS[id];
@@ -1471,6 +1642,17 @@
     b.addEventListener('click', () => { state.flow = f.id; render(); });
     $('flows').appendChild(b);
   });
+  const slot = document.createElement('span');
+  slot.id = 'traceSlot'; slot.style.display = 'contents';
+  $('flows').appendChild(slot);
+  slot.addEventListener('click', (e) => {
+    if (e.target.closest('[data-untrace]')) {
+      if (state.flow === trace.id) state.flow = trace.src === 'remote' ? 'remote-app' : 'branch-saas';
+      delete S[trace.id]; trace = null; render(); return;
+    }
+    const b = e.target.closest('[data-id]');
+    if (b) { state.flow = b.dataset.id; render(); }
+  });
 
   function setTheme(t) {
     document.documentElement.dataset.theme = t;
@@ -1489,6 +1671,8 @@
     if (!on && document.fullscreenElement) document.exitFullscreen().catch(() => {});
   }
   $('detail').addEventListener('click', (e) => {
+    const ph = e.target.closest('[data-phase]');
+    if (ph) { state.phase = +ph.dataset.phase; render(); return; }
     const b = e.target.closest('[data-tab]');
     if (b) { state.tab = b.dataset.tab; render(false, true); }
   });
@@ -1522,10 +1706,8 @@
     else if (k === 'f' || k === 'F') { if (state.view === 'lab') { state.tab = state.tab === 'main' ? 'pits' : 'main'; render(true, true); } }
     else if (k === 'i' || k === 'I') toggleIntro();
     else if (k === 'w' || k === 'W') toggleWhy();
-    else if (k === 'd' || k === 'D') setMode('draw');
+    else if (k === 'd' || k === 'D') setMode('trace');
     else if (k === 'e' || k === 'E') setMode('edit');
-    else if ((k === 'Delete' || k === 'Backspace') && state.mode === 'draw' && selLine >= 0) { deleteLine(selLine); e.preventDefault(); }
-    else if (k === 'Enter' && state.mode === 'draw' && selLine >= 0) labelLine(selLine);
     else if (k === 'Escape' && state.mode) setMode(null);
     else if (k === 'g' || k === 'G') (state.talk ? endTalk() : startTalk());
     else if (k === 'Escape' && state.talk && !document.fullscreenElement) endTalk();
@@ -1555,12 +1737,14 @@
     if (!m) return false;
     state.view = 'lab';
     state.phase = +m[1];
-    if (m[2] && S[m[2]]) state.flow = m[2];
+    const t2 = m[2] && m[2].match(/^t-(\w+)-(\w+)$/);
+    if (t2 && ENDPOINT[t2[1]] && ENDPOINT[t2[2]]) { const r = traceBetween(t2[1], t2[2]); if (r.id) state.flow = r.id; }
+    else if (m[2] && S[m[2]]) state.flow = m[2];
     return true;
   }
   window.addEventListener('hashchange', () => { if (fromHash() === true) render(false); });
   if (fromHash() !== 'done') render(false);
-  window.__lab = { state, S, N, FLOWS, TALKS, render, goStep, startTalk, endTalk, setMode, buildS, draw, get userLines() { return userLines; } };
+  window.__lab = { state, S, N, FLOWS, TALKS, render, goStep, startTalk, endTalk, setMode, buildS, draw, traceBetween, route, get trace() { return trace; } };
 })();
 </script>
 </body>
