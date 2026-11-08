@@ -2350,7 +2350,30 @@
   }
   // Size the diagram and the side panel to the window, so a view never scrolls on a 1080p screen
   // (the header, phase bar and chip rows change height with the window width and with present mode).
+  // In present mode the Why and intro slides scale like a slide: laid out at a fixed design width,
+  // then zoomed as a whole so the slide fills the window without scrolling.
+  function fitSlide() {
+    for (const id of ['why', 'intro']) {
+      const w = $(id);
+      w.style.zoom = ''; w.style.width = ''; w.style.justifySelf = '';
+      if (state.view !== id || !document.body.classList.contains('present') || innerWidth <= 900) continue;
+      const wrap = document.querySelector('.wrap'), cs = getComputedStyle(wrap);
+      const availW = wrap.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      // Try a few layout widths: a narrower layout is taller, so it fills a short, wide window better.
+      let best = [1600, 0];
+      for (const D of [1600, 1500, 1400, 1300, 1200, 1100]) {
+        w.style.width = `${D}px`;
+        const availH = innerHeight - (wrap.offsetHeight - w.offsetHeight) - 4;
+        const z = Math.min(availW / D, availH / w.offsetHeight);
+        if (z > best[1]) best = [D, z];
+      }
+      w.style.width = `${best[0]}px`;
+      w.style.zoom = String(best[1]);
+      w.style.justifySelf = 'center';
+    }
+  }
   function fit() {
+    fitSlide();
     const det = $('detail');
     svg.style.maxHeight = ''; det.style.maxHeight = '';
     if (state.view !== 'lab' || innerWidth <= 1100) return;
