@@ -372,6 +372,89 @@
   .why[data-stage="1"] .r2, .why[data-stage="1"] .r3, .why[data-stage="2"] .r3 { opacity: 0; visibility: hidden; }
   .why[data-stage="1"] .wh.sase, .why[data-stage="2"] .wh.gap { display: none; }
   .why:not([data-stage="1"]) .wh.gap { display: none; }
+  /* Why SASE, v2: issue list + legacy and SASE mini-diagrams */
+  .why2 { display: grid; grid-template-columns: minmax(250px, 0.62fr) minmax(0, 2fr); gap: 16px; align-items: start; }
+  .why-list { display: grid; gap: 6px; }
+  .wrow { text-align: left; display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 4px 10px; align-items: start; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); cursor: pointer; font: inherit; }
+  .wrow:hover { border-color: var(--accent); }
+  .wrow[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .wrow .wn { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2); border: 1px solid var(--line); font: 700 12px var(--body); color: var(--muted); }
+  .wrow[aria-pressed="true"] .wn { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+  .wrow .wi { font: 600 14.5px/1.3 var(--body); }
+  .wrow .wi::before { content: "✕ "; color: var(--bad); }
+  .wrow .caps { grid-column: 2; }
+  .why:not([data-stage="3"]) .wrow .caps { display: none; }
+  .why-viz { display: grid; gap: 10px; }
+  .why-def > div { display: grid; gap: 2px; padding: 9px 14px; border-radius: 10px; }
+  .why-def b { font: 700 19px/1.2 var(--display); }
+  .why-def span { font-size: 14px; }
+  .wd-q { background: var(--surface-2); border: 1px dashed var(--line); color: var(--muted); }
+  .wd-a { background: color-mix(in srgb, var(--cloud) 8%, var(--surface)); border: 1px solid color-mix(in srgb, var(--cloud) 40%, transparent); }
+  .wd-a b { color: var(--cloud); }
+  .why[data-stage="1"] .wd-a, .why:not([data-stage="1"]) .wd-q { display: none; }
+  .why-panels { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+  .wp { margin: 0; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px 12px; display: grid; gap: 6px; align-content: start; background: var(--surface); }
+  .wp.leg { border-top: 3px solid var(--bad); }
+  .wp.sase { border-top: 3px solid var(--cloud); }
+  .wp figcaption { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; font: 700 16px/1.2 var(--display); }
+  .wp .wk { font: 600 12px var(--display); letter-spacing: 0.12em; text-transform: uppercase; }
+  .wp.leg .wk { color: var(--bad); } .wp.sase .wk { color: var(--cloud); }
+  .wp .wq { font: 500 12.5px var(--body); color: var(--muted); }
+  .why[data-stage="3"] .wp .wq { display: none; }
+  .wp svg { width: 100%; height: auto; display: block; }
+  .wp p { margin: 0; font-size: 14px; line-height: 1.45; }
+  .wp p .caps { margin-top: 6px; }
+  .why:not([data-stage="3"]) .wp.sase svg { opacity: 0.08; filter: grayscale(1); }
+  .why:not([data-stage="3"]) .wp.sase p { visibility: hidden; }
+  .why-hint { font-size: 12.5px; color: var(--muted); }
+  /* Short windows: a tighter Why slide (the tags still show under the SASE diagram). */
+  @media (max-height: 820px) {
+    .intro { padding: 12px 16px 14px; gap: 10px; }
+    .intro-head h2 { font-size: 22px; }
+    .why-def > div { padding: 6px 12px; }
+    .why-def b { font-size: 16px; }
+    .why-def span { font-size: 12.5px; }
+    .why .wrow { padding: 5px 9px; }
+    .why .wrow .wi { font-size: 13.5px; }
+    .why .wrow .caps { display: none !important; }
+    .wp { padding: 8px 10px 10px; gap: 4px; }
+    .wp p { font-size: 13px; line-height: 1.35; }
+  }
+  /* Mini-diagrams */
+  .m-n rect, .m-n ellipse, .m-n circle { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+  .m-n.cloud ellipse { fill: var(--surface-2); stroke: var(--muted); }
+  .m-n.pop circle { stroke: var(--cloud); stroke-width: 2.5; }
+  .m-n.core circle { stroke: var(--cloud); stroke-width: 3; fill: var(--cloud-fill); }
+  .m-n.bad rect { stroke: var(--bad); stroke-width: 2; }
+  .m-n.good rect { stroke: var(--ok); stroke-width: 2; }
+  .m-n.dim { opacity: 0.38; }
+  .m-n .t1 { font: 600 12.5px var(--body); fill: var(--ink); }
+  .m-n.pop .t1, .m-n.core .t1 { font: 700 12px var(--display); fill: var(--cloud); letter-spacing: 0.04em; }
+  .m-n .t2 { font: 400 10.5px var(--body); fill: var(--muted); }
+  .m-n.note .t1 { font: 700 14px var(--display); fill: var(--bad); }
+  .m-l { fill: none; stroke-linecap: round; }
+  .m-l.flow { stroke: var(--accent); stroke-width: 3; stroke-dasharray: 9 6; animation: flow 1.1s linear infinite; }
+  .m-l.bad { stroke: var(--bad); stroke-width: 3; stroke-dasharray: 9 6; animation: flow 1.1s linear infinite; }
+  .m-l.ok { stroke: var(--ok); stroke-width: 3; }
+  .m-l.okline { stroke: var(--cloud); stroke-width: 2; opacity: .7; }
+  .m-l.idle { stroke: var(--muted); stroke-width: 2; stroke-dasharray: 5 5; opacity: .6; }
+  .m-l.plain { stroke: var(--line); stroke-width: 2; }
+  @media (prefers-reduced-motion: reduce) { .m-l { animation: none !important; } }
+  .m-lab { font: 500 11px var(--body); fill: var(--muted); paint-order: stroke; stroke: var(--surface); stroke-width: 4px; }
+  .m-badge rect { stroke-width: 1; }
+  .m-badge text { font: 600 11.5px var(--body); }
+  .m-badge.bad rect { fill: color-mix(in srgb, var(--bad) 10%, var(--surface)); stroke: var(--bad); } .m-badge.bad text { fill: var(--bad); }
+  .m-badge.good rect { fill: color-mix(in srgb, var(--ok) 10%, var(--surface)); stroke: var(--ok); } .m-badge.good text { fill: var(--ok); }
+  .m-meter .bg { fill: var(--surface-2); stroke: var(--line); }
+  .m-meter.bad .fg { fill: var(--bad); } .m-meter.good .fg { fill: var(--ok); }
+  .m-meter text { font: 600 10.5px var(--body); fill: var(--muted); }
+  @media (max-width: 1100px) { .why2 { grid-template-columns: 1fr; } }
+  @media (max-width: 700px) { .why-panels { grid-template-columns: 1fr; } }
+  @media (min-width: 1400px) and (min-height: 1000px) {
+    .wrow .wi { font-size: 16px; }
+    .wp p { font-size: 15.5px; }
+    .why-def b { font-size: 22px; }
+  }
   .why-dots { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); font-size: 13px; }
   .why-dots i { width: 9px; height: 9px; border-radius: 50%; background: var(--line); display: inline-block; }
   .why-dots i.on { background: var(--accent); }
@@ -476,9 +559,30 @@
     <div class="intro-head">
       <h2 id="whyTitle">Why change: what hurts in the legacy network, and how SASE covers it</h2>
     </div>
-    <div class="why-grid" id="whyGrid"></div>
+    <div class="why2">
+      <div class="why-list" id="whyList" role="group" aria-label="Legacy issues"></div>
+      <div class="why-viz">
+        <div class="why-def">
+          <div class="wd-q"><b>What would fix all of this?</b><span>Next: what SASE is.</span></div>
+          <div class="wd-a"><b>SASE = SD-WAN + SSE, from the cloud</b><span>Every site, user and cloud workload connects to the nearest PoP, where one policy and one pass of inspection apply to all traffic.</span></div>
+        </div>
+        <div class="why-panels">
+          <figure class="wp leg">
+            <figcaption><span class="wk">Legacy</span><span id="whyT"></span></figcaption>
+            <svg id="whyL" viewBox="0 0 460 260" role="img" aria-label="Legacy network for this issue"></svg>
+            <p id="whyLp"></p>
+          </figure>
+          <figure class="wp sase">
+            <figcaption><span class="wk">With SASE</span><span class="wq">revealed in step 3</span></figcaption>
+            <svg id="whyS" viewBox="0 0 460 260" role="img" aria-label="The same network with SASE"></svg>
+            <p id="whySp"></p>
+          </figure>
+        </div>
+      </div>
+    </div>
     <div class="intro-foot">
       <span class="why-dots" id="whyDots"></span>
+      <span class="why-hint"><kbd>↑</kbd><kbd>↓</kbd> or <kbd>1</kbd>–<kbd>7</kbd> pick an issue</span>
       <button class="btn go" id="whyGo" type="button">Next →</button>
     </div>
   </section>
@@ -1671,16 +1775,118 @@
     ['Blind to SaaS data and AI', 'URL categories only allow or block. No view of tenants, uploads or prompts.', 'CASB and DLP see the data. AI tools are discovered and controlled per app and activity.', ['casb', 'dlp', 'aidisc']]
   ];
   const whyTag = (c) => c === 'one' ? '<span class="tag sm cat-core">One policy, one log</span>' : `<span class="tag sm cat-${CAP[c][1]}">${esc(CAP[c][0])}</span>`;
+  // One legacy and one SASE mini-diagram per issue (viewBox 460 x 260).
+  // node: [id, x, y, label, sub, kind (box | cloud | pop | core | note), tone (bad | good | dim)]
+  // link: [from, to, class (flow | bad | ok | okline | idle | plain), label]
+  const WHY_DIAG = [
+    { legacy: { nodes: [['saas', 80, 38, 'SaaS', 'M365 · Teams'], ['inet', 250, 38, 'Internet', '', 'cloud'], ['br', 80, 205, 'Branch', 'users'], ['mpls', 250, 205, 'MPLS', '', 'cloud'], ['dc', 390, 122, 'DC firewall', 'proxy · NGFW']],
+        links: [['br', 'mpls', 'flow'], ['mpls', 'dc', 'flow'], ['dc', 'inet', 'flow'], ['inet', 'saas', 'flow', '+40 ms']],
+        badges: [[150, 122, 'the long way round', 'bad']] },
+      sase: { nodes: [['saas', 80, 38, 'SaaS', 'M365 · Teams'], ['pop', 80, 122, 'PoP', '', 'pop'], ['br', 80, 205, 'Branch', 'SD-WAN edge'], ['dc', 395, 122, 'DC firewall', 'not in the path', 'box', 'dim']],
+        links: [['br', 'pop', 'flow'], ['pop', 'saas', 'flow']],
+        badges: [[222, 122, 'straight to the nearest PoP', 'good']] } },
+    { legacy: { nodes: [['br', 75, 122, 'Branch', 'router'], ['mpls', 240, 50, 'MPLS', '$$$ per Mbps', 'cloud'], ['inet', 240, 188, 'Internet', 'IPsec backup, idle', 'cloud'], ['dc', 395, 122, 'DC', 'WAN hub']],
+        links: [['br', 'mpls', 'flow', 'primary'], ['mpls', 'dc', 'flow'], ['br', 'inet', 'idle'], ['inet', 'dc', 'idle']],
+        badges: [[230, 243, 'new site: ~3 months, waiting for the circuit', 'bad']] },
+      sase: { nodes: [['br', 75, 122, 'Branch', 'SD-WAN edge'], ['isp', 230, 50, 'Broadband', '', 'cloud'], ['g5', 230, 188, '5G', '', 'cloud'], ['pop', 390, 122, 'PoP', '', 'pop']],
+        links: [['br', 'isp', 'ok'], ['isp', 'pop', 'ok', 'active'], ['br', 'g5', 'ok'], ['g5', 'pop', 'ok', 'active']],
+        badges: [[230, 243, 'any ISP, zero-touch: a new site in days', 'good']] } },
+    { legacy: { nodes: [['lap', 68, 122, 'Laptop', 'VPN client'], ['vpn', 205, 122, 'VPN gateway', 'open to the internet', 'box', 'bad'], ['a1', 385, 40, 'App A', ''], ['a2', 385, 122, 'File server', ''], ['a3', 385, 204, 'Domain controller', '']],
+        links: [['lap', 'vpn', 'flow'], ['vpn', 'a1', 'bad'], ['vpn', 'a2', 'bad'], ['vpn', 'a3', 'bad']],
+        badges: [[205, 243, 'on the VPN = on the network', 'bad']] },
+      sase: { nodes: [['lap', 68, 122, 'Laptop', 'agent'], ['pop', 205, 122, 'PoP', '', 'pop'], ['a1', 385, 40, 'App A', 'allowed', 'box', 'good'], ['a2', 385, 122, 'File server', '', 'box', 'dim'], ['a3', 385, 204, 'Domain controller', '', 'box', 'dim']],
+        links: [['lap', 'pop', 'flow'], ['pop', 'a1', 'ok']],
+        badges: [[205, 243, 'one app, by identity and device posture', 'good']] } },
+    { legacy: { nodes: [['b1', 80, 45, 'Branch 1', 'infected laptop', 'box', 'bad'], ['mpls', 230, 125, 'MPLS', '"trusted"', 'cloud'], ['b2', 380, 45, 'Branch 2', ''], ['hq', 80, 205, 'HQ', ''], ['dc', 380, 205, 'DC', '']],
+        links: [['b1', 'mpls', 'bad'], ['mpls', 'b2', 'bad'], ['mpls', 'hq', 'bad'], ['mpls', 'dc', 'bad']],
+        marks: [['b2', 'x'], ['hq', 'x'], ['dc', 'x']], badges: [[230, 245, 'spreads site to site', 'bad']] },
+      sase: { nodes: [['b1', 80, 45, 'Branch 1', 'infected laptop', 'box', 'bad'], ['pop', 230, 125, 'PoP', '', 'pop'], ['b2', 380, 45, 'Branch 2', '', 'box', 'good'], ['hq', 80, 205, 'HQ', '', 'box', 'good'], ['dc', 380, 205, 'DC', '', 'box', 'good']],
+        links: [['b1', 'pop', 'bad'], ['pop', 'b2', 'okline'], ['pop', 'hq', 'okline'], ['pop', 'dc', 'okline']],
+        marks: [['pop', 'block']], badges: [[230, 245, 'stopped by the WAN firewall and IPS', 'good']] } },
+    { legacy: { nodes: [['u', 70, 110, 'Users', ''], ['fw', 230, 110, 'NGFW + proxy', 'sized for peak'], ['inet', 390, 110, 'Internet', '', 'cloud']],
+        links: [['u', 'fw', 'flow'], ['fw', 'inet', 'flow']],
+        meters: [[230, 165, 0.95, 'bad', 'CPU 95%']], badges: [[230, 40, 'TLS inspection: off (too slow)', 'bad'], [230, 228, 'refreshed every 5 years', 'bad']] },
+      sase: { nodes: [['u', 70, 110, 'Users', ''], ['pop', 230, 110, 'PoP', '', 'pop'], ['inet', 390, 110, 'Internet', '', 'cloud']],
+        links: [['u', 'pop', 'flow'], ['pop', 'inet', 'flow']],
+        meters: [[230, 165, 0.3, 'good', 'load 30%']], badges: [[230, 40, 'TLS inspection: on, single pass', 'good'], [230, 228, 'the provider scales and patches it', 'good']] } },
+    { legacy: { nodes: [['f', 95, 45, 'DC firewall', 'own rules · own log'], ['p', 365, 45, 'Web proxy', 'own rules · own log'], ['v', 95, 205, 'VPN', 'own rules · own log'], ['r', 365, 205, 'Branch routers', 'own rules · own log'], ['c', 230, 125, '4 consoles, 4 rulebases', '', 'note']],
+        links: [] },
+      sase: { nodes: [['core', 230, 125, 'ONE POLICY', '', 'core'], ['b', 85, 45, 'Branches', ''], ['h', 375, 45, 'HQ / DC', ''], ['r', 85, 205, 'Remote users', ''], ['cl', 375, 205, 'Cloud', '']],
+        links: [['core', 'b', 'okline'], ['core', 'h', 'okline'], ['core', 'r', 'okline'], ['core', 'cl', 'okline']],
+        badges: [[230, 245, 'one policy, one log, to the SOC', 'good']] } },
+    { legacy: { nodes: [['u', 68, 122, 'User', ''], ['px', 215, 122, 'Proxy', 'sees a domain only'], ['ai', 385, 45, 'GenAI', 'personal account'], ['pc', 385, 200, 'Personal cloud', 'Dropbox · Gmail']],
+        links: [['u', 'px', 'flow'], ['px', 'ai', 'bad', 'source code'], ['px', 'pc', 'bad', 'customer list']],
+        badges: [[215, 245, 'allowed by category, nobody sees what left', 'bad']] },
+      sase: { nodes: [['u', 68, 122, 'User', ''], ['pop', 215, 122, 'PoP', '', 'pop'], ['ai', 385, 45, 'GenAI', 'company tenant', 'box', 'good'], ['pc', 385, 200, 'Personal cloud', 'upload blocked', 'box', 'dim']],
+        links: [['u', 'pop', 'flow'], ['pop', 'ai', 'ok', 'prompt checked'], ['pop', 'pc', 'bad']],
+        marks: [['pc', 'block']], badges: [[215, 245, 'CASB knows the tenant, DLP reads the content', 'good']] } }
+  ];
+  const MW = { box: [126, 40], cloud: [118, 46], pop: [40, 40], core: [76, 76], note: [0, 0] };
+  // Draw one mini-diagram into an SVG.
+  function mini(svgEl, spec, idp) {
+    svgEl.textContent = '';
+    const defs = el('defs', {}, svgEl);
+    for (const [k, cls] of [['a', 't-arrow'], ['r', 't-arrow-risk'], ['g', 'm-arrow-ok']]) {
+      const mk = el('marker', { id: `${idp}${k}`, viewBox: '0 0 10 10', refX: 7, refY: 5, markerWidth: 4.5, markerHeight: 4.5, orient: 'auto-start-reverse' }, defs);
+      el('path', { d: 'M0,0 L10,5 L0,10 z', class: cls, style: k === 'g' ? 'fill: var(--ok)' : null }, mk);
+    }
+    const at = Object.fromEntries(spec.nodes.map((n) => [n[0], n]));
+    const edge = (n, from) => {
+      const [, x, y, , , kind = 'box'] = n, [w, h] = MW[kind], dx = from.x - x, dy = from.y - y;
+      if (kind === 'pop' || kind === 'core') { const r = w / 2 + 4, d = Math.hypot(dx, dy) || 1; return { x: x + dx / d * r, y: y + dy / d * r }; }
+      const t = Math.min(dx ? (w / 2 + 4) / Math.abs(dx) : Infinity, dy ? (h / 2 + 4) / Math.abs(dy) : Infinity);
+      return { x: x + dx * t, y: y + dy * t };
+    };
+    for (const [a, b, cls, label] of spec.links || []) {
+      const A = at[a], B = at[b], p1 = edge(A, { x: B[1], y: B[2] }), p2 = edge(B, { x: A[1], y: A[2] });
+      const marker = cls === 'flow' ? 'a' : cls === 'bad' ? 'r' : cls === 'ok' ? 'g' : null;
+      el('path', { d: `M${p1.x.toFixed(1)},${p1.y.toFixed(1)} L${p2.x.toFixed(1)},${p2.y.toFixed(1)}`, class: `m-l ${cls}`, 'marker-end': marker ? `url(#${idp}${marker})` : null }, svgEl);
+      if (label) {
+        const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2, len = Math.hypot(p2.x - p1.x, p2.y - p1.y) || 1, nx = -(p2.y - p1.y) / len * 12, ny = (p2.x - p1.x) / len * 12;
+        el('text', { x: mx + nx, y: my + ny + 4, 'text-anchor': 'middle', class: 'm-lab' }, svgEl).textContent = label;
+      }
+    }
+    for (const [id, x, y, label, sub, kind = 'box', tone] of spec.nodes) {
+      const g = el('g', { class: `m-n ${kind}${tone ? ' ' + tone : ''}` }, svgEl), [w, h] = MW[kind];
+      if (kind === 'cloud') el('ellipse', { cx: x, cy: y, rx: w / 2, ry: h / 2 }, g);
+      else if (kind === 'pop' || kind === 'core') el('circle', { cx: x, cy: y, r: w / 2 }, g);
+      else if (kind === 'box') el('rect', { x: x - w / 2, y: y - h / 2, width: w, height: h, rx: 8 }, g);
+      const two = sub && kind !== 'pop';
+      el('text', { x, y: two ? y - 2 : y + 4.5, 'text-anchor': 'middle', class: 't1' }, g).textContent = label;
+      if (two) el('text', { x, y: y + 12, 'text-anchor': 'middle', class: 't2' }, g).textContent = sub;
+    }
+    for (const [cx, cy, pct, tone, label] of spec.meters || []) {
+      const g = el('g', { class: `m-meter ${tone}` }, svgEl);
+      el('rect', { x: cx - 60, y: cy - 6, width: 120, height: 12, rx: 6, class: 'bg' }, g);
+      el('rect', { x: cx - 60, y: cy - 6, width: 120 * pct, height: 12, rx: 6, class: 'fg' }, g);
+      el('text', { x: cx, y: cy + 22, 'text-anchor': 'middle' }, g).textContent = label;
+    }
+    for (const [id, kind] of spec.marks || []) {
+      const [, x, y, , , k = 'box'] = at[id], [w, h] = MW[k];
+      const q = k === 'box' ? { x: x + w / 2 - 6, y: y - h / 2 + 2 } : { x, y };
+      const g = el('g', { class: `t-mark ${kind === 'block' ? 'block' : 'x'}` }, svgEl);
+      el('circle', { cx: q.x, cy: q.y, r: kind === 'block' ? 12 : 11 }, g);
+      if (kind === 'block') el('rect', { x: q.x - 7, y: q.y - 2.2, width: 14, height: 4.4, rx: 1.5 }, g);
+      else { el('line', { x1: q.x - 5, y1: q.y - 5, x2: q.x + 5, y2: q.y + 5 }, g); el('line', { x1: q.x + 5, y1: q.y - 5, x2: q.x - 5, y2: q.y + 5 }, g); }
+    }
+    for (const [cx, cy, text, tone] of spec.badges || []) {
+      const g = el('g', { class: `m-badge ${tone}` }, svgEl), w = text.length * 6.3 + 20;
+      el('rect', { x: cx - w / 2, y: cy - 11, width: w, height: 22, rx: 11 }, g);
+      el('text', { x: cx, y: cy + 4, 'text-anchor': 'middle' }, g).textContent = text;
+    }
+  }
   function buildWhy() {
-  $('whyGrid').innerHTML = `
-    <div class="wh leg"><span class="sub">1 · The legacy network</span><b>Hub and spoke</b><span>MPLS to the DC, internet backhauled through the DC firewall, remote users on VPN.</span></div>
-    <span class="wh"></span>
-    <div class="wh gap"><span class="sub">2 · ?</span><b>What would fix all of this?</b><span>Next: what SASE is.</span></div>
-    <div class="wh sase reveal r2"><span class="sub">2 · What SASE is</span><b>SASE = SD-WAN + SSE, from the cloud</b><span>Every site, user and cloud workload connects to the nearest PoP, where one policy and one pass of inspection apply to all traffic.</span></div>
-    ${WHY.map(([t, bad, good, caps]) => `
-      <div class="w-iss"><b>${esc(t)}</b><p>${esc(bad)}</p></div>
-      <span class="w-to reveal r3" aria-hidden="true">→</span>
-      <div class="w-fix reveal r3"><b>${esc(good)}</b><div class="caps">${caps.map(whyTag).join('')}</div></div>`).join('')}`;
+    $('whyList').innerHTML = WHY.map(([t, , , caps], i) => `<button type="button" class="wrow" data-row="${i}" aria-pressed="false"><span class="wn">${i + 1}</span><span class="wi">${esc(t)}</span><span class="caps">${caps.map(whyTag).join('')}</span></button>`).join('');
+    $('whyList').addEventListener('click', (e) => { const b = e.target.closest('[data-row]'); if (b) { state.whyRow = +b.dataset.row; render(); } });
+  }
+  function renderWhy() {
+    const i = state.whyRow, [t, bad, good, caps] = WHY[i];
+    $('whyList').querySelectorAll('.wrow').forEach((b, j) => b.setAttribute('aria-pressed', String(j === i)));
+    $('whyT').textContent = t;
+    mini($('whyL'), WHY_DIAG[i].legacy, 'wl');
+    mini($('whyS'), WHY_DIAG[i].sase, 'ws');
+    $('whyLp').textContent = bad;
+    $('whySp').innerHTML = `${esc(good)}<span class="caps">${caps.map(whyTag).join('')}</span>`;
   }
   const WHY_NEXT = ['Next: what SASE is →', 'Next: how SASE covers it →', 'Next: SD-WAN + SSE in detail →'];
 
@@ -1722,7 +1928,7 @@
 
   // ---------- State ----------
   // view: 'lab' (diagram), 'why' (whyStage 1-3) or 'intro'. mode: null, 'trace' or 'edit'. talk: null, or { len, i } while stepping through a run order.
-  const state = { phase: 0, flow: 'branch-saas', tab: 'main', view: 'lab', whyStage: 1, talk: null, mode: null, panel: false, what: null };
+  const state = { phase: 0, flow: 'branch-saas', tab: 'main', view: 'lab', whyStage: 1, whyRow: 0, talk: null, mode: null, panel: false, what: null };
   try { state.panel = localStorage.getItem('tornog-panel') === 'open'; } catch (e) {}
   const $ = (id) => document.getElementById(id);
   const svg = $('topo');
@@ -2063,6 +2269,7 @@
       $('why').dataset.stage = state.whyStage;
       $('whyDots').innerHTML = [1, 2, 3].map((n) => `<i class="${n <= state.whyStage ? 'on' : ''}"></i>`).join('') + `<span>${['The legacy network', 'What SASE is', 'How SASE covers it'][state.whyStage - 1]}</span>`;
       $('whyGo').textContent = WHY_NEXT[state.whyStage - 1];
+      renderWhy();
     }
     if (!lab && state.mode) setMode(null, false);
     $('main').classList.toggle('collapsed', !state.panel);
@@ -2295,6 +2502,8 @@
     }
     else if (next) { navNext(); e.preventDefault(); }
     else if (prev) { navPrev(); e.preventDefault(); }
+    else if (state.view === 'why' && (k === 'ArrowDown' || k === 'ArrowUp')) { state.whyRow = (state.whyRow + (k === 'ArrowDown' ? 1 : WHY.length - 1)) % WHY.length; render(); e.preventDefault(); }
+    else if (state.view === 'why' && /^[1-7]$/.test(k)) { state.whyRow = +k - 1; render(); }
     else if (k === 'ArrowDown') { state.flow = FLOWS[(fi + 1) % FLOWS.length].id; showLab(); e.preventDefault(); }
     else if (k === 'ArrowUp') { state.flow = FLOWS[(fi + FLOWS.length - 1) % FLOWS.length].id; showLab(); e.preventDefault(); }
     else if (k === 'f' || k === 'F') {
