@@ -79,6 +79,28 @@
 
   /* Phase stepper */
   .phases { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; overflow: hidden; }
+  /* Toolbar above the diagram: compact phase tabs, the flow picker, the phase description, Details */
+  .flows { flex-wrap: nowrap; gap: 10px; padding: 6px 10px; }
+  .flows .phases { display: inline-flex; flex: none; border: 1px solid var(--line); border-radius: 9px; }
+  .flows .phase { display: flex; align-items: baseline; gap: 6px; padding: 7px 12px; }
+  .flows .phase .pn { font-size: 11px; letter-spacing: 0.1em; }
+  .flows .phase .pt { font: 700 15px/1.1 var(--display); white-space: nowrap; }
+  .flows .phase .pd { display: none; }
+  .flows .phase[aria-pressed="true"]::after { height: 3px; }
+  .flowpick { display: inline-flex; align-items: center; gap: 4px; flex: none; }
+  .flowpick select { font: 500 13.5px var(--body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; max-width: 320px; cursor: pointer; }
+  .flowpick select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .phdesc { flex: 1 1 auto; min-width: 0; font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .edb { display: inline-flex; gap: 5px; }
+  /* The legend is drawn inside the diagram; this row only appears for trace and edit hints. */
+  body:not(.mode-trace):not(.mode-edit) .legend { display: none; }
+  .t-legend text { font: 500 12px var(--body); fill: var(--muted); }
+  .t-legend .lt { font: 600 11px var(--display); letter-spacing: 0.12em; text-transform: uppercase; }
+  @media (max-width: 900px) {
+    .flows { flex-wrap: wrap; }
+    .flows .phases { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
+    .phdesc { flex-basis: 100%; white-space: normal; }
+  }
   .phase { text-align: left; border: 0; border-right: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 10px 14px; cursor: pointer; display: grid; gap: 2px; position: relative; }
   .phase:last-child { border-right: 0; }
   .phase .pn { font: 600 12px var(--display); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
@@ -125,11 +147,11 @@
   .sw.cl { border-top: 3px solid var(--cloud); opacity: .6; }
   .sw.tn { border-top: 2px solid var(--cloud); opacity: .5; }
   /* Scoreboard and what-if, under the diagram */
-  .board { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 8px 12px; border-top: 1px solid var(--line); }
+  .board { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 6px 10px; border-top: 1px solid var(--line); }
   .tiles { display: flex; flex-wrap: wrap; gap: 6px; }
-  .tile { display: grid; gap: 1px; min-width: 112px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2); }
+  .tile { display: flex; align-items: baseline; gap: 6px; padding: 5px 9px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2); white-space: nowrap; }
   .tile .tl { font: 600 10.5px var(--display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
-  .tile b { font: 700 19px/1.1 var(--display); }
+  .tile b { font: 700 16px/1.1 var(--display); }
   .tile b small { font-size: 12px; color: var(--muted); font-weight: 500; }
   .tile .td { font-size: 11px; color: var(--muted); }
   .tile .td.good { color: var(--ok); } .tile .td.bad { color: var(--bad); }
@@ -497,11 +519,12 @@
     </div>
   </section>
 
-  <nav class="panel phases" id="phases" aria-label="Migration phase"></nav>
 
   <div class="main" id="main">
     <section class="panel stage" aria-label="Network diagram">
-      <div class="flows" id="flows" role="group" aria-label="Traffic flow"></div>
+      <div class="flows" id="flows" role="group" aria-label="Phase and flow">
+        <nav class="phases" id="phases" aria-label="Migration phase"></nav>
+      </div>
       <div class="canvas">
         <svg class="topo" id="topo" viewBox="0 0 1760 820" role="img" aria-label="Sample enterprise network: services on top (internet sites, SaaS, generative AI, the identity provider and the SOC); in the middle the MPLS WAN and the internet side by side, and the SASE cloud beside them with a policy core and PoPs; at the bottom the data center (with an AI agent), HQ, two branches (one with IoT devices), a remote worker, a contractor and the company cloud."></svg>
       </div>
@@ -516,25 +539,20 @@
           <button class="mini" type="button" data-what="ai">AI data leak</button>
           <button class="mini" type="button" data-what="dns">DNS attack</button>
         </div>
+        <span class="edb">
+          <button class="mini" id="traceBtn" type="button" title="Drag from a source to a destination to see its path in every phase (D). With a mouse, dragging works at any time.">Trace</button>
+          <button class="mini" id="editBtn" type="button" title="Move boxes around (E)">Edit</button>
+        </span>
         <div class="seg diaw" role="group" aria-label="Legacy branch internet">
           <button type="button" data-dia="0" title="Branch internet rides MPLS to the DC firewall">Backhaul</button><button type="button" data-dia="1" title="Each branch breaks out locally through its own firewall">DIA</button>
         </div>
       </div>
       <div class="legend">
-        <span class="lg"><i class="sw fl"></i> This flow</span>
-        <span class="lg"><i class="sw rk"></i> What can go wrong</span>
-        <span class="lg"><i class="sw cl"></i> PoP to shared core</span>
-        <span class="lg"><i class="sw mp"></i> MPLS</span>
-        <span class="lg"><i class="sw ip"></i> IPsec or VPN</span>
-        <span class="lg"><i class="sw tn"></i> SASE tunnel (over the internet)</span>
-        <span class="lg">Faded = not deployed yet, or retired</span>
         <span class="modehint m-trace" id="traceHint"><b>Trace:</b> drag from where the traffic starts (a user, a branch, the DC or the cloud) to where it goes. Then <kbd>←</kbd> <kbd>→</kbd> shows how it passes in each phase.</span>
         <span class="modehint m-edit"><b>Edit layout:</b> drag any box, PoP or the policy core. Links and flows follow. Saved in this browser.</span>
         <span class="ed">
           <button class="mini m-edit" id="copyLayout" type="button">Copy layout</button>
           <button class="mini m-edit" id="resetLayout" type="button">Reset layout</button>
-          <button class="mini" id="traceBtn" type="button" title="Drag from a source to a destination to see its path in every phase (D). With a mouse, dragging works at any time.">Trace a flow</button>
-          <button class="mini" id="editBtn" type="button" title="Move boxes around (E)">Edit layout</button>
         </span>
       </div>
     </section>
@@ -1550,11 +1568,11 @@
     const p = state.phase, m = metrics(p), m0 = metrics(0);
     const tile = (label, v, v0, of) => {
       const d = v - v0, cls = d < 0 ? 'good' : d > 0 ? 'bad' : '';
-      return `<div class="tile"><span class="tl">${label}</span><b>${v}${of ? `<small> / ${of}</small>` : ''}</b><span class="td ${cls}">${p === 0 ? 'legacy' : d === 0 ? 'same as legacy' : `${d > 0 ? '+' : ''}${d} vs legacy`}</span></div>`;
+      return `<div class="tile"><span class="tl">${label}</span><b>${v}${of ? `<small> / ${of}</small>` : ''}</b><span class="td ${cls}" title="Compared with phase 0 (legacy)">${p === 0 || d === 0 ? '' : `(${d > 0 ? '+' : '−'}${Math.abs(d)})`}</span></div>`;
     };
     $('tiles').innerHTML = tile('Boxes you patch', m.boxes, m0.boxes) + tile('Consoles', m.consoles, m0.consoles)
-      + tile('Flows via the DC', m.viaDC, m0.viaDC, m.notDC) + tile('Flows on MPLS', m.onMpls, m0.onMpls, FLOWS.length)
-      + `<div class="tile"><span class="tl">New site live in</span><b>${p < 2 ? '~3 months' : 'days'}</b><span class="td ${p < 2 ? '' : 'good'}">${p < 2 ? 'waiting for the MPLS circuit' : 'any ISP, zero-touch edge'}</span></div>`;
+      + tile('Via the DC', m.viaDC, m0.viaDC, m.notDC) + tile('On MPLS', m.onMpls, m0.onMpls, FLOWS.length)
+      + `<div class="tile"><span class="tl">New site in</span><b>${p < 2 ? '~3 months' : 'days'}</b><span class="td ${p < 2 ? '' : 'good'}">${p < 2 ? '(MPLS circuit)' : '(zero-touch)'}</span></div>`;
     $('board').querySelectorAll('[data-what]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.what === state.what)));
     $('board').querySelectorAll('[data-dia]').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.dia === +OPT.dia)));
   }
@@ -1808,6 +1826,19 @@
       }
     }
 
+    // Legend, in the empty corner under the services (the what-if card uses the same corner).
+    if (!scn) {
+      const g = el('g', { class: 't-legend' }, svg), x0 = 22, y0 = BUS_Y + 30;
+      const item = (x, y, cls, label) => {
+        if (cls) el('path', { d: `M${x},${y - 4} h26`, class: cls }, g);
+        el('text', { x: x + (cls ? 32 : 0), y }, g).textContent = label;
+      };
+      el('text', { x: x0, y: y0, class: 'lt' }, g).textContent = 'Legend';
+      item(x0, y0 + 22, 't-flow', 'This flow'); item(x0 + 130, y0 + 22, 't-risk', 'What can go wrong'); item(x0 + 315, y0 + 22, 't-link tunnel', 'SASE tunnel (over the internet)');
+      item(x0, y0 + 44, 't-link mpls', 'MPLS'); item(x0 + 130, y0 + 44, 't-link ipsec', 'IPsec or VPN'); item(x0 + 315, y0 + 44, 't-link core', 'PoP to the policy core');
+      item(x0, y0 + 66, null, 'Faded = not deployed yet, or retired. Drag from one box to another to trace any flow.');
+    }
+
     // What if: marks on what failed or got hit, stop signs where a PoP blocked it, and the explanation card.
     if (scn) {
       const mark = (id, cls) => {
@@ -1885,8 +1916,9 @@
 
   function renderControls() {
     $('phases').querySelectorAll('.phase').forEach((b, i) => b.setAttribute('aria-pressed', String(i === state.phase)));
-    $('traceSlot').innerHTML = trace ? `<span class="label">Traced →</span><button type="button" class="chip" data-id="${trace.id}">${esc(trace.label)}</button><button type="button" class="chip x" data-untrace aria-label="Remove the traced flow" title="Remove the traced flow">✕</button>` : '';
-    $('flows').querySelectorAll('.chip[data-id]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.id === state.flow)));
+    $('traceSlot').innerHTML = trace ? `<button type="button" class="chip x" data-untrace aria-label="Remove the traced flow" title="Remove the traced flow (${esc(trace.label)})">✕ traced</button>` : '';
+    fillFlowSel();
+    $('phDesc').textContent = PHASES[state.phase].desc;
   }
 
   // ---------- Talk mode ----------
@@ -2094,22 +2126,24 @@
   PHASES.forEach((ph, i) => {
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'phase';
-    b.innerHTML = `<span class="pn">Phase ${i}</span><span class="pt">${esc(ph.name)}</span><span class="pd">${esc(ph.desc)}</span>`;
+    b.innerHTML = `<span class="pn">${i}</span><span class="pt">${esc(ph.name)}</span><span class="pd">${esc(ph.desc)}</span>`;
+    b.title = `Phase ${i}: ${ph.desc}`;
     b.addEventListener('click', () => { state.phase = i; render(); });
     $('phases').appendChild(b);
   });
-  FLOWS.forEach((f, i) => {
-    if (!i || FLOWS[i - 1].group !== f.group) {
-      const g = document.createElement('span');
-      g.className = 'label'; g.textContent = f.group + ' →';
-      $('flows').appendChild(g);
-    }
-    const b = document.createElement('button');
-    b.type = 'button'; b.className = 'chip'; b.dataset.id = f.id;
-    b.textContent = f.label;
-    b.addEventListener('click', () => { state.flow = f.id; render(); });
-    $('flows').appendChild(b);
-  });
+  // One dropdown for every flow, grouped by where it starts (↑ ↓ still step through them).
+  const pick = document.createElement('label');
+  pick.className = 'flowpick';
+  pick.innerHTML = '<span class="label">Flow</span><select id="flowSel" aria-label="Traffic flow"></select>';
+  $('flows').appendChild(pick);
+  $('flowSel').addEventListener('change', (e) => { state.flow = e.target.value; render(); });
+  function fillFlowSel() {
+    const groups = [];
+    for (const f of FLOWS) { const g = groups.find((x) => x[0] === f.group); if (g) g[1].push(f); else groups.push([f.group, [f]]); }
+    if (trace) groups.push(['Traced', [trace]]);
+    $('flowSel').innerHTML = groups.map(([g, list]) => `<optgroup label="${esc(g)}">${list.map((f) => `<option value="${f.id}">${esc(g === 'Traced' ? f.label : `${g} → ${f.label}`)}</option>`).join('')}</optgroup>`).join('');
+    $('flowSel').value = state.flow;
+  }
   $('board').addEventListener('click', (e) => {
     const w = e.target.closest('[data-what]'), d = e.target.closest('[data-dia]');
     if (w) { state.what = state.what === w.dataset.what ? null : w.dataset.what; render(true, true); }
@@ -2127,6 +2161,9 @@
   const slot = document.createElement('span');
   slot.id = 'traceSlot'; slot.style.display = 'contents';
   $('flows').appendChild(slot);
+  const desc = document.createElement('span');
+  desc.className = 'phdesc'; desc.id = 'phDesc';
+  $('flows').appendChild(desc);
   const panelBtn = document.createElement('button');
   panelBtn.type = 'button'; panelBtn.className = 'mini'; panelBtn.id = 'panelBtn';
   panelBtn.title = 'Show or hide the steps, capabilities, issues and pitfalls (S)';
