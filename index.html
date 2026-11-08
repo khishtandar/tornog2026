@@ -154,6 +154,11 @@
   .t-node.dev rect { fill: var(--surface-2); }
   .t-node.legacy rect { stroke: var(--c-legacy); stroke-dasharray: 4 3; }
   .t-node.sdwan rect { stroke: var(--c-net); stroke-width: 2; }
+  .t-node.threat rect { stroke: var(--bad); stroke-dasharray: 4 3; fill: color-mix(in srgb, var(--bad) 6%, var(--surface)); }
+  .t-node.threat .n1 { fill: var(--bad); }
+  .t-node.sase rect { stroke: var(--cloud); stroke-width: 2; }
+  .t-node.sase .n1 { fill: var(--cloud); }
+  .t-link.threat { stroke: var(--bad); opacity: .5; stroke-dasharray: 4 3; }
   .t-node .n1 { font: 600 14px var(--body); fill: var(--ink); }
   .t-node .n2 { font: 400 11.5px var(--mono); fill: var(--muted); }
   .t-node.on rect { stroke: var(--accent); stroke-width: 3; stroke-dasharray: none; }
@@ -188,7 +193,7 @@
   .t-mark.block rect { fill: #FFFFFF; }
   .t-card rect { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
   .t-card .tt { font: 700 18px var(--display); fill: var(--ink); }
-  .t-card .tx { font: 400 14px var(--body); fill: var(--ink); }
+  .t-card .tx { font: 400 13.5px var(--body); fill: var(--ink); }
   .t-card .tk { font: 500 11.5px var(--body); fill: var(--muted); }
   .t-inet rect { fill: color-mix(in srgb, var(--muted) 9%, var(--surface)); stroke: var(--muted); stroke-width: 1.5; }
   .t-inet text { font: 700 13px var(--display); letter-spacing: 0.14em; fill: var(--muted); }
@@ -509,6 +514,7 @@
           <button class="mini" type="button" data-what="pop">PoP down</button>
           <button class="mini" type="button" data-what="ransom">Ransomware</button>
           <button class="mini" type="button" data-what="ai">AI data leak</button>
+          <button class="mini" type="button" data-what="dns">DNS attack</button>
         </div>
         <div class="seg diaw" role="group" aria-label="Legacy branch internet">
           <button type="button" data-dia="0" title="Branch internet rides MPLS to the DC firewall">Backhaul</button><button type="button" data-dia="1" title="Each branch breaks out locally through its own firewall">DIA</button>
@@ -567,11 +573,14 @@
     fwaas: ['FWaaS', 'sec'], swg: ['Secure Web Gateway', 'sec'], tls: ['TLS inspection', 'sec'], ips: ['IPS and anti-malware', 'sec'], rbi: ['Remote browser isolation', 'sec'],
     casb: ['CASB', 'data'], dlp: ['DLP', 'data'],
     aidisc: ['Shadow-AI discovery', 'ai'], aictl: ['AI tenant and activity control', 'ai'], mcp: ['AI agent and MCP allow-list', 'ai'],
-    branchfw: ['Branch firewall (DIA)', 'legacy'], iotid: ['IoT device discovery', 'sec'], seg: ['LAN segmentation at the edge', 'net']
+    branchfw: ['Branch firewall (DIA)', 'legacy'], dnssec: ['DNS security', 'sec'], iotid: ['IoT device discovery', 'sec'], seg: ['LAN segmentation at the edge', 'net']
   };
 
   // ---------- Field pitfalls ----------
   const PIT = {
+    mediaBypass: ['Inspecting real-time media hurts it', 'Decrypting and proxying call media adds delay and breaks some clients.', 'Bypass TLS inspection for the provider\'s published media ranges, and keep inspecting sign-in and signalling.'],
+    dnsDoh: ['Apps that skip your DNS', 'Browsers and malware can use DNS over HTTPS to public resolvers and bypass your filtering.', 'Block or redirect known DoH resolvers, and hand out the PoP resolver through DHCP and the agent.'],
+    instance: ['Sanctioned app, personal account', 'The same service is both approved and personal, so a domain block breaks real work.', 'Write rules on the instance (tenant) and the activity, not the domain.'],
     iotBreak: ['Segmentation breaks the odd device', 'Some devices need local services (printing, multicast discovery, a local controller) that a strict segment blocks.', 'Start in monitor mode, learn the flows per device type, then enforce.'],
     aiAgents: ['Agents act with real permissions', 'An agent with broad API keys can be steered by a poisoned page or file (prompt injection) into sending data out.', 'Give each agent its own identity with least privilege, allow-list its tools and destinations, and inspect what it sends.'],
     clientless: ['Browser access has limits', 'Browser-based ZTNA covers web apps, RDP and SSH. Thick clients and file shares still need an agent or a virtual desktop.', 'List what contractors actually use before you promise "no agent", and give agents only to devices you manage.'],
@@ -691,21 +700,43 @@
     ['Security trimmed to fit the box', 'Small branch firewalls rarely run TLS inspection, sandboxing, CASB or DLP.', 'The full stack, with TLS inspection, CASB and DLP, at the nearest PoP.'],
     ['Logs scattered across boxes', 'Investigating an incident means pulling logs from many branch firewalls.', 'One log for every site and user, sent to the SOC.']
   ];
-  const DIA_FLOWS = ['branch-saas', 'branch-web', 'branch-ai'];
+  ISSUES['branch-voice'] = [
+    ['Calls hairpin through the DC', 'Teams and Zoom media rides MPLS to the DC and back out, adding tens of milliseconds.', 'Breaks out at the nearest PoP, close to the provider\'s own media servers.'],
+    ['One bad link, choppy calls', 'Loss on the branch circuit goes straight into the call.', 'The edge measures every link, and steers or duplicates real-time packets.'],
+    ['Video fills the WAN', 'Meetings and screen sharing compete with business apps on the same MPLS circuit.', 'Per-application QoS on every link, set once in one policy.'],
+    ['Nobody sees call quality', 'Complaints arrive as "Teams is bad", with no data.', 'Jitter, loss and latency per application and site, in one console.']
+  ];
+  ISSUES['branch-c2'] = [
+    ['DNS is wide open', 'Any device can resolve any domain, including one registered an hour ago.', 'DNS security in every PoP blocks new, look-alike and known-bad domains.'],
+    ['Data leaves inside DNS', 'DNS tunnelling sneaks data out in queries that every firewall allows.', 'The resolver spots tunnelling patterns and blocks them.'],
+    ['Uncategorized means allowed', 'The proxy lets unknown sites through to avoid help-desk tickets.', 'Threat intelligence and IPS block command-and-control traffic, even over HTTPS.'],
+    ['Found weeks later', 'Nobody correlates DNS, proxy and firewall logs.', 'One log: the blocked lookup names the user and the device at once.']
+  ];
+  ISSUES['remote-pcloud'] = [
+    ['Company or personal?', 'The same service serves the company tenant and personal accounts.', 'CASB tells the instances apart and applies different rules.'],
+    ['Off the VPN, no control', 'Disconnect the VPN and uploads go straight out.', 'The always-on agent applies the same rules at home.'],
+    ['The category says "allow"', 'File sharing is allowed, because the business uses it.', 'Browsing is allowed, uploads to personal instances are not.'],
+    ['No record of what left', 'Nobody knows which files went where.', 'DLP logs the file, the user and the destination to the SOC.']
+  ];
+  const DIA_FLOWS = ['branch-saas', 'branch-web', 'branch-ai', 'branch-voice'];
 
   // ---------- Topology ----------
   // kind: end (selectable endpoint), dev (device), net (a transport cloud), pop, core
   const N = {
     // Top: services on the internet, plus the identity provider and the SOC that SASE ties in
-    web:    { x: 720, y: 48, kind: 'end', l: 'Internet sites', s: 'web · uncategorized' },
-    saas:   { x: 900, y: 48, kind: 'end', l: 'SaaS', s: 'M365 · CRM · storage' },
-    genai:  { x: 1080, y: 48, kind: 'end', l: 'Generative AI', s: 'chat · LLM APIs' },
-    idp:    { x: 1340, y: 48, kind: 'end', l: 'Identity (IdP)', s: 'SSO · MFA · groups' },
-    soc:    { x: 1560, y: 48, kind: 'end', l: 'SOC / SIEM', s: 'logs' },
+    ucaas:  { x: 260, y: 48, kind: 'end', l: 'Voice & video', s: 'Teams · Zoom · Webex' },
+    web:    { x: 440, y: 48, kind: 'end', l: 'Internet sites', s: 'web · uncategorized' },
+    saas:   { x: 620, y: 48, kind: 'end', l: 'SaaS', s: 'M365 · CRM · storage' },
+    genai:  { x: 800, y: 48, kind: 'end', l: 'Generative AI', s: 'chat · LLM APIs' },
+    pcloud: { x: 980, y: 48, kind: 'end', l: 'Personal cloud', s: 'Gmail · Dropbox' },
+    c2:     { x: 1160, y: 48, kind: 'end', l: 'Attacker (C2)', s: 'new domains · DNS' },
+    idp:    { x: 1400, y: 48, kind: 'end', l: 'Identity (IdP)', s: 'SSO · MFA · groups' },
+    soc:    { x: 1590, y: 48, kind: 'end', l: 'SOC / SIEM', s: 'logs' },
     // Middle: MPLS and the internet side by side, and the SASE cloud beside them
-    mpls:   { x: 330, y: 330, kind: 'net', l: 'MPLS WAN', s: 'carrier private network', to: 2 },
-    inet:   { x: 810, y: 330, kind: 'net', l: 'INTERNET', s: 'broadband · 5G · Wi-Fi' },
+    mpls:   { x: 330, y: 348, kind: 'net', l: 'MPLS WAN', s: 'carrier private network', to: 2 },
+    inet:   { x: 810, y: 348, kind: 'net', l: 'INTERNET', s: 'broadband · 5G · Wi-Fi' },
     core:   { x: 1420, y: 280, kind: 'core', from: 1 },
+    dns:    { x: 1205, y: 300, kind: 'dev', l: 'DNS security', s: 'blocks bad domains', from: 1 },
     popD:   { x: 1150, y: 440, kind: 'pop', from: 1 },
     popB1:  { x: 1275, y: 440, kind: 'pop', from: 2 },
     popB2:  { x: 1400, y: 440, kind: 'pop', from: 3 },
@@ -750,6 +781,8 @@
       remote: { s: p === 0 ? 'laptop · VPN' : p === 3 ? 'laptop · agent' : 'agent + VPN' },
       contractor: { s: p === 0 ? 'own laptop · VPN' : 'browser only' },
       iot: { s: p < 2 ? 'cameras · flat LAN' : 'cameras · segmented' },
+      c2: { cls: 'threat' },
+      dns: { cls: 'sase' },
       soc: { s: p === 3 ? 'one log, from SASE' : p ? `${boxes} boxes + SASE` : `logs from ${boxes} boxes` },
       dcfw: p === 3 ? { l: 'DC firewall', s: 'east-west only', cls: 'legacy' } : { l: 'Perimeter FW', s: 'NGFW · proxy · VPN', cls: 'legacy' },
       dcedge: p < 2 ? { l: 'WAN edge', s: 'MPLS + IPsec hub', cls: 'legacy' } : sd(p === 2 ? 'SASE + MPLS hub' : 'dual ISP'),
@@ -775,9 +808,10 @@
   // [a, b, firstPhase, lastPhase, class, label, labelPos (fraction of the last segment, or [x, y, anchor]), waypoints]
   function links() {
     const L = [
-      [[X('web'), BUS_Y], [X('soc'), BUS_Y], 0, 3, 'bus'],
+      [[X('ucaas'), BUS_Y], [X('soc'), BUS_Y], 0, 3, 'bus'],
       ['inet', [X('inet'), BUS_Y], 0, 3, 'bus'],
-      ...['web', 'saas', 'genai', 'idp', 'soc'].map((id) => [id, [X(id), BUS_Y], 0, 3]),
+      ...['ucaas', 'web', 'saas', 'genai', 'pcloud', 'c2', 'idp', 'soc'].map((id) => [id, [X(id), BUS_Y], 0, 3, id === 'c2' ? 'threat' : null]),
+      ['dns', 'core', 1, 3, 'core'],
       ['core', [X('core'), BUS_Y], 1, 3, null, 'egress', [X('core') - 8, BUS_Y + 24, 'end']],
       ['core', 'idp', 1, 3, 'dashed', 'identity', 0.3],
       ['core', 'soc', 1, 3, 'dashed', 'one log', 0.3],
@@ -830,14 +864,17 @@
     { id: 'branch-ai', group: 'Branch', label: 'GenAI', title: 'Branch user to a generative AI tool', src: 'users1', dst: 'genai' },
     { id: 'branch-cloud', group: 'Branch', label: 'Cloud app', title: 'Branch user to a cloud app', src: 'users1', dst: 'cloudapp' },
     { id: 'branch-web', group: 'Branch', label: 'Internet', title: 'Branch user to the internet', src: 'users1', dst: 'web' },
+    { id: 'branch-voice', group: 'Branch', label: 'Teams call', title: 'Branch user on a Teams or Zoom call', src: 'users1', dst: 'ucaas' },
     { id: 'dc-web', group: 'DC', label: 'Internet', title: 'Data center to the internet', src: 'apps', dst: 'web' },
     { id: 'remote-app', group: 'Remote', label: 'DC app', title: 'Remote user to a DC app', src: 'remote', dst: 'apps' },
     { id: 'remote-saas', group: 'Remote', label: 'SaaS', title: 'Remote user to SaaS', src: 'remote', dst: 'saas' },
     { id: 'remote-ai', group: 'Remote', label: 'GenAI', title: 'Remote user to a generative AI tool', src: 'remote', dst: 'genai' },
     { id: 'remote-cloud', group: 'Remote', label: 'Cloud app', title: 'Remote user to a cloud app', src: 'remote', dst: 'cloudapp' },
+    { id: 'remote-pcloud', group: 'Remote', label: 'Personal cloud', title: 'Remote user uploading to a personal cloud', src: 'remote', dst: 'pcloud' },
     { id: 'contractor-app', group: 'Contractor', label: 'DC app', title: 'Contractor to a DC app', src: 'contractor', dst: 'apps' },
     { id: 'branch-iot', group: 'IoT', label: 'Vendor cloud', title: 'Branch IoT camera to its cloud service', src: 'iot', dst: 'web' },
-    { id: 'dc-agent', group: 'AI agent', label: 'LLM API', title: 'AI agent in the DC to an LLM API', src: 'agent', dst: 'genai' }
+    { id: 'dc-agent', group: 'AI agent', label: 'LLM API', title: 'AI agent in the DC to an LLM API', src: 'agent', dst: 'genai' },
+    { id: 'branch-c2', group: 'Threat', label: 'C2 via DNS', title: 'Infected laptop calling its attacker', src: 'users1', dst: 'c2' }
   ];
 
   // SCN[flowId][phase] = { path, risk, riskLabel, verdict, vclass, note, steps: [[where, text]], caps, pits }
@@ -1131,9 +1168,58 @@
   };
   S['dc-agent'] = [agentLegacy, { ...agentLegacy, note: 'Unchanged: phase 1 moved remote users only.' }, agentSase, { ...agentSase, pits: ['aiAgents'] }];
 
+  const voiceLegacy = {
+    path: [...backhaul1, ...dcOut('ucaas')], verdict: 'Backhauled: delay and jitter', vclass: 'legacy',
+    steps: [['Branch router', 'Call media rides MPLS to the DC with everything else.'],
+      ['DC perimeter', 'Out through the firewall and proxy, often far from the provider\'s nearest media servers.'],
+      ['Teams / Zoom', 'Every extra millisecond and lost packet shows up as a choppy call.']],
+    caps: ['mpls', 'ngfw', 'proxy'], pits: []
+  };
+  const voiceSase = {
+    path: ['users1', 'edge1', 'popB1', ...coreOut('ucaas')], verdict: 'Nearest PoP, protected for real time', vclass: 'good',
+    steps: [['SD-WAN edge', 'Recognises the call, gives it priority, and steers or duplicates packets across links when one is lossy.'],
+      ['PoP', 'Nearest PoP, under the same policy. Media is usually exempt from TLS inspection.'],
+      ['Egress', 'Leaves close to the user and to the provider\'s own edge.']],
+    caps: ['sdwan', 'qos', 'fwaas', 'swg'], pits: ['mediaBypass', 'voice']
+  };
+  S['branch-voice'] = [voiceLegacy, { ...voiceLegacy, note: 'Unchanged: phase 1 moved remote users only.' }, voiceSase, { ...voiceSase, pits: ['mediaBypass', 'lastMile'] }];
+
+  const c2Legacy = {
+    path: [...backhaul1, ...dcOut('c2')], verdict: 'The callback gets out', vclass: 'legacy',
+    steps: [['Malware', 'Looks up a domain registered an hour ago, then calls home over HTTPS, or hides data inside DNS queries.'],
+      ['DC DNS and proxy', 'The DNS server forwards any query, and the proxy allows "uncategorized" sites, so both get out.'],
+      ['Attacker', 'Has a foothold, and can take data out a few bytes at a time inside DNS (DNS tunnelling).']],
+    caps: ['mpls', 'ngfw', 'proxy'], pits: []
+  };
+  const c2Sase = {
+    path: ['users1', 'edge1', 'popB1', 'dns'], verdict: 'Stopped at DNS security', vclass: 'good',
+    steps: [['DNS security', 'Every lookup goes through the PoP\'s resolver: new, look-alike and known-bad domains are blocked, and tunnelling is spotted.'],
+      ['IPS', 'If the malware uses a hard-coded IP instead, IPS and threat intelligence block the C2 traffic.'],
+      ['SOC', 'The blocked lookup is logged with the user and the device, so the infected laptop is found at once.']],
+    caps: ['dnssec', 'ips', 'fwaas', 'swg'], pits: ['dnsDoh']
+  };
+  S['branch-c2'] = [c2Legacy, { ...c2Legacy, note: 'Unchanged: phase 1 moved remote users only.' }, c2Sase, c2Sase];
+
+  const pcloudSase = {
+    path: ['remote', 'popU', ...coreOut('pcloud')], verdict: 'Company tenant only, uploads checked', vclass: 'good',
+    steps: [['Agent', 'Always on, at home or in the office: traffic goes to the nearest PoP.'],
+      ['CASB', 'Tells the company tenant from personal accounts on the same service: personal logins can browse, not upload.'],
+      ['DLP', 'Files with customer data or source code are blocked, with a message that says why.']],
+    caps: ['casb', 'dlp', 'tls', 'swg'], pits: ['instance', 'tlsBreak']
+  };
+  S['remote-pcloud'] = [
+    { path: [...vpn('remote'), ...dcOut('pcloud').slice(1)], verdict: 'Allowed by category', vclass: 'legacy',
+      risk: roadRisk('pcloud'), riskLabel: 'VPN off: straight out', riskAt: roadRiskAt(),
+      steps: [['VPN client', 'Full tunnel to the DC, while it is on.'],
+        ['DC proxy', 'Allows the "file sharing" category. It cannot tell the company\'s account from a personal one.'],
+        ['Personal cloud', 'A customer list uploaded to a personal account has left the company.']],
+      caps: ['vpn', 'proxy'], pits: [] },
+    pcloudSase, { ...pcloudSase, pits: ['instance'] }, { ...pcloudSase, pits: ['instance'] }
+  ];
+
   // DIA: before Branch 1 joins SASE, its internet traffic breaks out locally instead of riding MPLS to the DC.
   if (OPT.dia) {
-    for (const [id, src, dst] of [['branch-saas', 'users1', 'saas'], ['branch-web', 'users1', 'web'], ['branch-ai', 'users1', 'genai'], ['branch-iot', 'iot', 'web']]) {
+    for (const [id, src, dst] of [['branch-saas', 'users1', 'saas'], ['branch-web', 'users1', 'web'], ['branch-ai', 'users1', 'genai'], ['branch-voice', 'users1', 'ucaas'], ['branch-c2', 'users1', 'c2'], ['branch-iot', 'iot', 'web']]) {
       const d = {
         path: [src, 'edge1', 'inet', ...toBus(dst)], verdict: 'Direct internet access (DIA)', vclass: 'legacy',
         steps: [['Router + FW', 'Breaks out locally: the branch firewall inspects what it can, then sends it straight to the internet.'],
@@ -1150,13 +1236,13 @@
 
   // ---------- Trace any flow: drag from where traffic starts to where it goes ----------
   // The path in each phase is worked out from the same rules the hand-written flows follow.
-  const NET = ['web', 'saas', 'genai'];
+  const NET = ['web', 'saas', 'genai', 'ucaas', 'pcloud', 'c2'];
   // Dropping on a device means the endpoint behind it.
   const ENDPOINT = { usersH: 'usersH', edgeH: 'usersH', users1: 'users1', edge1: 'users1', iot: 'iot', users2: 'users2', edge2: 'users2', remote: 'remote', contractor: 'contractor',
-    apps: 'apps', agent: 'agent', dcedge: 'apps', dcfw: 'apps', conn: 'apps', cloudapp: 'cloudapp', vgw: 'cloudapp', web: 'web', saas: 'saas', genai: 'genai' };
+    apps: 'apps', agent: 'agent', dcedge: 'apps', dcfw: 'apps', conn: 'apps', cloudapp: 'cloudapp', vgw: 'cloudapp', web: 'web', saas: 'saas', genai: 'genai', ucaas: 'ucaas', pcloud: 'pcloud', c2: 'c2' };
   const NAME = { usersH: 'HQ user', users1: 'Branch 1 user', iot: 'Branch IoT device', users2: 'Branch 2 user', remote: 'Remote worker', contractor: 'Contractor',
-    apps: 'DC app', agent: 'DC AI agent', cloudapp: 'Cloud app', web: 'the internet', saas: 'SaaS', genai: 'a generative AI tool' };
-  const SHORT = { usersH: 'HQ', users1: 'Branch 1', iot: 'IoT', users2: 'Branch 2', remote: 'Remote', contractor: 'Contractor', apps: 'DC app', agent: 'AI agent', cloudapp: 'Cloud app', web: 'Internet', saas: 'SaaS', genai: 'GenAI' };
+    apps: 'DC app', agent: 'DC AI agent', cloudapp: 'Cloud app', web: 'the internet', saas: 'SaaS', genai: 'a generative AI tool', ucaas: 'a Teams or Zoom call', pcloud: 'a personal cloud', c2: 'an attacker\'s C2 server' };
+  const SHORT = { usersH: 'HQ', users1: 'Branch 1', iot: 'IoT', users2: 'Branch 2', remote: 'Remote', contractor: 'Contractor', apps: 'DC app', agent: 'AI agent', cloudapp: 'Cloud app', web: 'Internet', saas: 'SaaS', genai: 'GenAI', ucaas: 'Voice & video', pcloud: 'Personal cloud', c2: 'Attacker', dns: 'DNS security' };
   const EDGE = { usersH: 'edgeH', users1: 'edge1', iot: 'edge1', users2: 'edge2' };
   const AWAY = ['remote', 'contractor'];   // people off the network: VPN first, then agent or browser
   const DCSIDE = ['apps', 'agent'];        // things hosted in the DC
@@ -1192,13 +1278,13 @@
     if (EDGE[src] && EDGE[src] === EDGE[dst]) return [src, EDGE[src], dst];
     if (DCSIDE.includes(src) && DCSIDE.includes(dst)) return [src, 'dcfw', dst];
     if (NET.includes(dst)) {
-      if (onSase(src, p, null)) return [...upToCore(src, null), ...coreOut(dst).slice(1)];
+      if (onSase(src, p, null)) return dst === 'c2' ? [...upToCore(src, null).slice(0, -1), 'dns'] : [...upToCore(src, null), ...coreOut(dst).slice(1)];
       if (DCSIDE.includes(src)) return [src, ...dcOut(dst)];
       // A contractor's own laptop goes straight to the internet: the company sees nothing.
       if (src === 'contractor') return ['contractor', 'inet', ...toBus(dst)];
       if (EDGE[src] && OPT.dia) return [src, EDGE[src], 'inet', ...toBus(dst)];
       // From phase 2 the DC itself leaves through its PoP, so a branch still on MPLS is backhauled to the DC and goes out there.
-      if (p >= 2 && EDGE[src]) return [...toDC(src), 'popD', ...coreOut(dst)];
+      if (p >= 2 && EDGE[src]) return [...toDC(src), 'popD', ...(dst === 'c2' ? ['dns'] : coreOut(dst))];
       return joinDC(toDC(src), dcOut(dst));
     }
     const sa = onSase(src, p, dst), sb = onSase(dst, p, src);
@@ -1234,6 +1320,7 @@
         if (x === 'agent') out.push(['AI agent', 'A server-side agent calling LLM APIs and tools, with a key from its config.']);
         return;
       }
+      if (x === 'dns') { out.push(['DNS security', 'The PoP\'s resolver blocks the lookup of a new or known-bad domain, and spots DNS tunnelling.']); return; }
       if (i === nodes.length - 1) return;
       if (x === 'dcedge' || EDGES.includes(x)) {
         const sd = (L[x] || {}).cls === 'sdwan';
@@ -1292,6 +1379,9 @@
   // The hand-written flow closest to a traced one lends its legacy issues and pitfalls.
   function analogFor(src, dst) {
     const k = (e) => (e === 'iot' || e === 'agent' ? e : EDGE[e] ? 'branch' : e);
+    if (dst === 'c2') return 'branch-c2';
+    if (dst === 'ucaas') return 'branch-voice';
+    if (dst === 'pcloud') return 'remote-pcloud';
     const d = dst === 'contractor' ? 'remote' : dst === 'agent' ? 'apps' : EDGE[dst] ? 'branch' : dst;
     const T = {
       contractor: { apps: 'contractor-app', saas: 'remote-saas', web: 'remote-saas', genai: 'remote-ai', cloudapp: 'remote-cloud', branch: 'remote-app', remote: 'remote-app' },
@@ -1314,6 +1404,7 @@
     const verdict = DCSIDE.includes(src) && DCSIDE.includes(dst) ? 'East-west inside the DC'
       : sameBranch ? (vclass === 'good' ? 'Segmented at the edge' : 'Flat branch LAN')
       : vclass === 'warn' ? (net ? 'Backhauled, then out at the DC\'s PoP' : 'Via the DC: one end not migrated yet')
+      : vclass === 'good' && dst === 'c2' ? 'Stopped at DNS security'
       : vclass === 'good' ? (net ? 'Inspected at the nearest PoP' : (AWAY.includes(src) || AWAY.includes(dst)) ? 'ZTNA, one app at a time' : 'Over the SASE backbone')
       : net ? (DCSIDE.includes(src) ? 'Out through the DC perimeter' : src === 'contractor' ? 'Unmanaged: no company control' : dia ? 'Direct internet access (DIA)' : 'Backhauled to the DC')
       : nodes.includes('dcfw') || nodes.includes('dcedge') ? 'Through the DC' : 'Over MPLS';
@@ -1337,6 +1428,9 @@
       if (dst === 'genai') { caps.add('aidisc'); caps.add('aictl'); caps.add('dlp'); }
       if (src === 'iot') { caps.add('iotid'); caps.add('seg'); }
       if (src === 'agent' && dst === 'genai') caps.add('mcp');
+      if (dst === 'c2') caps.add('dnssec');
+      if (dst === 'pcloud') { caps.add('casb'); caps.add('dlp'); }
+      if (dst === 'ucaas') caps.add('qos');
     }
     const a = S[analog][p];
     const pits = vclass === 'warn' ? (net ? ['hubTransit', 'egressIP'] : ['hubTransit', 'asym']) : vclass === 'legacy' ? [] : a.vclass === 'good' ? a.pits : net ? ['egressIP', 'tlsBreak'] : ['mtu', 'lastMile'];
@@ -1351,7 +1445,7 @@
   }
 
   // ---------- What if: break something, and see each phase cope ----------
-  const WHAT = { dc: 'DC outage', mpls: 'MPLS cut', pop: 'PoP down', ransom: 'Ransomware in Branch 1', ai: 'AI data leak' };
+  const WHAT = { dc: 'DC outage', mpls: 'MPLS cut', pop: 'PoP down', ransom: 'Ransomware in Branch 1', ai: 'AI data leak', dns: 'DNS attack' };
   const listNames = (a) => (a.length < 2 ? a.join('') : `${a.slice(0, -1).join(', ')} and ${a[a.length - 1]}`);
   // Collapse "PoP → core → same PoP" and repeats left behind by a reroute.
   function tidy(path) {
@@ -1413,17 +1507,28 @@
       if (reached.length) lines.push(`One infected laptop in Branch 1 reaches ${listNames(reached)} over "trusted" MPLS.`, 'Nothing inspects traffic between sites, so it spreads at network speed.');
       if (blocked.length) lines.push(reached.length ? 'Where a site is already on SASE, the PoP stops it.' : 'The same infected laptop is stopped at its first PoP, every time.', 'The WAN firewall and IPS sit between every pair of sites, under the same policy as internet traffic.');
     } else if (kind === 'ai') {
-      lines.push('Someone pastes source code into a personal AI account, and an agent sends customer data to an LLM API.');
-      for (const [a, name] of [['users1', 'Branch user'], ['remote', p === 0 ? 'Remote worker, VPN off' : 'Remote worker'], ['agent', 'AI agent in the DC']]) {
+      lines.push('Someone pastes source code into a personal AI account; an agent sends customer data to an LLM API.');
+      const leaked = [], stopped = [];
+      for (const [a, name] of [['users1', 'the branch user'], ['remote', p === 0 ? 'the remote worker (VPN off)' : 'the remote worker'], ['agent', 'the DC agent']]) {
         const path = a === 'remote' && p === 0 ? roadRiskPath('genai') : route(a, 'genai', p), i = path.findIndex(isPop);
-        if (i >= 0) { paths.push({ path: path.slice(0, i + 1), cls: 'down', end: 'block' }); blocked.push(path[i]); lines.push(`${name}: blocked in the PoP by DLP and the tenant rules, with a coaching message.`); }
-        else {
-          paths.push({ path, cls: 'down', end: 'arrow' });
-          lines.push(`${name}: leaked. ${a === 'agent' ? 'The firewall allows any 443 from the server.' : a === 'remote' ? 'With the VPN off, nothing applies.' : OPT.dia ? 'The branch firewall sees a category, not the prompt.' : 'The DC proxy sees a domain, not the prompt.'}`);
-        }
+        if (i >= 0) { paths.push({ path: path.slice(0, i + 1), cls: 'down', end: 'block' }); blocked.push(path[i]); stopped.push(name); }
+        else { paths.push({ path, cls: 'down', end: 'arrow' }); leaked.push(name); }
       }
+      if (leaked.length) lines.push(`Leaked: ${listNames(leaked)}. A proxy or firewall sees a domain, not the prompt.`);
+      if (stopped.length) lines.push(`Blocked in the PoP by DLP and tenant rules, with a coaching message: ${listNames(stopped)}.`);
+    } else if (kind === 'dns') {
+      lines.push('Malware looks up a domain registered an hour ago, then hides data inside DNS queries (DNS tunnelling).');
+      const leaked = [], stopped = [];
+      for (const [a, name] of [['users1', 'Branch 1'], ['users2', 'Branch 2'], ['remote', 'the remote worker'], ['iot', 'the IoT camera']]) {
+        const path = route(a, 'c2', p), dnsAt = path.indexOf('dns');
+        if (dnsAt >= 0) { paths.push({ path, cls: 'down', end: 'block' }); blocked.push('dns'); stopped.push(name); }
+        else { paths.push({ path, cls: 'down', end: 'arrow' }); leaked.push(name); }
+      }
+      if (leaked.length) lines.push(`Reaches the attacker: ${listNames(leaked)}. The resolver forwards any query, and every firewall allows DNS.`);
+      if (stopped.length) lines.push(`Stopped by DNS security in the PoP: ${listNames(stopped)}. The lookup is logged with the user and device.`);
+      if (leaked.length) down.push('c2');
     }
-    return { title: `What if: ${WHAT[kind]} · Phase ${p}`, lines, paths, down: down.filter((id) => live(N[id].from, N[id].to)), blocked, infected: kind === 'ransom' ? ['users1'] : [] };
+        return { title: `What if: ${WHAT[kind]} · Phase ${p}`, lines, paths, down: down.filter((id) => live(N[id].from, N[id].to)), blocked, infected: kind === 'ransom' ? ['users1'] : [] };
   }
   const roadRiskPath = (dst) => ['remote', 'inet', ...toBus(dst)];
 
@@ -1637,7 +1742,7 @@
     el('rect', { x: cx, y: cy, width: cw, height: ch, rx: 44, class: 't-cloud' }, cloud);
     el('text', { x: cx + 26, y: cy + 30, class: 't-cloud-label' }, cloud).textContent = 'SASE CLOUD';
     el('text', { x: cx + 26, y: cy + 46, class: 't-cloud-cap' }, cloud).textContent = p === 0 ? 'not deployed yet' : 'one policy, a PoP near every site';
-    el('text', { x: X('web') - 80, y: BUS_Y - 8, class: 't-bus-label' }, svg).textContent = 'INTERNET';
+    el('text', { x: X('ucaas') - 80, y: BUS_Y - 8, class: 't-bus-label' }, svg).textContent = 'INTERNET';
 
     // Links (labels are drawn later, above the flow)
     const linkLabels = [];
@@ -1716,12 +1821,12 @@
       scn.down.forEach((id) => mark(id, 'x'));
       scn.infected.forEach((id) => mark(id, 'x'));
       [...new Set(scn.blocked)].forEach((id) => mark(id, 'block'));
-      const text = scn.lines.flatMap((t) => wrap(t, 82));
-      const g = el('g', { class: 't-card' }, svg), h = 46 + text.length * 19 + 26;
-      el('rect', { x: 16, y: 14, width: 620, height: h, rx: 12 }, g);
-      el('text', { x: 32, y: 42, class: 'tt' }, g).textContent = scn.title;
-      text.forEach((t, i) => { el('text', { x: 32, y: 68 + i * 19, class: 'tx' }, g).textContent = t; });
-      el('text', { x: 32, y: 68 + text.length * 19 + 8, class: 'tk' }, g).textContent = 'Red: stops, spreads or leaks · green: keeps working · amber: degraded · bar: blocked in the PoP';
+      const text = scn.lines.flatMap((t) => wrap(t, 96)), top = BUS_Y + 12;
+      const g = el('g', { class: 't-card' }, svg), h = 40 + text.length * 17 + 22;
+      el('rect', { x: 12, y: top, width: 660, height: h, rx: 12 }, g);
+      el('text', { x: 26, y: top + 26, class: 'tt' }, g).textContent = scn.title;
+      text.forEach((t, i) => { el('text', { x: 26, y: top + 48 + i * 17, class: 'tx' }, g).textContent = t; });
+      el('text', { x: 26, y: top + 48 + text.length * 17 + 6, class: 'tk' }, g).textContent = 'Red: stops, spreads or leaks · green: keeps working · amber: degraded · bar: blocked in the PoP';
     }
 
     // Risk label on top of everything
