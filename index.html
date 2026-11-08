@@ -406,6 +406,10 @@
   .wp p .caps { margin-top: 6px; }
   .why:not([data-stage="3"]) .wp.sase svg { opacity: 0.08; filter: grayscale(1); }
   .why:not([data-stage="3"]) .wp.sase p { visibility: hidden; }
+  /* Tap or click the hidden SASE side (or the question above it) to reveal it: handy on a phone. */
+  .why:not([data-stage="3"]) .wp.sase, .wd-q { cursor: pointer; }
+  .why:not([data-stage="3"]) .wp.sase:hover { border-color: var(--cloud); }
+  .why:not([data-stage="3"]) .wp.sase .wq { color: var(--cloud); font-weight: 600; }
   .why-hint { font-size: 12.5px; color: var(--muted); }
   .wwarn { display: grid; gap: 1px; padding: 6px 10px; border-left: 4px solid var(--warn); border-radius: 6px; background: color-mix(in srgb, var(--warn) 10%, var(--surface)); font-size: 13.5px !important; }
   .wwarn b { font: 600 11px var(--display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--warn); }
@@ -633,7 +637,7 @@
       <div class="why-list" id="whyList" role="group" aria-label="Legacy issues"></div>
       <div class="why-viz">
         <div class="why-def">
-          <div class="wd-q"><b>What would fix all of this?</b><span>Next: what SASE is.</span></div>
+          <div class="wd-q"><b>What would fix all of this?</b><span>Tap to see what SASE is.</span></div>
           <div class="wd-a"><b>SASE = SD-WAN + SSE, from the cloud</b><span>Every site, user and cloud workload connects to the nearest PoP, where one policy and one pass of inspection apply to all traffic.</span></div>
         </div>
         <div class="why-panels">
@@ -644,7 +648,7 @@
             <p class="wask" id="whyQ"></p>
           </figure>
           <figure class="wp sase">
-            <figcaption><span class="wk">With SASE</span><span class="wq">revealed in step 3</span></figcaption>
+            <figcaption><span class="wk">With SASE</span><span class="wq">tap to show</span></figcaption>
             <svg id="whyS" viewBox="0 0 460 260" role="img" aria-label="The same network with SASE"></svg>
             <p id="whySp"></p>
             <p class="wwarn" id="whyW" hidden></p>
@@ -1999,8 +2003,16 @@
     }
   }
   function buildWhy() {
+    document.querySelector('.wp.sase').addEventListener('click', () => revealWhy(3));
+    document.querySelector('.wd-q').addEventListener('click', () => revealWhy(2));
     $('whyList').innerHTML = WHY.map(([t, , , caps], i) => `<button type="button" class="wrow" data-row="${i}" aria-pressed="false"><span class="wn">${i + 1}</span><span class="wi">${esc(t)}</span><span class="caps">${caps.map(whyTag).join('')}</span></button>`).join('');
     $('whyList').addEventListener('click', (e) => { const b = e.target.closest('[data-row]'); if (b) { state.whyRow = +b.dataset.row; render(); } });
+  }
+  // Reveal by tapping: the question box shows what SASE is (step 2); the SASE side shows the fix (step 3).
+  function revealWhy(stage) {
+    if (state.view !== 'why' || state.whyStage >= stage) return;
+    state.whyStage = stage;
+    render();
   }
   function renderWhy() {
     const i = state.whyRow, [t, bad, good, caps, ask, warn] = WHY[i];
