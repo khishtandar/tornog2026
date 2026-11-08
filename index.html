@@ -383,7 +383,7 @@
   .wrow .wi { font: 600 14.5px/1.3 var(--body); }
   .wrow .wi::before { content: "✕ "; color: var(--bad); }
   .wrow .caps { grid-column: 2; }
-  .why:not([data-stage="3"]) .wrow .caps { display: none; }
+  .wrow .caps { display: none; }
   .why-viz { display: grid; gap: 10px; }
   .why-def > div { display: grid; gap: 2px; padding: 9px 14px; border-radius: 10px; }
   .why-def b { font: 700 19px/1.2 var(--display); }
@@ -414,8 +414,10 @@
     .why-def > div { padding: 6px 12px; }
     .why-def b { font-size: 16px; }
     .why-def span { font-size: 12.5px; }
-    .why .wrow { padding: 5px 9px; }
-    .why .wrow .wi { font-size: 13.5px; }
+    .why-list { gap: 3px; }
+    .why .wrow { padding: 3px 8px; gap: 2px 8px; }
+    .why .wrow .wn { width: 18px; height: 18px; font-size: 10.5px; }
+    .why .wrow .wi { font-size: 12.5px; line-height: 1.25; }
     .why .wrow .caps { display: none !important; }
     .wp { padding: 8px 10px 10px; gap: 4px; }
     .wp p { font-size: 13px; line-height: 1.35; }
@@ -582,7 +584,7 @@
     </div>
     <div class="intro-foot">
       <span class="why-dots" id="whyDots"></span>
-      <span class="why-hint"><kbd>↑</kbd><kbd>↓</kbd> or <kbd>1</kbd>–<kbd>7</kbd> pick an issue</span>
+      <span class="why-hint"><kbd>↑</kbd><kbd>↓</kbd> or click to pick an issue</span>
       <button class="btn go" id="whyGo" type="button">Next →</button>
     </div>
   </section>
@@ -1770,11 +1772,17 @@
     ['A WAN that is slow to change and costly', 'MPLS takes months to deliver and is the priciest bandwidth. The IPsec backup sits idle and untested.', 'Any internet link, all links active, zero-touch sites, and a provider backbone between PoPs.', ['sdwan', 'mm', 'qos']],
     ['The VPN gives the whole network', 'Users get routes to whole subnets, and the VPN gateway is exposed on the internet.', 'ZTNA gives one app at a time, by identity and device posture. Nothing listens inbound.', ['ztna', 'idp']],
     ['Nothing inspects the WAN', 'Any-to-any MPLS is "trusted", so ransomware moves from site to site.', 'A firewall and IPS between every pair of sites, under the same policy as internet traffic.', ['fwaas', 'ips']],
-    ['Security capped by the box', 'Appliances are sized for peak and refreshed every few years. TLS inspection costs throughput, so it is often off.', 'Single-pass inspection in every PoP, scaled by the provider, so TLS inspection stays on.', ['tls', 'swg', 'ips']],
+    ['Security capped by the box', 'Appliances are sized for the peak someone guessed years ago. TLS inspection costs throughput, so it is often left off.', 'Single-pass inspection in every PoP, scaled by the provider, so TLS inspection stays on.', ['tls', 'swg', 'ips']],
+    ['Hardware to replace every 5 years', 'Firewalls, proxies, VPN concentrators and routers reach end of life together: a forklift project and a capital spike every cycle.', 'The security stack is a cloud service, upgraded continuously. Only a thin edge stays on site, and it is swapped zero-touch.', ['sub', 'ztp']],
+    ['Emergency patching of edge boxes', 'Internet-facing VPN gateways and firewalls are favourite targets: a new CVE means patching tonight, sometimes before a fix exists.', 'The provider patches every PoP. Private apps sit behind connectors that dial out, so there is nothing listening to attack.', ['ztna', 'ips']],
     ['A different policy everywhere', 'HQ, branches, remote users and the cloud each have their own rules, consoles and logs.', 'One policy and one log for every site, user and cloud workload.', ['one']],
+    ['Operations cost', 'Every change touches several boxes and teams, plus carrier tickets. Most of the time goes to keeping boxes alive.', 'One change in one console applies everywhere, with fewer boxes, circuits and contracts. Compare the subscription honestly with hardware, support and people time.', ['one', 'sub']],
+    ['Slow to troubleshoot', '"Teams is bad" turns into a carrier ticket and logs from three different tools.', 'Loss, jitter and latency per link and per application, next to the security events, in one place.', ['qos', 'anal']],
     ['Blind to SaaS data and AI', 'URL categories only allow or block. No view of tenants, uploads or prompts.', 'CASB and DLP see the data. AI tools are discovered and controlled per app and activity.', ['casb', 'dlp', 'aidisc']]
   ];
-  const whyTag = (c) => c === 'one' ? '<span class="tag sm cat-core">One policy, one log</span>' : `<span class="tag sm cat-${CAP[c][1]}">${esc(CAP[c][0])}</span>`;
+  // Tags that are not single capabilities.
+  const WHY_TAG = { one: ['One policy, one log', 'core'], sub: ['Delivered as a cloud service', 'core'], ztp: ['Zero-touch edge', 'net'], anal: ['One view of network and security', 'core'] };
+  const whyTag = (c) => { const [label, cat] = WHY_TAG[c] || CAP[c]; return `<span class="tag sm cat-${cat}">${esc(label)}</span>`; };
   // One legacy and one SASE mini-diagram per issue (viewBox 460 x 260).
   // node: [id, x, y, label, sub, kind (box | cloud | pop | core | note), tone (bad | good | dim)]
   // link: [from, to, class (flow | bad | ok | okline | idle | plain), label]
@@ -1805,15 +1813,39 @@
         marks: [['pop', 'block']], badges: [[230, 245, 'stopped by the WAN firewall and IPS', 'good']] } },
     { legacy: { nodes: [['u', 70, 110, 'Users', ''], ['fw', 230, 110, 'NGFW + proxy', 'sized for peak'], ['inet', 390, 110, 'Internet', '', 'cloud']],
         links: [['u', 'fw', 'flow'], ['fw', 'inet', 'flow']],
-        meters: [[230, 165, 0.95, 'bad', 'CPU 95%']], badges: [[230, 40, 'TLS inspection: off (too slow)', 'bad'], [230, 228, 'refreshed every 5 years', 'bad']] },
+        meters: [[230, 165, 0.95, 'bad', 'CPU 95%']], badges: [[230, 40, 'TLS inspection: off (too slow)', 'bad'], [230, 228, 'sized for a guess made years ago', 'bad']] },
       sase: { nodes: [['u', 70, 110, 'Users', ''], ['pop', 230, 110, 'PoP', '', 'pop'], ['inet', 390, 110, 'Internet', '', 'cloud']],
         links: [['u', 'pop', 'flow'], ['pop', 'inet', 'flow']],
-        meters: [[230, 165, 0.3, 'good', 'load 30%']], badges: [[230, 40, 'TLS inspection: on, single pass', 'good'], [230, 228, 'the provider scales and patches it', 'good']] } },
+        meters: [[230, 165, 0.3, 'good', 'load 30%']], badges: [[230, 40, 'TLS inspection: on, single pass', 'good'], [230, 228, 'the provider scales it', 'good']] } },
+    { legacy: { nodes: [['b', 75, 105, 'Buy', 'year 0'], ['s', 230, 105, 'Support', 'every year'], ['e', 385, 105, 'End of life', 'year 5', 'box', 'bad'], ['f', 230, 205, 'Forklift swap', 'buy it all again', 'box', 'bad']],
+        links: [['b', 's', 'plain'], ['s', 'e', 'plain'], ['e', 'f', 'bad'], ['f', 'b', 'bad', 'again']],
+        badges: [[230, 35, 'a capital spike every cycle', 'bad']] },
+      sase: { nodes: [['sub', 95, 105, 'Subscription', 'monthly or yearly'], ['up', 365, 105, 'New features', 'added continuously', 'box', 'good'], ['edge', 230, 205, 'Thin edge', 'swapped zero-touch', 'box', 'good']],
+        links: [['sub', 'up', 'ok'], ['up', 'edge', 'okline'], ['sub', 'edge', 'okline']],
+        badges: [[230, 35, 'no forklift upgrades', 'good']] } },
+    { legacy: { nodes: [['att', 75, 50, 'Attacker', 'new CVE', 'box', 'bad'], ['vpn', 230, 130, 'VPN gateway', 'exposed, unpatched', 'box', 'bad'], ['net', 385, 130, 'Internal network', ''], ['adm', 75, 205, 'Admin', 'patching at 2 a.m.']],
+        links: [['att', 'vpn', 'bad'], ['vpn', 'net', 'bad'], ['adm', 'vpn', 'idle']],
+        marks: [['net', 'x']], badges: [[300, 245, 'patch tonight, hope it holds', 'bad']] },
+      sase: { nodes: [['att', 75, 50, 'Attacker', 'new CVE', 'box', 'bad'], ['pop', 230, 130, 'PoP', '', 'pop'], ['app', 385, 50, 'Private app', 'not on the internet', 'box', 'good'], ['conn', 385, 200, 'Connector', 'dials out', 'box', 'good']],
+        links: [['att', 'pop', 'bad'], ['conn', 'pop', 'okline'], ['conn', 'app', 'okline']],
+        marks: [['pop', 'block']], badges: [[195, 245, 'the provider patches; nothing listens inbound', 'good']] } },
     { legacy: { nodes: [['f', 95, 45, 'DC firewall', 'own rules · own log'], ['p', 365, 45, 'Web proxy', 'own rules · own log'], ['v', 95, 205, 'VPN', 'own rules · own log'], ['r', 365, 205, 'Branch routers', 'own rules · own log'], ['c', 230, 125, '4 consoles, 4 rulebases', '', 'note']],
         links: [] },
       sase: { nodes: [['core', 230, 125, 'ONE POLICY', '', 'core'], ['b', 85, 45, 'Branches', ''], ['h', 375, 45, 'HQ / DC', ''], ['r', 85, 205, 'Remote users', ''], ['cl', 375, 205, 'Cloud', '']],
         links: [['core', 'b', 'okline'], ['core', 'h', 'okline'], ['core', 'r', 'okline'], ['core', 'cl', 'okline']],
         badges: [[230, 245, 'one policy, one log, to the SOC', 'good']] } },
+    { legacy: { nodes: [['adm', 230, 130, 'Admin team', ''], ['f', 80, 60, 'Firewall change', ''], ['p', 380, 60, 'Proxy rule', ''], ['v', 80, 205, 'VPN accounts', ''], ['c', 380, 205, 'Carrier ticket', 'days', 'box', 'bad']],
+        links: [['adm', 'f', 'idle'], ['adm', 'p', 'idle'], ['adm', 'v', 'idle'], ['adm', 'c', 'idle']],
+        meters: [[230, 14, 0.85, 'bad', 'effort per change']], badges: [[230, 245, 'several teams, change windows, tickets', 'bad']] },
+      sase: { nodes: [['adm', 75, 120, 'Admin', ''], ['con', 230, 120, 'One console', 'one change'], ['pops', 385, 120, 'Every PoP', 'applied everywhere', 'box', 'good']],
+        links: [['adm', 'con', 'flow'], ['con', 'pops', 'ok']],
+        meters: [[230, 14, 0.35, 'good', 'effort per change']], badges: [[230, 200, 'fewer boxes, circuits and contracts', 'good']] } },
+    { legacy: { nodes: [['u', 75, 130, 'User', '"Teams is bad"', 'box', 'bad'], ['cp', 330, 45, 'Carrier portal', 'ticket: days'], ['fl', 330, 130, 'Firewall logs', ''], ['pl', 330, 215, 'Proxy logs', '']],
+        links: [['u', 'cp', 'idle'], ['u', 'fl', 'idle'], ['u', 'pl', 'idle']],
+        badges: [[200, 248, 'three tools and a ticket: days', 'bad']] },
+      sase: { nodes: [['u', 75, 120, 'User', '"Teams is bad"'], ['con', 300, 60, 'One console', 'per link, per app', 'box', 'good']],
+        links: [['u', 'con', 'flow']],
+        meters: [[300, 130, 0.08, 'good', 'loss 0.1% on ISP 1'], [300, 185, 0.7, 'bad', 'loss 7% on ISP 2: steered away']] } },
     { legacy: { nodes: [['u', 68, 122, 'User', ''], ['px', 215, 122, 'Proxy', 'sees a domain only'], ['ai', 385, 45, 'GenAI', 'personal account'], ['pc', 385, 200, 'Personal cloud', 'Dropbox · Gmail']],
         links: [['u', 'px', 'flow'], ['px', 'ai', 'bad', 'source code'], ['px', 'pc', 'bad', 'customer list']],
         badges: [[215, 245, 'allowed by category, nobody sees what left', 'bad']] },
@@ -1859,7 +1891,7 @@
       const g = el('g', { class: `m-meter ${tone}` }, svgEl);
       el('rect', { x: cx - 60, y: cy - 6, width: 120, height: 12, rx: 6, class: 'bg' }, g);
       el('rect', { x: cx - 60, y: cy - 6, width: 120 * pct, height: 12, rx: 6, class: 'fg' }, g);
-      el('text', { x: cx, y: cy + 22, 'text-anchor': 'middle' }, g).textContent = label;
+      if (label) el('text', { x: cx, y: cy + 22, 'text-anchor': 'middle' }, g).textContent = label;
     }
     for (const [id, kind] of spec.marks || []) {
       const [, x, y, , , k = 'box'] = at[id], [w, h] = MW[k];
@@ -2503,7 +2535,7 @@
     else if (next) { navNext(); e.preventDefault(); }
     else if (prev) { navPrev(); e.preventDefault(); }
     else if (state.view === 'why' && (k === 'ArrowDown' || k === 'ArrowUp')) { state.whyRow = (state.whyRow + (k === 'ArrowDown' ? 1 : WHY.length - 1)) % WHY.length; render(); e.preventDefault(); }
-    else if (state.view === 'why' && /^[1-7]$/.test(k)) { state.whyRow = +k - 1; render(); }
+    else if (state.view === 'why' && /^[1-9]$/.test(k) && +k <= WHY.length) { state.whyRow = +k - 1; render(); }
     else if (k === 'ArrowDown') { state.flow = FLOWS[(fi + 1) % FLOWS.length].id; showLab(); e.preventDefault(); }
     else if (k === 'ArrowUp') { state.flow = FLOWS[(fi + FLOWS.length - 1) % FLOWS.length].id; showLab(); e.preventDefault(); }
     else if (k === 'f' || k === 'F') {
