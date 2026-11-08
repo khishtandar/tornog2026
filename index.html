@@ -114,7 +114,7 @@
   .chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-ink); }
   .chip[aria-pressed="true"] .k { color: var(--accent-ink); }
   .canvas { overflow-x: auto; flex: 1; display: grid; align-items: center; }
-  svg.topo { display: block; width: 100%; min-width: 760px; height: auto; max-height: calc(100vh - 300px); min-height: 400px; }
+  svg.topo { display: block; width: 100%; min-width: 760px; height: auto; max-height: calc(100vh - 300px); min-height: 280px; }
   .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 8px 12px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--muted); align-items: center; }
   .legend span { display: inline-flex; align-items: center; gap: 6px; }
   .sw { width: 22px; height: 0; border-top: 3px solid var(--line); display: inline-block; }
@@ -123,6 +123,19 @@
   .sw.mp { border-top: 3px dotted var(--c-legacy); }
   .sw.ip { border-top: 3px dashed var(--c-legacy); }
   .sw.cl { border-top: 3px solid var(--cloud); opacity: .6; }
+  .sw.tn { border-top: 2px solid var(--cloud); opacity: .5; }
+  /* Scoreboard and what-if, under the diagram */
+  .board { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 8px 12px; border-top: 1px solid var(--line); }
+  .tiles { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tile { display: grid; gap: 1px; min-width: 112px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2); }
+  .tile .tl { font: 600 10.5px var(--display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  .tile b { font: 700 19px/1.1 var(--display); }
+  .tile b small { font-size: 12px; color: var(--muted); font-weight: 500; }
+  .tile .td { font-size: 11px; color: var(--muted); }
+  .tile .td.good { color: var(--ok); } .tile .td.bad { color: var(--bad); }
+  .whatif { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+  .whatif .mini[aria-pressed="true"] { background: color-mix(in srgb, var(--bad) 14%, var(--surface)); border-color: var(--bad); color: var(--bad); }
+  .diaw { margin-left: auto; }
 
   /* SVG */
   .t-grid { fill: var(--grid); }
@@ -157,6 +170,26 @@
   .t-mpls text { font: 600 13px var(--display); letter-spacing: 0.12em; fill: var(--c-legacy); }
   .t-mpls.on rect { stroke: var(--accent); stroke-width: 3; }
   .t-link.ipsec { stroke: var(--c-legacy); stroke-width: 2.5; stroke-dasharray: 8 4; }
+  .t-net rect { fill: color-mix(in srgb, var(--muted) 8%, var(--surface)); stroke: var(--muted); stroke-width: 1.5; }
+  .t-net.mpls rect { fill: color-mix(in srgb, var(--c-legacy) 10%, var(--surface)); stroke: var(--c-legacy); stroke-dasharray: 5 4; }
+  .t-net .n1 { font: 700 19px var(--display); letter-spacing: 0.14em; fill: var(--muted); }
+  .t-net.mpls .n1 { fill: var(--c-legacy); }
+  .t-net .n2 { font: 400 11.5px var(--mono); fill: var(--muted); }
+  .t-net.on rect { stroke: var(--accent); stroke-width: 3; }
+  .t-link.tunnel { stroke: var(--cloud); stroke-width: 2; opacity: .5; }
+  .t-sc { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .t-sc.down { stroke: var(--bad); stroke-width: 3.5; stroke-dasharray: 8 6; animation: flow 1.2s linear infinite; }
+  .t-sc.ok { stroke: var(--ok); stroke-width: 3; opacity: .55; }
+  .t-sc.warn { stroke: var(--warn); stroke-width: 3.5; stroke-dasharray: 8 6; animation: flow 1.6s linear infinite; }
+  .t-sc.reroute { stroke: var(--ok); stroke-width: 3.5; stroke-dasharray: 8 6; animation: flow 1.2s linear infinite; }
+  @media (prefers-reduced-motion: reduce) { .t-sc { animation: none !important; } }
+  .t-mark circle { fill: var(--bad); stroke: var(--surface); stroke-width: 2; }
+  .t-mark line { stroke: #FFFFFF; stroke-width: 3; stroke-linecap: round; }
+  .t-mark.block rect { fill: #FFFFFF; }
+  .t-card rect { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+  .t-card .tt { font: 700 18px var(--display); fill: var(--ink); }
+  .t-card .tx { font: 400 14px var(--body); fill: var(--ink); }
+  .t-card .tk { font: 500 11.5px var(--body); fill: var(--muted); }
   .t-inet rect { fill: color-mix(in srgb, var(--muted) 9%, var(--surface)); stroke: var(--muted); stroke-width: 1.5; }
   .t-inet text { font: 700 13px var(--display); letter-spacing: 0.14em; fill: var(--muted); }
   .t-inet.on rect { stroke: var(--accent); stroke-width: 2.5; }
@@ -465,14 +498,29 @@
     <section class="panel stage" aria-label="Network diagram">
       <div class="flows" id="flows" role="group" aria-label="Traffic flow"></div>
       <div class="canvas">
-        <svg class="topo" id="topo" viewBox="0 0 1500 780" role="img" aria-label="Sample enterprise network in four tiers: services on top (internet sites, SaaS, generative AI); below them the SASE cloud with a policy core and a PoP above every site; then the internet and the MPLS WAN; and at the bottom the data center, HQ, two branches, a remote worker, a contractor and the company cloud."></svg>
+        <svg class="topo" id="topo" viewBox="0 0 1760 820" role="img" aria-label="Sample enterprise network: services on top (internet sites, SaaS, generative AI, the identity provider and the SOC); in the middle the MPLS WAN and the internet side by side, and the SASE cloud beside them with a policy core and PoPs; at the bottom the data center (with an AI agent), HQ, two branches (one with IoT devices), a remote worker, a contractor and the company cloud."></svg>
+      </div>
+      <div class="board" id="board">
+        <div class="tiles" id="tiles"></div>
+        <div class="whatif" role="group" aria-label="What if">
+          <span class="label">What if</span>
+          <button class="mini" type="button" data-what="dc">DC outage</button>
+          <button class="mini" type="button" data-what="mpls">MPLS cut</button>
+          <button class="mini" type="button" data-what="pop">PoP down</button>
+          <button class="mini" type="button" data-what="ransom">Ransomware</button>
+          <button class="mini" type="button" data-what="ai">AI data leak</button>
+        </div>
+        <div class="seg diaw" role="group" aria-label="Legacy branch internet">
+          <button type="button" data-dia="0" title="Branch internet rides MPLS to the DC firewall">Backhaul</button><button type="button" data-dia="1" title="Each branch breaks out locally through its own firewall">DIA</button>
+        </div>
       </div>
       <div class="legend">
         <span class="lg"><i class="sw fl"></i> This flow</span>
         <span class="lg"><i class="sw rk"></i> What can go wrong</span>
         <span class="lg"><i class="sw cl"></i> PoP to shared core</span>
         <span class="lg"><i class="sw mp"></i> MPLS</span>
-        <span class="lg"><i class="sw ip"></i> IPsec (before SASE)</span>
+        <span class="lg"><i class="sw ip"></i> IPsec or VPN</span>
+        <span class="lg"><i class="sw tn"></i> SASE tunnel (over the internet)</span>
         <span class="lg">Faded = not deployed yet, or retired</span>
         <span class="modehint m-trace" id="traceHint"><b>Trace:</b> drag from where the traffic starts (a user, a branch, the DC or the cloud) to where it goes. Then <kbd>←</kbd> <kbd>→</kbd> shows how it passes in each phase.</span>
         <span class="modehint m-edit"><b>Edit layout:</b> drag any box, PoP or the policy core. Links and flows follow. Saved in this browser.</span>
@@ -497,8 +545,11 @@
 <script>
 (() => {
   const SVGNS = 'http://www.w3.org/2000/svg';
-  // Tiers, top to bottom: services, the internet they sit on (BUS_Y), the SASE cloud, the internet and MPLS bands, then the sites.
-  const BUS_Y = 105, INET_Y = 425, MPLS_Y = 478, LEFT_X = 18, VIEW_W = 1500, VIEW_H = 780;
+  // Tiers, top to bottom: services on the internet bus (BUS_Y); then MPLS, the internet and the SASE cloud side by side; then the sites.
+  const BUS_Y = 112, VIEW_W = 1760, VIEW_H = 820;
+  // Options a viewer can switch: branches break out locally (DIA) instead of backhauling to the DC.
+  const OPT = { dia: false };
+  try { OPT.dia = localStorage.getItem('tornog-dia') === '1'; } catch (e) {}
 
   // ---------- Phases ----------
   const PHASES = [
@@ -515,11 +566,14 @@
     ztna: ['ZTNA', 'access'], idp: ['Identity and device posture', 'access'], clientless: ['Browser-based ZTNA (no agent)', 'access'],
     fwaas: ['FWaaS', 'sec'], swg: ['Secure Web Gateway', 'sec'], tls: ['TLS inspection', 'sec'], ips: ['IPS and anti-malware', 'sec'], rbi: ['Remote browser isolation', 'sec'],
     casb: ['CASB', 'data'], dlp: ['DLP', 'data'],
-    aidisc: ['Shadow-AI discovery', 'ai'], aictl: ['AI tenant and activity control', 'ai']
+    aidisc: ['Shadow-AI discovery', 'ai'], aictl: ['AI tenant and activity control', 'ai'], mcp: ['AI agent and MCP allow-list', 'ai'],
+    branchfw: ['Branch firewall (DIA)', 'legacy'], iotid: ['IoT device discovery', 'sec'], seg: ['LAN segmentation at the edge', 'net']
   };
 
   // ---------- Field pitfalls ----------
   const PIT = {
+    iotBreak: ['Segmentation breaks the odd device', 'Some devices need local services (printing, multicast discovery, a local controller) that a strict segment blocks.', 'Start in monitor mode, learn the flows per device type, then enforce.'],
+    aiAgents: ['Agents act with real permissions', 'An agent with broad API keys can be steered by a poisoned page or file (prompt injection) into sending data out.', 'Give each agent its own identity with least privilege, allow-list its tools and destinations, and inspect what it sends.'],
     clientless: ['Browser access has limits', 'Browser-based ZTNA covers web apps, RDP and SSH. Thick clients and file shares still need an agent or a virtual desktop.', 'List what contractors actually use before you promise "no agent", and give agents only to devices you manage.'],
     thirdParty: ['Whose identity?', 'Contractors often sign in with shared logins, or with accounts that nobody disables when the project ends.', 'One guest or federated account per person in your IdP, in a group with an expiry date.'],
     egressIP: ['Your public IP changes', 'SaaS IP allow-lists, IdP conditional access, partner firewalls and geolocation were all built on the DC\'s egress IP.', 'Inventory every allow-list early. Use dedicated egress IPs from the provider and update the IdP before cutover.'],
@@ -618,39 +672,64 @@
     ['Access outlives the contract', 'Contractor VPN accounts and firewall rules are rarely cleaned up.', 'Access comes from an IdP group: disable the account and every app is gone.']
   ];
 
+  ISSUES['branch-iot'] = [
+    ['Nobody knows what is plugged in', 'Cameras, printers and badge readers sit on the branch LAN, unlisted.', 'The edge discovers and classifies every device from its traffic.'],
+    ['A flat network', 'IoT shares the LAN with laptops and can reach the DC over MPLS.', 'Segmented at the edge: a camera can reach only its own cloud service.'],
+    ['No agent, no patches', 'Old firmware, and no security agent can be installed.', 'IPS in the PoP virtually patches known exploits.'],
+    ['Talks to anything', 'Any outbound destination is allowed, so a hijacked camera can join a botnet.', 'An allow-list per device type: everything else is blocked and logged.']
+  ];
+  ISSUES['dc-agent'] = [
+    ['Servers with open outbound', 'Agents run on servers that are allowed out to "any on 443".', 'Only approved LLM APIs and MCP servers are allowed, per agent.'],
+    ['Prompts nobody sees', 'What the agent sends is inside TLS: customer data, secrets, code.', 'TLS inspection and DLP on prompts and tool results.'],
+    ['Prompt injection', 'A poisoned web page or file can tell the agent to send data somewhere else.', 'Destinations are allow-listed, so an injected "send it to X" is blocked and logged.'],
+    ['Shared API keys', 'One key in a config file, used by many scripts and never rotated.', 'Each agent has its own identity, and its traffic is logged to the SOC under that identity.']
+  ];
+  // With DIA, branch internet flows have different legacy issues (no backhaul, but a firewall in every branch).
+  const ISSUES_DIA = [
+    ['A firewall in every branch', 'Each branch has its own firewall to buy, size, patch and refresh.', 'No branch firewalls: the PoP inspects, and the edge is managed from one place.'],
+    ['Policy drifts site by site', 'Every branch rulebase is edited separately, so they slowly diverge.', 'One policy for every site, edited once.'],
+    ['Security trimmed to fit the box', 'Small branch firewalls rarely run TLS inspection, sandboxing, CASB or DLP.', 'The full stack, with TLS inspection, CASB and DLP, at the nearest PoP.'],
+    ['Logs scattered across boxes', 'Investigating an incident means pulling logs from many branch firewalls.', 'One log for every site and user, sent to the SOC.']
+  ];
+  const DIA_FLOWS = ['branch-saas', 'branch-web', 'branch-ai'];
+
   // ---------- Topology ----------
-  // kind: end (selectable endpoint), dev (device), pop, core
-  // Each site's PoP sits straight above the site's internet uplink, so its tunnel visibly rides the internet.
+  // kind: end (selectable endpoint), dev (device), net (a transport cloud), pop, core
   const N = {
-    // Top: services on the internet
-    web:    { x: 580, y: 45, kind: 'end', l: 'Internet sites', s: 'web · uncategorized' },
-    saas:   { x: 820, y: 45, kind: 'end', l: 'SaaS', s: 'M365 · CRM · storage' },
-    genai:  { x: 1060, y: 45, kind: 'end', l: 'Generative AI', s: 'chat · copilots' },
-    // Next: the SASE cloud, one policy core and a PoP above every site
-    core:   { x: 820, y: 232, kind: 'core', from: 1 },
-    popD:   { x: 232, y: 345, kind: 'pop', from: 1 },
-    popH:   { x: 413, y: 345, kind: 'pop', from: 2 },
-    popB1:  { x: 597, y: 345, kind: 'pop', from: 2 },
-    popB2:  { x: 781, y: 345, kind: 'pop', from: 3 },
-    popU:   { x: 1087, y: 345, kind: 'pop', from: 1 },
-    popC:   { x: 1347, y: 345, kind: 'pop', from: 2 },
-    // Bottom: the sites and the people (the internet and MPLS are drawn as bands above them)
-    dcfw:   { x: 106, y: 575, kind: 'dev', l: 'Perimeter FW', s: 'NGFW · proxy · VPN' },
-    dcedge: { x: 262, y: 575, kind: 'dev', l: 'WAN edge', s: 'MPLS + IPsec hub' },
-    apps:   { x: 106, y: 690, kind: 'end', l: 'Private apps', s: 'ERP · file shares' },
-    conn:   { x: 262, y: 690, kind: 'dev', l: 'ZTNA connector', s: 'dials out', from: 1 },
-    edgeH:  { x: 443, y: 575, kind: 'dev', l: 'HQ router', s: 'MPLS + IPsec' },
-    usersH: { x: 443, y: 690, kind: 'end', l: 'HQ users', s: '10.1.0.0/16' },
-    edge1:  { x: 627, y: 575, kind: 'dev', l: 'Branch router', s: 'MPLS + IPsec' },
-    users1: { x: 627, y: 690, kind: 'end', l: 'Branch 1 users', s: '10.10.0.0/16' },
-    edge2:  { x: 811, y: 575, kind: 'dev', l: 'Branch router', s: 'MPLS + IPsec' },
-    users2: { x: 811, y: 690, kind: 'end', l: 'Branch 2 users', s: '10.20.0.0/16' },
-    remote: { x: 995, y: 632, kind: 'end', l: 'Remote worker', s: 'laptop' },
-    contractor: { x: 1179, y: 632, kind: 'end', l: 'Contractor', s: 'unmanaged laptop' },
-    vgw:    { x: 1377, y: 575, kind: 'dev', l: 'Cloud VPN GW', s: 'IPsec to the DC' },
-    cloudapp: { x: 1377, y: 690, kind: 'end', l: 'Cloud workloads', s: 'VPC · VNet' }
+    // Top: services on the internet, plus the identity provider and the SOC that SASE ties in
+    web:    { x: 720, y: 48, kind: 'end', l: 'Internet sites', s: 'web · uncategorized' },
+    saas:   { x: 900, y: 48, kind: 'end', l: 'SaaS', s: 'M365 · CRM · storage' },
+    genai:  { x: 1080, y: 48, kind: 'end', l: 'Generative AI', s: 'chat · LLM APIs' },
+    idp:    { x: 1340, y: 48, kind: 'end', l: 'Identity (IdP)', s: 'SSO · MFA · groups' },
+    soc:    { x: 1560, y: 48, kind: 'end', l: 'SOC / SIEM', s: 'logs' },
+    // Middle: MPLS and the internet side by side, and the SASE cloud beside them
+    mpls:   { x: 330, y: 330, kind: 'net', l: 'MPLS WAN', s: 'carrier private network', to: 2 },
+    inet:   { x: 810, y: 330, kind: 'net', l: 'INTERNET', s: 'broadband · 5G · Wi-Fi' },
+    core:   { x: 1420, y: 280, kind: 'core', from: 1 },
+    popD:   { x: 1150, y: 440, kind: 'pop', from: 1 },
+    popB1:  { x: 1275, y: 440, kind: 'pop', from: 2 },
+    popB2:  { x: 1400, y: 440, kind: 'pop', from: 3 },
+    popU:   { x: 1530, y: 440, kind: 'pop', from: 1 },
+    popC:   { x: 1675, y: 440, kind: 'pop', from: 2 },
+    // Bottom: the sites and the people
+    dcfw:   { x: 96, y: 610, kind: 'dev', l: 'Perimeter FW', s: 'NGFW · proxy · VPN' },
+    dcedge: { x: 251, y: 610, kind: 'dev', l: 'WAN edge', s: 'MPLS + IPsec hub' },
+    agent:  { x: 96, y: 725, kind: 'end', l: 'AI agent', s: 'server · LLM APIs' },
+    apps:   { x: 251, y: 725, kind: 'end', l: 'Private apps', s: 'ERP · file shares' },
+    conn:   { x: 406, y: 725, kind: 'dev', l: 'ZTNA connector', s: 'dials out', from: 1 },
+    edgeH:  { x: 583, y: 610, kind: 'dev', l: 'HQ router', s: 'MPLS + IPsec' },
+    usersH: { x: 583, y: 725, kind: 'end', l: 'HQ users', s: '10.1.0.0/16' },
+    edge1:  { x: 840, y: 610, kind: 'dev', l: 'Branch router', s: 'MPLS + IPsec' },
+    users1: { x: 760, y: 725, kind: 'end', l: 'Branch 1 users', s: '10.10.0.0/16' },
+    iot:    { x: 920, y: 725, kind: 'end', l: 'IoT / OT', s: 'cameras · sensors' },
+    edge2:  { x: 1097, y: 610, kind: 'dev', l: 'Branch router', s: 'MPLS + IPsec' },
+    users2: { x: 1097, y: 725, kind: 'end', l: 'Branch 2 users', s: '10.20.0.0/16' },
+    remote: { x: 1279, y: 640, kind: 'end', l: 'Remote worker', s: 'laptop' },
+    contractor: { x: 1461, y: 640, kind: 'end', l: 'Contractor', s: 'unmanaged laptop' },
+    vgw:    { x: 1651, y: 610, kind: 'dev', l: 'Cloud VPN GW', s: 'IPsec to the DC' },
+    cloudapp: { x: 1651, y: 725, kind: 'end', l: 'Cloud workloads', s: 'VPC · VNet' }
   };
-  const BOX = { end: [152, 48], dev: [138, 44] };
+  const BOX = { end: [152, 48], dev: [138, 44], net: [420, 118] };
   const R = { pop: 25, core: 58 };
 
   // ---------- Your layout and lines (saved in this browser only) ----------
@@ -659,65 +738,76 @@
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   };
   const DEFAULT_POS = Object.fromEntries(Object.entries(N).map(([id, n]) => [id, [n.x, n.y]]));
-  const savedPos = store.get('tornog-layout-v2', {});
+  const savedPos = store.get('tornog-layout-v3', {});
   for (const id in savedPos) if (N[id] && Array.isArray(savedPos[id])) [N[id].x, N[id].y] = savedPos[id];
 
-  // Labels that change as the migration progresses.
+  // Labels that change as the migration progresses (and with DIA).
   function phaseLabels(p) {
     const sd = (s) => ({ l: 'SD-WAN edge', s, cls: 'sdwan' });
-    const ce = { l: 'Branch router', s: 'MPLS + IPsec', cls: 'legacy' };
+    const ce = (l) => (OPT.dia ? { l: l === 'HQ router' ? 'HQ router + FW' : 'Router + FW', s: 'MPLS + DIA', cls: 'legacy' } : { l, s: 'MPLS + IPsec', cls: 'legacy' });
+    const boxes = boxCount(p);
     return {
       remote: { s: p === 0 ? 'laptop · VPN' : p === 3 ? 'laptop · agent' : 'agent + VPN' },
       contractor: { s: p === 0 ? 'own laptop · VPN' : 'browser only' },
-      edgeH: p < 2 ? { l: 'HQ router', s: 'MPLS + IPsec', cls: 'legacy' } : sd(p === 2 ? 'ISP + MPLS' : 'dual ISP'),
+      iot: { s: p < 2 ? 'cameras · flat LAN' : 'cameras · segmented' },
+      soc: { s: p === 3 ? 'one log, from SASE' : p ? `${boxes} boxes + SASE` : `logs from ${boxes} boxes` },
       dcfw: p === 3 ? { l: 'DC firewall', s: 'east-west only', cls: 'legacy' } : { l: 'Perimeter FW', s: 'NGFW · proxy · VPN', cls: 'legacy' },
       dcedge: p < 2 ? { l: 'WAN edge', s: 'MPLS + IPsec hub', cls: 'legacy' } : sd(p === 2 ? 'SASE + MPLS hub' : 'dual ISP'),
-      edge1: p < 2 ? ce : sd(p === 2 ? 'ISP + MPLS' : 'ISP + 5G'),
-      edge2: p < 3 ? ce : sd('ISP + 5G'),
+      edgeH: p < 2 ? ce('HQ router') : sd(p === 2 ? 'ISP + MPLS' : 'dual ISP'),
+      edge1: p < 2 ? ce('Branch router') : sd(p === 2 ? 'ISP + MPLS' : 'ISP + 5G'),
+      edge2: p < 3 ? ce('Branch router') : sd('ISP + 5G'),
       vgw: p < 2 ? { l: 'Cloud VPN GW', s: 'IPsec to the DC', cls: 'legacy' } : { l: 'SD-WAN edge', s: 'virtual, in VPC', cls: 'sdwan' }
     };
   }
+  // Appliances you run and patch yourself in a phase: the DC firewall stack (NGFW, proxy, VPN), every legacy router or gateway, and branch firewalls with DIA.
+  function boxCount(p) {
+    const legacy = Object.keys(SITE).filter((e) => SITE[e][1] > p).length;
+    const fw = OPT.dia ? ['edgeH', 'edge1', 'edge2'].filter((e) => SITE[e][1] > p).length : 0;
+    return (p < 3 ? 3 : 1) + legacy + fw;
+  }
 
   // Every coordinate below is relative to the nodes, so the layout editor can move them and links, flows and labels follow.
-  // Each WAN edge has two uplinks (x offset from its centre): to the internet band, which its PoP tunnel continues, and to MPLS.
-  const UPOFF = Object.fromEntries(['dcedge', 'edgeH', 'edge1', 'edge2', 'vgw'].map((e) => [e, { inet: -30, mpls: 30 }]));
   const X = (id) => N[id].x, Y = (id) => N[id].y;
-  const upX = (e, k) => X(e) + UPOFF[e][k];
-  const connX = () => X('conn') + 75;     // the ZTNA connector's line up to its PoP
-  // When each WAN edge joins SASE (its IPsec backup becomes a tunnel to the PoP), and when its MPLS goes.
-  const SITE = { dcedge: ['popD', 2, 2], edgeH: ['popH', 2, 1], edge1: ['popB1', 2, 1], edge2: ['popB2', 3, 2], vgw: ['popC', 2, -1] };
+  // Each WAN edge: its PoP, the phase it joins SASE, and the last phase it still has MPLS (-1: never).
+  const SITE = { dcedge: ['popD', 2, 2], edgeH: ['popD', 2, 1], edge1: ['popB1', 2, 1], edge2: ['popB2', 3, 2], vgw: ['popC', 2, -1] };
+  const EDGES = ['edgeH', 'edge1', 'edge2'];
 
   // [a, b, firstPhase, lastPhase, class, label, labelPos (fraction of the last segment, or [x, y, anchor]), waypoints]
   function links() {
     const L = [
-      [[LEFT_X, BUS_Y], [1240, BUS_Y], 0, 3, 'bus'],
-      [[LEFT_X, BUS_Y], [LEFT_X, INET_Y], 0, 3, 'bus'],
-      ...['web', 'saas', 'genai'].map((id) => [id, [X(id), BUS_Y], 0, 3]),
-      ['dcfw', [X('dcfw'), INET_Y], 0, 3],
-      ['apps', 'dcfw', 0, 3], ['apps', 'dcedge', 0, 3], ['dcedge', 'dcfw', 0, 3],
-      ['conn', 'popD', 1, 3, 'dashed', null, null, via()['conn>popD']], ['conn', 'apps', 1, 3], ['conn', 'dcfw', 1, 1],
-      ['usersH', 'edgeH', 0, 3], ['users1', 'edge1', 0, 3], ['users2', 'edge2', 0, 3], ['cloudapp', 'vgw', 0, 3],
-      ...['remote', 'contractor'].map((id) => [id, [X(id), INET_Y], 0, 3, 'dashed']),
-      ['remote', 'popU', 1, 3, 'dashed', 'agent', [X('remote') + 14, INET_Y - 30], [[X('remote'), INET_Y]]],
-      ['contractor', 'popU', 1, 3, 'dashed', 'browser', [X('contractor') - 12, INET_Y - 30, 'end'], [[X('contractor'), INET_Y]]],
+      [[X('web'), BUS_Y], [X('soc'), BUS_Y], 0, 3, 'bus'],
+      ['inet', [X('inet'), BUS_Y], 0, 3, 'bus'],
+      ...['web', 'saas', 'genai', 'idp', 'soc'].map((id) => [id, [X(id), BUS_Y], 0, 3]),
+      ['core', [X('core'), BUS_Y], 1, 3, null, 'egress', [X('core') - 8, BUS_Y + 24, 'end']],
+      ['core', 'idp', 1, 3, 'dashed', 'identity', 0.3],
+      ['core', 'soc', 1, 3, 'dashed', 'one log', 0.3],
       ...Object.keys(N).filter((id) => N[id].kind === 'pop').map((id) => [id, 'core', N[id].from, 3, 'core']),
-      ['core', [X('core'), BUS_Y], 1, 3, null, 'egress', [X('core') + 8, BUS_Y + 22]]
+      ['dcfw', 'inet', 0, 2],
+      ['apps', 'dcfw', 0, 3], ['apps', 'dcedge', 0, 3], ['dcedge', 'dcfw', 0, 3], ['agent', 'dcfw', 0, 3], ['agent', 'dcedge', 0, 3],
+      ['conn', 'popD', 1, 3, 'tunnel', null, null, via()['conn>popD']], ['conn', 'apps', 1, 3], ['conn', 'agent', 1, 3, null, null, null, via()['conn>agent']], ['conn', 'dcfw', 1, 1],
+      ['usersH', 'edgeH', 0, 3], ['users1', 'edge1', 0, 3], ['iot', 'edge1', 0, 3], ['users2', 'edge2', 0, 3], ['cloudapp', 'vgw', 0, 3],
+      ['remote', 'inet', 0, 2, 'ipsec', 'VPN', 0.25], ['contractor', 'inet', 0, 0, 'ipsec', 'VPN', 0.25],
+      ['remote', 'popU', 1, 3, 'tunnel', 'agent', 0.5], ['contractor', 'popU', 1, 3, 'tunnel', 'browser', 0.5]
     ];
     for (const e in SITE) {
-      const [pop, joins, mplsUntil] = SITE[e], up = [[upX(e, 'inet'), Y(e)]];
-      // The internet uplink carries the IPsec backup (or, for the cloud, the IPsec tunnel to the DC) until the site joins SASE.
-      L.push([e, [upX(e, 'inet'), INET_Y], 0, joins - 1, 'ipsec', e === 'vgw' ? 'IPsec to the DC' : null, [upX(e, 'inet') - 8, INET_Y + 34, 'end'], up]);
-      L.push([e, [upX(e, 'inet'), INET_Y], joins, 3, null, null, null, up]);
-      L.push([e, pop, joins, 3, null, 'tunnel', [upX(e, 'inet') + 7, INET_Y - 26], up]);
-      if (mplsUntil >= 0) L.push([e, [upX(e, 'mpls'), MPLS_Y], 0, mplsUntil, 'mpls', null, null, [[upX(e, 'mpls'), Y(e)]]]);
+      const [pop, joins, mplsUntil] = SITE[e], dia = OPT.dia && EDGES.includes(e);
+      // Before SASE the internet link carries the IPsec backup (or DIA, or the cloud's IPsec tunnel to the DC).
+      const wps = e === 'vgw' ? via()['inet>vgw'].slice().reverse() : null;
+      L.push([e, 'inet', 0, joins - 1, dia ? null : 'ipsec', e === 'vgw' ? 'IPsec to the DC' : dia ? 'DIA' : null, e === 'vgw' ? [X('vgw') - 10, 500, 'end'] : 0.25, wps]);
+      L.push([e, pop, joins, 3, 'tunnel', null, null, (via()[`${e}>${pop}`] || null)]);
+      if (mplsUntil >= 0) L.push([e, 'mpls', 0, mplsUntil, 'mpls']);
     }
     return L;
   }
   // Waypoints between two nodes on a flow, so flows follow the drawn links.
   function via() {
-    const v = { 'conn>popD': [[connX(), Y('conn')], [connX(), Y('popD')]], 'remote>popU': [[X('remote'), INET_Y]], 'contractor>popU': [[X('contractor'), INET_Y]] };
-    for (const e in SITE) v[`${e}>${SITE[e][0]}`] = [[upX(e, 'inet'), Y(e)]];
-    return v;
+    return {
+      'conn>popD': [[X('conn'), Y('conn') - 205]],
+      // Under the DC's boxes, so it doesn't cross the apps.
+      'conn>agent': [[X('conn'), Y('agent') + 42], [X('agent'), Y('agent') + 42]],
+      // The cloud's legacy IPsec runs below the SASE cloud, clear of its PoPs.
+      'inet>vgw': [[X('inet') + 250, 512], [X('vgw'), 512]]
+    };
   }
   function expand(list) {
     const outList = [], V = via();
@@ -745,26 +835,30 @@
     { id: 'remote-saas', group: 'Remote', label: 'SaaS', title: 'Remote user to SaaS', src: 'remote', dst: 'saas' },
     { id: 'remote-ai', group: 'Remote', label: 'GenAI', title: 'Remote user to a generative AI tool', src: 'remote', dst: 'genai' },
     { id: 'remote-cloud', group: 'Remote', label: 'Cloud app', title: 'Remote user to a cloud app', src: 'remote', dst: 'cloudapp' },
-    { id: 'contractor-app', group: 'Contractor', label: 'DC app', title: 'Contractor to a DC app', src: 'contractor', dst: 'apps' }
+    { id: 'contractor-app', group: 'Contractor', label: 'DC app', title: 'Contractor to a DC app', src: 'contractor', dst: 'apps' },
+    { id: 'branch-iot', group: 'IoT', label: 'Vendor cloud', title: 'Branch IoT camera to its cloud service', src: 'iot', dst: 'web' },
+    { id: 'dc-agent', group: 'AI agent', label: 'LLM API', title: 'AI agent in the DC to an LLM API', src: 'agent', dst: 'genai' }
   ];
 
   // SCN[flowId][phase] = { path, risk, riskLabel, verdict, vclass, note, steps: [[where, text]], caps, pits }
   // Paths hold waypoints computed from node positions, so buildS() runs again whenever the layout changes.
   const S = {};
-  const mpls = (a, b) => [[upX(a, 'mpls'), Y(a)], [upX(a, 'mpls'), MPLS_Y], [upX(b, 'mpls'), MPLS_Y], [upX(b, 'mpls'), Y(b)]];
-  // Out of the DC firewall: up to the internet band, along to the edge of the map, up to the services.
-  const dcOut = (dst) => ['dcfw', [X('dcfw'), INET_Y], [LEFT_X, INET_Y], [LEFT_X, BUS_Y], [X(dst), BUS_Y], dst];
-  // A VPN from a remote worker or contractor rides the internet band to the DC firewall.
-  const vpn = (who) => [who, [X(who), INET_Y], [X('dcfw'), INET_Y], 'dcfw'];
-  // The legacy IPsec tunnel from the DC firewall to the cloud VPC, over the internet.
-  const dcToCloud = () => ['dcfw', [X('dcfw'), INET_Y], [upX('vgw', 'inet'), INET_Y], [upX('vgw', 'inet'), Y('vgw')], 'vgw', 'cloudapp'];
+  // Transport clouds are nodes, so a path is mostly a list of node ids.
+  const mpls = () => ['mpls'];
+  const toBus = (dst) => [[X('inet'), BUS_Y], [X(dst), BUS_Y], dst];
+  // Out of the DC firewall to the internet, then up to the services.
+  const dcOut = (dst) => ['dcfw', 'inet', ...toBus(dst)];
   const coreOut = (dst) => ['core', [X('core'), BUS_Y], [X(dst), BUS_Y], dst];
+  // A VPN from a remote worker or contractor rides the internet to the DC firewall.
+  const vpn = (who) => [who, 'inet', 'dcfw'];
+  // The legacy IPsec tunnel from the DC firewall to the cloud VPC, over the internet.
+  const dcToCloud = () => ['dcfw', 'inet', 'vgw', 'cloudapp'];
   let trace = null;   // a flow you traced by dragging: { id, src, dst, analog, label, title, group }
   function buildS() {
   const backhaul1 = ['users1', 'edge1', ...mpls('edge1', 'dcedge'), 'dcedge'];
   // Off the VPN, the laptop goes straight to the internet.
-  const roadRisk = (dst) => ['remote', [X('remote') + 22, Y('remote')], [X('remote') + 22, BUS_Y], [X(dst), BUS_Y], dst];
-  const roadRiskAt = () => [X('remote') + 22, 290];
+  const roadRisk = (dst) => ['remote', 'inet', ...toBus(dst)];
+  const roadRiskAt = () => [(X('remote') + X('inet')) / 2 + 40, (Y('remote') + Y('inet')) / 2 + 30];
 
   const legacySaas = {
     path: [...backhaul1, ...dcOut('saas')], verdict: 'Backhauled to the DC', vclass: 'legacy',
@@ -1004,6 +1098,52 @@
       caps: ['vpn', 'ngfw'], pits: [] },
     contractorZtna, { ...contractorZtna, pits: ['clientless'] }, { ...contractorZtna, pits: ['thirdParty'] }
   ];
+  const iotSase = {
+    path: ['iot', 'edge1', 'popB1', ...coreOut('web')], verdict: 'Known, segmented, allow-listed', vclass: 'good',
+    steps: [['SD-WAN edge', 'Recognises the camera from its traffic and keeps it in its own segment on the LAN.'],
+      ['PoP', 'Allows only the camera vendor\'s cloud. Everything else is blocked and logged.'],
+      ['IPS', 'Virtually patches known exploits for firmware nobody can update.']],
+    caps: ['iotid', 'seg', 'sdwan', 'fwaas', 'ips'], pits: ['iotBreak']
+  };
+  const iotLegacy = {
+    path: ['iot', 'edge1', 'mpls', 'dcedge', ...dcOut('web')], verdict: 'Flat network, backhauled', vclass: 'legacy',
+    steps: [['IoT device', 'A camera on the same LAN as the laptops. No agent can run on it, and nobody listed it.'],
+      ['MPLS', 'Its traffic rides MPLS to the DC like everything else, and it can reach the DC too.'],
+      ['DC perimeter', 'Allowed out to "any" so the vendor cloud works.']],
+    caps: ['mpls', 'ngfw'], pits: []
+  };
+  S['branch-iot'] = [iotLegacy, { ...iotLegacy, note: 'Unchanged: phase 1 moved remote users only.' }, iotSase, { ...iotSase, pits: ['iotBreak', 'lastMile'] }];
+
+  const agentLegacy = {
+    path: ['agent', ...dcOut('genai')], verdict: 'Any-to-443 from a server', vclass: 'legacy',
+    steps: [['AI agent', 'A server-side agent calls an LLM API and MCP tool servers, with an API key from its config.'],
+      ['DC perimeter', 'Allows outbound 443 from the server. It sees a domain, not the prompts, the tools called or the data sent.'],
+      ['LLM API', 'Receives whatever the agent sends, including customer data it pulled from internal systems.']],
+    caps: ['ngfw'], pits: []
+  };
+  const agentSase = {
+    path: ['agent', 'dcedge', 'popD', ...coreOut('genai')], verdict: 'Inspected and allow-listed', vclass: 'good',
+    steps: [['DC SD-WAN edge', 'Sends the agent\'s traffic to the nearest PoP, like any other server traffic.'],
+      ['PoP', 'TLS inspection, then an allow-list: only approved LLM APIs and MCP servers, only the company tenant.'],
+      ['DLP', 'Scans prompts and tool results for customer data and secrets before they leave.'],
+      ['SOC', 'Every call is logged under the agent\'s identity, so unusual tool use stands out.']],
+    caps: ['tls', 'mcp', 'aictl', 'dlp', 'fwaas'], pits: ['aiAgents', 'logPrivacy']
+  };
+  S['dc-agent'] = [agentLegacy, { ...agentLegacy, note: 'Unchanged: phase 1 moved remote users only.' }, agentSase, { ...agentSase, pits: ['aiAgents'] }];
+
+  // DIA: before Branch 1 joins SASE, its internet traffic breaks out locally instead of riding MPLS to the DC.
+  if (OPT.dia) {
+    for (const [id, src, dst] of [['branch-saas', 'users1', 'saas'], ['branch-web', 'users1', 'web'], ['branch-ai', 'users1', 'genai'], ['branch-iot', 'iot', 'web']]) {
+      const d = {
+        path: [src, 'edge1', 'inet', ...toBus(dst)], verdict: 'Direct internet access (DIA)', vclass: 'legacy',
+        steps: [['Router + FW', 'Breaks out locally: the branch firewall inspects what it can, then sends it straight to the internet.'],
+          ['Internet', 'No backhaul, so it is fast. But every branch has its own firewall, rulebase and logs.'],
+          [dst === 'genai' ? 'GenAI tool' : src === 'iot' ? 'IoT' : 'Security', dst === 'genai' ? 'At best the firewall matches the "Generative AI" category. No tenant, prompt or upload control.' : src === 'iot' ? 'The camera still shares the LAN with laptops, and goes out to anything.' : 'Small branch firewalls rarely run TLS inspection, sandboxing, CASB or DLP.']],
+        caps: ['branchfw'], pits: []
+      };
+      S[id][0] = d; S[id][1] = { ...d, note: 'Unchanged: phase 1 moved remote users only.' };
+    }
+  }
   if (trace) S[trace.id] = [0, 1, 2, 3].map((p) => traceScenario(trace.src, trace.dst, p, trace.analog));
   }
   buildS();
@@ -1012,33 +1152,35 @@
   // The path in each phase is worked out from the same rules the hand-written flows follow.
   const NET = ['web', 'saas', 'genai'];
   // Dropping on a device means the endpoint behind it.
-  const ENDPOINT = { usersH: 'usersH', edgeH: 'usersH', contractor: 'contractor', users1: 'users1', edge1: 'users1', users2: 'users2', edge2: 'users2', remote: 'remote', apps: 'apps', dcedge: 'apps', dcfw: 'apps', conn: 'apps', cloudapp: 'cloudapp', vgw: 'cloudapp', web: 'web', saas: 'saas', genai: 'genai' };
-  const NAME = { usersH: 'HQ user', contractor: 'Contractor', users1: 'Branch 1 user', users2: 'Branch 2 user', remote: 'Remote user', apps: 'DC app', cloudapp: 'Cloud app', web: 'the internet', saas: 'SaaS', genai: 'a generative AI tool' };
-  const SHORT = { usersH: 'HQ', contractor: 'Contractor', users1: 'Branch 1', users2: 'Branch 2', remote: 'Remote', apps: 'DC app', cloudapp: 'Cloud app', web: 'Internet', saas: 'SaaS', genai: 'GenAI' };
-  const EDGE = { usersH: 'edgeH', users1: 'edge1', users2: 'edge2' };
+  const ENDPOINT = { usersH: 'usersH', edgeH: 'usersH', users1: 'users1', edge1: 'users1', iot: 'iot', users2: 'users2', edge2: 'users2', remote: 'remote', contractor: 'contractor',
+    apps: 'apps', agent: 'agent', dcedge: 'apps', dcfw: 'apps', conn: 'apps', cloudapp: 'cloudapp', vgw: 'cloudapp', web: 'web', saas: 'saas', genai: 'genai' };
+  const NAME = { usersH: 'HQ user', users1: 'Branch 1 user', iot: 'Branch IoT device', users2: 'Branch 2 user', remote: 'Remote worker', contractor: 'Contractor',
+    apps: 'DC app', agent: 'DC AI agent', cloudapp: 'Cloud app', web: 'the internet', saas: 'SaaS', genai: 'a generative AI tool' };
+  const SHORT = { usersH: 'HQ', users1: 'Branch 1', iot: 'IoT', users2: 'Branch 2', remote: 'Remote', contractor: 'Contractor', apps: 'DC app', agent: 'AI agent', cloudapp: 'Cloud app', web: 'Internet', saas: 'SaaS', genai: 'GenAI' };
+  const EDGE = { usersH: 'edgeH', users1: 'edge1', iot: 'edge1', users2: 'edge2' };
   const AWAY = ['remote', 'contractor'];   // people off the network: VPN first, then agent or browser
+  const DCSIDE = ['apps', 'agent'];        // things hosted in the DC
   const rev = (list) => list.slice().reverse();
   // When each endpoint is on SASE. DC apps are reachable through ZTNA from phase 1, and site to site from phase 2.
   function onSase(e, p, peer) {
-    if (e === 'apps') return p >= 2 || (AWAY.includes(peer) && p >= 1);
-    return { usersH: p >= 2, users1: p >= 2, users2: p >= 3, remote: p >= 1, contractor: p >= 1, cloudapp: p >= 2 }[e];
+    if (DCSIDE.includes(e)) return p >= 2 || (AWAY.includes(peer) && p >= 1);
+    return { usersH: p >= 2, users1: p >= 2, iot: p >= 2, users2: p >= 3, remote: p >= 1, contractor: p >= 1, cloudapp: p >= 2 }[e];
   }
   // From an endpoint on SASE up to the policy core.
   function upToCore(e, peer) {
-    return {
-      usersH: ['usersH', 'edgeH', 'popH', 'core'], users1: ['users1', 'edge1', 'popB1', 'core'], users2: ['users2', 'edge2', 'popB2', 'core'],
-      remote: ['remote', 'popU', 'core'], contractor: ['contractor', 'popU', 'core'], cloudapp: ['cloudapp', 'vgw', 'popC', 'core'],
-      apps: AWAY.includes(peer) ? ['apps', 'conn', 'popD', 'core'] : ['apps', 'dcedge', 'popD', 'core']
-    }[e];
+    if (EDGE[e]) return [e, EDGE[e], SITE[EDGE[e]][0], 'core'];
+    if (AWAY.includes(e)) return [e, 'popU', 'core'];
+    if (e === 'cloudapp') return ['cloudapp', 'vgw', 'popC', 'core'];
+    return AWAY.includes(peer) ? [e, 'conn', 'popD', 'core'] : [e, 'dcedge', 'popD', 'core'];
   }
   // From a legacy endpoint to the DC (ends at the WAN edge or the perimeter firewall).
   function toDC(e) {
-    if (EDGE[e]) return [e, EDGE[e], ...mpls(EDGE[e], 'dcedge'), 'dcedge'];
+    if (EDGE[e]) return [e, EDGE[e], 'mpls', 'dcedge'];
     if (AWAY.includes(e)) return vpn(e);
     if (e === 'cloudapp') return rev(dcToCloud());
-    return ['apps'];
+    return [e];
   }
-  // Join two paths that meet in the DC, where the WAN edge, the firewall and the app servers are linked to each other.
+  // Join two paths that meet in the DC, where the WAN edge, the firewall and the servers are linked to each other.
   function joinDC(a, b) {
     const x = a[a.length - 1], y = b[0];
     if (x === y) return [...a, ...b.slice(1)];
@@ -1046,11 +1188,15 @@
     return [...a, ...b];
   }
   function route(src, dst, p) {
+    // Two things in the same branch: the edge's LAN firewall sits between them. Two things in the DC: the DC firewall.
+    if (EDGE[src] && EDGE[src] === EDGE[dst]) return [src, EDGE[src], dst];
+    if (DCSIDE.includes(src) && DCSIDE.includes(dst)) return [src, 'dcfw', dst];
     if (NET.includes(dst)) {
       if (onSase(src, p, null)) return [...upToCore(src, null), ...coreOut(dst).slice(1)];
-      if (src === 'apps') return ['apps', ...dcOut(dst)];
+      if (DCSIDE.includes(src)) return [src, ...dcOut(dst)];
       // A contractor's own laptop goes straight to the internet: the company sees nothing.
-      if (src === 'contractor') return ['contractor', [X('contractor') + 22, Y('contractor')], [X('contractor') + 22, BUS_Y], [X(dst), BUS_Y], dst];
+      if (src === 'contractor') return ['contractor', 'inet', ...toBus(dst)];
+      if (EDGE[src] && OPT.dia) return [src, EDGE[src], 'inet', ...toBus(dst)];
       // From phase 2 the DC itself leaves through its PoP, so a branch still on MPLS is backhauled to the DC and goes out there.
       if (p >= 2 && EDGE[src]) return [...toDC(src), 'popD', ...coreOut(dst)];
       return joinDC(toDC(src), dcOut(dst));
@@ -1063,47 +1209,52 @@
       return [...a, ...b.slice(1)];
     }
     if (!sa && !sb) {
-      if (EDGE[src] && EDGE[dst]) return [src, EDGE[src], ...mpls(EDGE[src], EDGE[dst]), EDGE[dst], dst];
+      if (EDGE[src] && EDGE[dst]) return [src, EDGE[src], 'mpls', EDGE[dst], dst];
       return joinDC(toDC(src), rev(toDC(dst)));
     }
     // One end on SASE, the other not yet: the two worlds meet at the DC.
     const sEnd = sa ? src : dst, lEnd = sa ? dst : src;
-    const path = sEnd === 'apps' ? joinDC(['apps'], rev(toDC(lEnd)))
+    const path = DCSIDE.includes(sEnd) ? joinDC([sEnd], rev(toDC(lEnd)))
       : joinDC([...upToCore(sEnd, lEnd), ...(p >= 2 ? ['popD', 'dcedge'] : ['popD', 'conn'])], rev(toDC(lEnd)));
-    return sa ? path : rev(path);
+    return tidy(sa ? path : rev(path));
   }
   const isPop = (x) => typeof x === 'string' && N[x].kind === 'pop';
-  const atMpls = (path, i) => Array.isArray(path[i]) && path[i][1] === MPLS_Y;
+  const strNodes = (path) => path.filter((x) => typeof x === 'string');
   // Numbered steps for a traced path.
   function describe(path, p, src, dst) {
-    const L = phaseLabels(p), net = NET.includes(dst), out = [];
+    const L = phaseLabels(p), net = NET.includes(dst), out = [], nodes = strNodes(path);
     const ztna = (AWAY.includes(src) || AWAY.includes(dst)) && !net;
-    const prevNode = (i) => { for (let j = i - 1; j >= 0; j -= 1) if (typeof path[j] === 'string') return path[j]; return null; };
     let pops = 0;
-    path.forEach((x, i) => {
-      if (typeof x !== 'string') return;
-      const prev = path[i - 1], next = path[i + 1];
+    nodes.forEach((x, i) => {
+      const prev = nodes[i - 1], next = nodes[i + 1];
       if (i === 0) {
-        if (x === 'remote') out.push(path[2] === 'popU' ? ['Agent', 'Signs in through the IdP with a device-posture check, and tunnels to the nearest PoP.'] : ['VPN client', 'Tunnels over the internet to the VPN concentrator in the DC.']);
-        if (x === 'contractor') out.push(path[2] === 'popU' ? ['Browser', 'No agent on a laptop you don\'t own: signs in through your IdP in a browser, and the PoP brokers access.'] : path.includes('dcfw') ? ['VPN client', 'A VPN account on an unmanaged laptop, straight onto the network.'] : ['Own internet', 'An unmanaged laptop goes straight to the internet. The company sees nothing.']);
+        if (x === 'remote') out.push(next === 'popU' ? ['Agent', 'Signs in through the IdP with a device-posture check, and tunnels to the nearest PoP.'] : nodes[2] === 'dcfw' ? ['VPN client', 'Tunnels over the internet to the VPN concentrator in the DC.'] : ['Off the VPN', 'Goes straight to the internet: no company policy applies.']);
+        if (x === 'contractor') out.push(next === 'popU' ? ['Browser', 'No agent on a laptop you don\'t own: signs in through your IdP in a browser, and the PoP brokers access.'] : nodes[2] === 'dcfw' ? ['VPN client', 'A VPN account on an unmanaged laptop, straight onto the network.'] : ['Own internet', 'An unmanaged laptop goes straight to the internet. The company sees nothing.']);
+        if (x === 'iot') out.push(['IoT device', 'A camera or sensor: no agent can run on it, and nobody may have listed it.']);
+        if (x === 'agent') out.push(['AI agent', 'A server-side agent calling LLM APIs and tools, with a key from its config.']);
         return;
       }
-      if (i === path.length - 1) return;
-      if (x === 'edge1' || x === 'edge2' || x === 'edgeH' || x === 'dcedge') {
+      if (i === nodes.length - 1) return;
+      if (x === 'dcedge' || EDGES.includes(x)) {
         const sd = (L[x] || {}).cls === 'sdwan';
-        const where = x === 'dcedge' ? (sd ? 'DC SD-WAN edge' : 'DC WAN edge') : (sd ? 'SD-WAN edge' : x === 'edgeH' ? 'HQ router' : 'Branch router');
-        if (atMpls(path, i + 2)) out.push([where, isPop(prev) ? 'The gateway between SASE and MPLS: hands it on over MPLS.' : 'Sends it into the carrier\'s MPLS VPN.']);
-        else if (isPop(next)) out.push([where, 'Tunnels to the nearest PoP over the internet underlay.']);
-        else if (atMpls(path, i - 2) && next === 'dcfw') out.push([where, 'Hands it to the perimeter firewall.']);
-        else if (atMpls(path, i - 2) && i === path.length - 2 && x !== 'dcedge') out.push([where, 'Receives it from MPLS and delivers it.']);
+        const where = x === 'dcedge' ? (sd ? 'DC SD-WAN edge' : 'DC WAN edge') : sd ? 'SD-WAN edge' : (L[x] || {}).l || 'Branch router';
+        if (next === 'mpls') out.push([where, isPop(prev) ? 'The gateway between SASE and MPLS: hands it on over MPLS.' : 'Sends it into the carrier\'s MPLS VPN.']);
+        else if (next === 'inet') out.push([where, 'Breaks out locally (DIA): the branch firewall inspects what it can and sends it straight to the internet.']);
+        else if (isPop(next)) out.push([where, 'Tunnels to the nearest PoP over the internet.']);
+        else if (prev === 'mpls' && next === 'dcfw') out.push([where, 'Hands it to the perimeter firewall.']);
+        else if (prev === 'mpls' && x !== 'dcedge') out.push([where, 'Receives it from MPLS and delivers it.']);
+        else if (EDGE[prev] && EDGE[next]) out.push([where, sd ? 'Keeps the two in separate segments and allows only what policy says.' : 'Both sit on the same flat LAN: nothing stands between them.']);
         return;
       }
       if (x === 'dcfw') {
-        if (path.slice(i + 1).some((q) => Array.isArray(q) && q[0] === LEFT_X)) out.push(['DC perimeter', 'NGFW and web proxy inspect it, then out the DC internet link.']);
-        else if (path.includes('vgw') && path.indexOf('vgw') > i) out.push(['DC perimeter', 'Routes it into the IPsec tunnel over the internet to the VPC.']);
-        else if (path.includes('vgw')) out.push(['DC perimeter', 'Takes it out of the IPsec tunnel from the VPC and routes it on.']);
-        else if (AWAY.includes(prevNode(i))) out.push(['DC perimeter', 'Terminates the VPN, with routes to whole internal subnets.']);
+        const after = nodes.slice(i + 1), before = nodes.slice(0, i);
+        if (next === 'inet' && after.includes('vgw')) out.push(['DC perimeter', 'Routes it into the IPsec tunnel over the internet to the VPC.']);
+        else if (next === 'inet' && after.some((q) => NET.includes(q))) out.push(['DC perimeter', 'NGFW and web proxy inspect it, then out the DC internet link.']);
+        else if (next === 'inet') out.push(['DC perimeter', 'Sends it back out over the VPN.']);
+        else if (prev === 'inet' && before.includes('vgw')) out.push(['DC perimeter', 'Takes it out of the IPsec tunnel from the VPC and routes it on.']);
+        else if (prev === 'inet') out.push(['DC perimeter', 'Terminates the VPN, with routes to whole internal subnets.']);
         else if (prev === 'conn') out.push(['DC perimeter', 'The connector reaches the rest of the network through the DC firewall.']);
+        else if (DCSIDE.includes(prev) && DCSIDE.includes(next)) out.push(['DC firewall', 'East-west inside the DC: the DC firewall decides, in every phase. SASE does not change this.']);
         else out.push(['DC perimeter', 'Inspects it on the way through the DC.']);
         return;
       }
@@ -1114,59 +1265,69 @@
         else if (pops === 2) out.push(['PoP', 'The provider middle mile carries it to the PoP nearest the destination.']);
         return;
       }
-      if (x === 'core' && Array.isArray(next)) { out.push(['Egress', 'Leaves from a provider IP near the user, not from the DC.']); return; }
+      if (x === 'core' && NET.includes(next)) { out.push(['Egress', 'Leaves from a provider IP near the user, not from the DC.']); return; }
       if (x === 'vgw') out.push(onSase('cloudapp', p) ? ['Virtual SD-WAN edge', 'Runs inside the VPC and tunnels to the nearest PoP.'] : ['Cloud VPN GW', 'Ends the IPsec tunnel to the DC firewall.']);
     });
     return out;
   }
   // A short "A → B → C" line for the phase list.
-  function hops(path, p) {
-    // Repeats of the same thing collapse (MPLS waypoints); two different PoPs both show.
-    const out = [];
+  function hops(path) {
+    // Two different PoPs both show; the internet shows as VPN or IPsec when it carries one.
+    const out = [], nodes = strNodes(path);
     let last = null;
     const push = (t, key = t) => { if (t && key !== last) { out.push(t); last = key; } };
-    path.forEach((x, i) => {
-      if (Array.isArray(x)) { if (x[1] === MPLS_Y) push('MPLS'); return; }
-      const before = path.slice(0, i).filter((q) => typeof q === 'string').pop();
-      if ((x === 'dcfw' && AWAY.includes(before)) || (AWAY.includes(x) && before === 'dcfw')) push('VPN');
+    nodes.forEach((x, i) => {
+      const before = nodes[i - 1], after = nodes[i + 1];
+      if (x === 'inet') {
+        if ((AWAY.includes(before) && after === 'dcfw') || (before === 'dcfw' && AWAY.includes(after))) push('VPN');
+        else if ((before === 'dcfw' && after === 'vgw') || (before === 'vgw' && after === 'dcfw')) push('IPsec');
+        else push('Internet');
+        return;
+      }
       if (isPop(x)) { push('PoP', x); return; }
-      if (x === 'core') return;
-      if (x === 'vgw') { if (!onSase('cloudapp', p)) push('IPsec'); return; }
-      push({ usersH: 'HQ', contractor: 'Contractor', users1: 'Branch 1', users2: 'Branch 2', remote: 'Remote worker', apps: 'DC app', cloudapp: 'Cloud app', web: 'Internet', saas: 'SaaS', genai: 'GenAI',
-        dcfw: 'DC firewall', dcedge: 'DC edge', conn: 'Connector' }[x]);
+      push({ ...SHORT, mpls: 'MPLS', dcfw: 'DC firewall', dcedge: 'DC edge', conn: 'Connector' }[x]);
     });
     return out.join(' → ');
   }
   // The hand-written flow closest to a traced one lends its legacy issues and pitfalls.
   function analogFor(src, dst) {
-    const k = (e) => (EDGE[e] ? 'branch' : e);
-    const d = dst === 'contractor' ? 'remote' : k(dst);
-    return {
+    const k = (e) => (e === 'iot' || e === 'agent' ? e : EDGE[e] ? 'branch' : e);
+    const d = dst === 'contractor' ? 'remote' : dst === 'agent' ? 'apps' : EDGE[dst] ? 'branch' : dst;
+    const T = {
       contractor: { apps: 'contractor-app', saas: 'remote-saas', web: 'remote-saas', genai: 'remote-ai', cloudapp: 'remote-cloud', branch: 'remote-app', remote: 'remote-app' },
       branch: { saas: 'branch-saas', web: 'branch-web', genai: 'branch-ai', apps: 'branch-dc', branch: 'branch-branch', cloudapp: 'branch-cloud', remote: 'remote-app' },
+      iot: { saas: 'branch-iot', web: 'branch-iot', genai: 'branch-iot', apps: 'branch-iot', branch: 'branch-iot', cloudapp: 'branch-iot', remote: 'branch-iot' },
       remote: { saas: 'remote-saas', web: 'remote-saas', genai: 'remote-ai', apps: 'remote-app', cloudapp: 'remote-cloud', branch: 'remote-app', remote: 'remote-app' },
-      apps: { saas: 'dc-web', web: 'dc-web', genai: 'dc-web', branch: 'branch-dc', cloudapp: 'branch-cloud', remote: 'remote-app' },
+      apps: { saas: 'dc-web', web: 'dc-web', genai: 'dc-agent', branch: 'branch-dc', cloudapp: 'branch-cloud', remote: 'remote-app', apps: 'branch-dc' },
+      agent: { saas: 'dc-agent', web: 'dc-agent', genai: 'dc-agent', branch: 'branch-dc', cloudapp: 'branch-cloud', remote: 'remote-app', apps: 'branch-dc' },
       cloudapp: { apps: 'branch-cloud', branch: 'branch-cloud', remote: 'remote-cloud' }
-    }[k(src)][d];
+    };
+    return (T[k(src)] || {})[d] || 'branch-dc';
   }
   function traceScenario(src, dst, p, analog) {
-    const path = route(src, dst, p), nodes = path.filter((x) => typeof x === 'string'), net = NET.includes(dst);
-    const viaCore = nodes.some(isPop), usesMpls = path.some((x) => Array.isArray(x) && x[1] === MPLS_Y);
-    const vclass = !viaCore ? 'legacy' : usesMpls || nodes.includes('dcfw') ? 'warn' : 'good';
-    const verdict = vclass === 'warn' ? (net ? 'Backhauled, then out at the DC\'s PoP' : 'Via the DC: one end not migrated yet')
+    const path = route(src, dst, p), nodes = strNodes(path), net = NET.includes(dst);
+    const viaSase = nodes.some(isPop), usesMpls = nodes.includes('mpls');
+    const dia = nodes.some((x, i) => EDGES.includes(x) && nodes[i + 1] === 'inet');
+    const L = phaseLabels(p);
+    const sameBranch = EDGE[src] && EDGE[src] === EDGE[dst];
+    const vclass = sameBranch ? ((L[EDGE[src]] || {}).cls === 'sdwan' ? 'good' : 'legacy') : !viaSase ? 'legacy' : usesMpls || nodes.includes('dcfw') ? 'warn' : 'good';
+    const verdict = DCSIDE.includes(src) && DCSIDE.includes(dst) ? 'East-west inside the DC'
+      : sameBranch ? (vclass === 'good' ? 'Segmented at the edge' : 'Flat branch LAN')
+      : vclass === 'warn' ? (net ? 'Backhauled, then out at the DC\'s PoP' : 'Via the DC: one end not migrated yet')
       : vclass === 'good' ? (net ? 'Inspected at the nearest PoP' : (AWAY.includes(src) || AWAY.includes(dst)) ? 'ZTNA, one app at a time' : 'Over the SASE backbone')
-      : net ? (src === 'apps' ? 'Out through the DC perimeter' : src === 'contractor' ? 'Unmanaged: no company control' : 'Backhauled to the DC')
+      : net ? (DCSIDE.includes(src) ? 'Out through the DC perimeter' : src === 'contractor' ? 'Unmanaged: no company control' : dia ? 'Direct internet access (DIA)' : 'Backhauled to the DC')
       : nodes.includes('dcfw') || nodes.includes('dcedge') ? 'Through the DC' : 'Over MPLS';
     const caps = new Set();
     if (usesMpls) caps.add('mpls');
     if (nodes.includes('vgw') && !onSase('cloudapp', p)) caps.add('ipsec');
-    if (AWAY.includes(nodes[0]) && nodes[1] === 'dcfw') caps.add('vpn');
+    if (AWAY.includes(nodes[0]) && nodes[2] === 'dcfw') caps.add('vpn');
     if (nodes.includes('dcfw')) caps.add('ngfw');
     if (nodes.includes('dcfw') && net) caps.add('proxy');
-    const L = phaseLabels(p);
-    if (['edge1', 'edge2', 'edgeH', 'dcedge'].some((e) => nodes.includes(e) && (L[e] || {}).cls === 'sdwan' && nodes.some((x) => isPop(x)))) caps.add('sdwan');
+    if (dia) caps.add('branchfw');
+    if ([...EDGES, 'dcedge'].some((e) => nodes.includes(e) && (L[e] || {}).cls === 'sdwan') && (viaSase || sameBranch)) caps.add('sdwan');
+    if (sameBranch && vclass === 'good') caps.add('seg');
     if (new Set(nodes.filter(isPop)).size > 1) caps.add('mm');
-    if (viaCore) {
+    if (viaSase) {
       if (!net && (src === 'contractor' || dst === 'contractor')) { caps.add('clientless'); caps.add('idp'); caps.add('rbi'); }
       else if (!net && (src === 'remote' || dst === 'remote')) { caps.add('ztna'); caps.add('idp'); }
       caps.add('fwaas');
@@ -1174,20 +1335,131 @@
       caps.add('ips');
       if (dst === 'saas') caps.add('casb');
       if (dst === 'genai') { caps.add('aidisc'); caps.add('aictl'); caps.add('dlp'); }
+      if (src === 'iot') { caps.add('iotid'); caps.add('seg'); }
+      if (src === 'agent' && dst === 'genai') caps.add('mcp');
     }
     const a = S[analog][p];
     const pits = vclass === 'warn' ? (net ? ['hubTransit', 'egressIP'] : ['hubTransit', 'asym']) : vclass === 'legacy' ? [] : a.vclass === 'good' ? a.pits : net ? ['egressIP', 'tlsBreak'] : ['mtu', 'lastMile'];
-    return { path, verdict, vclass, steps: describe(path, p, src, dst), caps: [...caps], pits, hops: hops(path, p),
+    return { path, verdict, vclass, steps: describe(path, p, src, dst), caps: [...caps], pits, hops: hops(path),
       issuesOpen: vclass === 'warn' ? 'one end not migrated yet' : undefined,
       note: 'Traced from the topology; issues and pitfalls come from the closest hand-written flow.' };
   }
+  // Issues for a flow: traced flows borrow them, and with DIA the branch internet flows have their own.
+  function issuesFor(flow) {
+    const key = trace && trace.id === flow ? trace.analog : flow;
+    return OPT.dia && DIA_FLOWS.includes(key) ? ISSUES_DIA : ISSUES[key];
+  }
+
+  // ---------- What if: break something, and see each phase cope ----------
+  const WHAT = { dc: 'DC outage', mpls: 'MPLS cut', pop: 'PoP down', ransom: 'Ransomware in Branch 1', ai: 'AI data leak' };
+  const listNames = (a) => (a.length < 2 ? a.join('') : `${a.slice(0, -1).join(', ')} and ${a[a.length - 1]}`);
+  // Collapse "PoP → core → same PoP" and repeats left behind by a reroute.
+  function tidy(path) {
+    const out = [];
+    for (const x of path) {
+      if (out.length && out[out.length - 1] === x) continue;
+      if (typeof x === 'string' && out.length > 1 && out[out.length - 1] === 'core' && out[out.length - 2] === x) { out.pop(); continue; }
+      out.push(x);
+    }
+    return out;
+  }
+  // With MPLS gone, the IPsec backup carries the traffic: hub and spoke through the DC WAN edge.
+  function viaBackup(path) {
+    const out = [];
+    path.forEach((x, i) => {
+      if (x !== 'mpls') { out.push(x); return; }
+      const prev = strNodes(path.slice(0, i)).pop(), next = strNodes(path.slice(i + 1))[0];
+      out.push(...(prev !== 'dcedge' && next !== 'dcedge' ? ['inet', 'dcedge', 'inet'] : ['inet']));
+    });
+    return out;
+  }
+  function scenario(kind, p) {
+    const flows = FLOWS.map((f) => ({ f, path: S[f.id][p].path }));
+    const n = flows.length, paths = [], lines = [], blocked = [];
+    let down = [];
+    if (kind === 'dc') {
+      down = ['dcfw', 'dcedge', 'apps', 'conn', 'agent'];
+      const hit = flows.filter((x) => x.path.some((y) => down.includes(y)));
+      for (const x of flows) paths.push({ path: x.path, cls: hit.includes(x) ? 'down' : 'ok' });
+      const netHit = hit.some((x) => NET.includes(x.f.dst) && !DCSIDE.includes(x.f.src));
+      lines.push(`${hit.length} of ${n} flows stop.`);
+      if (netHit) lines.push('Internet, SaaS and AI stop for every site still backhauled, and for anyone on the VPN. The DC is the hub, so it is also the single point of failure.');
+      else lines.push('Internet, SaaS, AI, the cloud and branch-to-branch keep working: they never touch the DC.', 'Only the apps and agents hosted in the DC are unreachable, as you would expect.');
+    } else if (kind === 'mpls') {
+      down = ['mpls'];
+      const hit = flows.filter((x) => x.path.includes('mpls'));
+      for (const x of hit) paths.push({ path: viaBackup(x.path), cls: 'warn', end: 'arrow' });
+      if (!hit.length) lines.push('Nothing changes: MPLS is already gone.', 'Every site runs over two internet links to its nearest PoP.');
+      else {
+        lines.push(`${hit.length} of ${n} flows fail over to the IPsec backup over the internet.`, 'No carrier QoS for voice, and branch-to-branch now hairpins through the DC.', 'The backup is rarely tested, so expect MTU, certificate or routing surprises.');
+        if (p === 2) lines.push('Only Branch 2 and the DC hub still depend on MPLS.');
+      }
+    } else if (kind === 'pop') {
+      if (p === 0) lines.push('No SASE yet, so there is no PoP to lose.', 'Try "DC outage" in this phase instead: that one takes almost everything down.');
+      else {
+        const failed = p === 1 ? 'popU' : 'popB1';
+        down = [failed];
+        const hit = flows.filter((x) => x.path.includes(failed));
+        for (const x of hit) paths.push({ path: tidy(x.path.map((y) => (y === failed ? 'popD' : y))), cls: 'reroute', end: 'arrow' });
+        lines.push(`${hit.length} of ${n} flows move from the failed PoP to the next nearest one, within seconds.`, 'Edges and agents re-establish their tunnels on their own: nobody visits a site, and the policy is the same in every PoP.');
+      }
+    } else if (kind === 'ransom') {
+      const reached = [];
+      for (const [t, name] of [['usersH', 'HQ'], ['users2', 'Branch 2'], ['apps', 'the DC']]) {
+        const path = route('users1', t, p), i = path.findIndex(isPop);
+        if (i >= 0) { paths.push({ path: path.slice(0, i + 1), cls: 'down', end: 'block' }); blocked.push(path[i]); }
+        else { paths.push({ path, cls: 'down', end: 'arrow' }); reached.push(name); down.push(t); }
+      }
+      if (reached.length) lines.push(`One infected laptop in Branch 1 reaches ${listNames(reached)} over "trusted" MPLS.`, 'Nothing inspects traffic between sites, so it spreads at network speed.');
+      if (blocked.length) lines.push(reached.length ? 'Where a site is already on SASE, the PoP stops it.' : 'The same infected laptop is stopped at its first PoP, every time.', 'The WAN firewall and IPS sit between every pair of sites, under the same policy as internet traffic.');
+    } else if (kind === 'ai') {
+      lines.push('Someone pastes source code into a personal AI account, and an agent sends customer data to an LLM API.');
+      for (const [a, name] of [['users1', 'Branch user'], ['remote', p === 0 ? 'Remote worker, VPN off' : 'Remote worker'], ['agent', 'AI agent in the DC']]) {
+        const path = a === 'remote' && p === 0 ? roadRiskPath('genai') : route(a, 'genai', p), i = path.findIndex(isPop);
+        if (i >= 0) { paths.push({ path: path.slice(0, i + 1), cls: 'down', end: 'block' }); blocked.push(path[i]); lines.push(`${name}: blocked in the PoP by DLP and the tenant rules, with a coaching message.`); }
+        else {
+          paths.push({ path, cls: 'down', end: 'arrow' });
+          lines.push(`${name}: leaked. ${a === 'agent' ? 'The firewall allows any 443 from the server.' : a === 'remote' ? 'With the VPN off, nothing applies.' : OPT.dia ? 'The branch firewall sees a category, not the prompt.' : 'The DC proxy sees a domain, not the prompt.'}`);
+        }
+      }
+    }
+    return { title: `What if: ${WHAT[kind]} · Phase ${p}`, lines, paths, down: down.filter((id) => live(N[id].from, N[id].to)), blocked, infected: kind === 'ransom' ? ['users1'] : [] };
+  }
+  const roadRiskPath = (dst) => ['remote', 'inet', ...toBus(dst)];
+
+  // ---------- Scoreboard ----------
+  function metrics(p) {
+    const legacy = Object.keys(SITE).filter((e) => SITE[e][1] > p).length;
+    const fw = OPT.dia ? EDGES.filter((e) => SITE[e][1] > p).length : 0;
+    const inDC = (e) => DCSIDE.includes(e);
+    const paths = FLOWS.map((f) => [f, S[f.id][p].path]);
+    return {
+      boxes: boxCount(p),
+      consoles: (p < 3 ? 3 : 1) + (legacy ? 1 : 0) + (fw ? 1 : 0) + (p >= 1 ? 1 : 0),
+      viaDC: paths.filter(([f, path]) => !inDC(f.src) && !inDC(f.dst) && path.some((x) => x === 'dcfw' || x === 'dcedge')).length,
+      notDC: paths.filter(([f]) => !inDC(f.src) && !inDC(f.dst)).length,
+      onMpls: paths.filter(([, path]) => path.includes('mpls')).length
+    };
+  }
+  function renderBoard() {
+    const p = state.phase, m = metrics(p), m0 = metrics(0);
+    const tile = (label, v, v0, of) => {
+      const d = v - v0, cls = d < 0 ? 'good' : d > 0 ? 'bad' : '';
+      return `<div class="tile"><span class="tl">${label}</span><b>${v}${of ? `<small> / ${of}</small>` : ''}</b><span class="td ${cls}">${p === 0 ? 'legacy' : d === 0 ? 'same as legacy' : `${d > 0 ? '+' : ''}${d} vs legacy`}</span></div>`;
+    };
+    $('tiles').innerHTML = tile('Boxes you patch', m.boxes, m0.boxes) + tile('Consoles', m.consoles, m0.consoles)
+      + tile('Flows via the DC', m.viaDC, m0.viaDC, m.notDC) + tile('Flows on MPLS', m.onMpls, m0.onMpls, FLOWS.length)
+      + `<div class="tile"><span class="tl">New site live in</span><b>${p < 2 ? '~3 months' : 'days'}</b><span class="td ${p < 2 ? '' : 'good'}">${p < 2 ? 'waiting for the MPLS circuit' : 'any ISP, zero-touch edge'}</span></div>`;
+    $('board').querySelectorAll('[data-what]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.what === state.what)));
+    $('board').querySelectorAll('[data-dia]').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.dia === +OPT.dia)));
+  }
+
   // Returns the flow id to show: a hand-written flow when one exists, otherwise a traced one.
   function setTrace(src, dst) {
     const known = FLOWS.find((f) => f.src === src && f.dst === dst);
     if (known) return known.id;
     if (trace) delete S[trace.id];
     trace = { id: `t-${src}-${dst}`, group: 'Traced', label: `${SHORT[src]} → ${SHORT[dst]}`, title: `${NAME[src]} to ${NAME[dst]}`, src, dst, analog: analogFor(src, dst) };
-    ISSUES[trace.id] = ISSUES[trace.analog];
     S[trace.id] = [0, 1, 2, 3].map((p) => traceScenario(src, dst, p, trace.analog));
     return trace.id;
   }
@@ -1265,7 +1537,7 @@
 
   // ---------- State ----------
   // view: 'lab' (diagram), 'why' (whyStage 1-3) or 'intro'. mode: null, 'trace' or 'edit'. talk: null, or { len, i } while stepping through a run order.
-  const state = { phase: 0, flow: 'branch-saas', tab: 'main', view: 'lab', whyStage: 1, talk: null, mode: null, panel: false };
+  const state = { phase: 0, flow: 'branch-saas', tab: 'main', view: 'lab', whyStage: 1, talk: null, mode: null, panel: false, what: null };
   try { state.panel = localStorage.getItem('tornog-panel') === 'open'; } catch (e) {}
   const $ = (id) => document.getElementById(id);
   const svg = $('topo');
@@ -1288,6 +1560,7 @@
     }
     const [w, h] = BOX[n.kind];
     const t = Math.min(dx ? (w / 2 + 4) / Math.abs(dx) : Infinity, dy ? (h / 2 + 4) / Math.abs(dy) : Infinity);
+    if (t >= 1) return { x: n.x, y: n.y };
     return { x: n.x + dx * t, y: n.y + dy * t };
   }
   function pathD(list) {
@@ -1302,6 +1575,14 @@
     return pts.map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
   }
   const live = (from, to) => state.phase >= (from ?? 0) && state.phase <= (to ?? 3);
+  // Wrap a sentence for the SVG card.
+  function wrap(text, n) {
+    const out = [];
+    let line = '';
+    for (const w of text.split(' ')) { if ((line + ' ' + w).trim().length > n) { out.push(line); line = w; } else line = (line + ' ' + w).trim(); }
+    if (line) out.push(line);
+    return out;
+  }
 
   // ---------- Drawing ----------
   // A zone keeps its designed size, and grows when the layout editor moves one of its nodes outside it.
@@ -1327,8 +1608,8 @@
 
   function draw() {
     const p = state.phase, sc = S[state.flow][p];
-    const onPath = new Set(sc.path.filter((x) => !Array.isArray(x)));
-    const usesMPLS = sc.path.some((x) => Array.isArray(x) && x[1] === MPLS_Y);
+    const scn = state.what ? scenario(state.what, p) : null;
+    const onPath = new Set(scn ? [] : sc.path.filter((x) => !Array.isArray(x)));
     svg.textContent = '';
 
     const defs = el('defs', {}, svg);
@@ -1341,31 +1622,22 @@
     el('rect', { x: 0, y: 0, width: VIEW_W, height: VIEW_H, fill: 'url(#dots)' }, svg);
 
     // Bottom: every place traffic starts. Zones are 245 high, labels at the bottom.
-    const ZY = 525, ZH = 245;
-    zone(grow(24, ZY, 320, ZH, ['dcfw', 'dcedge', 'apps', 'conn']), 'Data center', null, true);
-    zone(grow(358, ZY, 170, ZH, ['edgeH', 'usersH']), 'HQ', null, true);
-    zone(grow(542, ZY, 170, ZH, ['edge1', 'users1']), 'Branch 1', null, true);
-    zone(grow(726, ZY, 170, ZH, ['edge2', 'users2']), 'Branch 2', null, true);
-    zone(grow(910, ZY, 170, ZH, ['remote']), 'Remote worker', null, true);
-    zone(grow(1094, ZY, 170, ZH, ['contractor']), 'Contractor', null, true);
-    zone(grow(1278, ZY, 198, ZH, ['vgw', 'cloudapp']), 'Company cloud', null, true);
+    const ZY = 565, ZH = 245;
+    zone(grow(16, ZY, 470, ZH, ['dcfw', 'dcedge', 'apps', 'conn', 'agent']), 'Data center', null, true);
+    zone(grow(498, ZY, 170, ZH, ['edgeH', 'usersH']), 'HQ', null, true);
+    zone(grow(680, ZY, 320, ZH, ['edge1', 'users1', 'iot']), 'Branch 1', null, true);
+    zone(grow(1012, ZY, 170, ZH, ['edge2', 'users2']), 'Branch 2', null, true);
+    zone(grow(1194, ZY, 170, ZH, ['remote']), 'Remote worker', null, true);
+    zone(grow(1376, ZY, 170, ZH, ['contractor']), 'Contractor', null, true);
+    zone(grow(1558, ZY, 186, ZH, ['vgw', 'cloudapp']), 'Company cloud', null, true);
 
-    // Top: the SASE cloud sits between the services and everything below it.
+    // Middle, right: the SASE cloud, beside MPLS and the internet (MPLS and the internet are nodes, drawn later).
     const cloud = el('g', { class: p === 0 ? 'ghost' : null }, svg);
-    const [cx, cy, cw, ch] = grow(185, 140, 1235, 245, Object.keys(N).filter((id) => N[id].kind === 'pop' || N[id].kind === 'core'));
-    el('rect', { x: cx, y: cy, width: cw, height: ch, rx: 50, class: 't-cloud' }, cloud);
+    const [cx, cy, cw, ch] = grow(1090, 175, 655, 305, Object.keys(N).filter((id) => N[id].kind === 'pop' || N[id].kind === 'core'));
+    el('rect', { x: cx, y: cy, width: cw, height: ch, rx: 44, class: 't-cloud' }, cloud);
     el('text', { x: cx + 26, y: cy + 30, class: 't-cloud-label' }, cloud).textContent = 'SASE CLOUD';
-    el('text', { x: cx + 26, y: cy + 46, class: 't-cloud-cap' }, cloud).textContent = p === 0 ? 'not deployed yet' : 'one policy, a PoP near every site and user';
-    el('text', { x: 40, y: BUS_Y - 8, class: 't-bus-label' }, svg).textContent = 'INTERNET';
-
-    // Middle: the internet every site and user reaches, and the MPLS WAN.
-    const usesInet = sc.path.some((x) => Array.isArray(x) && x[1] === INET_Y);
-    const inet = el('g', { class: `t-inet${usesInet ? ' on' : ''}` }, svg);
-    el('rect', { x: 8, y: INET_Y - 17, width: VIEW_W - 16, height: 34, rx: 17 }, inet);
-    el('text', { x: (X('dcfw') + upX('dcedge', 'inet')) / 2, y: INET_Y + 5, 'text-anchor': 'middle' }, inet).textContent = 'INTERNET';
-    const mp = el('g', { class: `t-mpls${p === 3 ? ' ghost' : ''}${usesMPLS ? ' on' : ''}` }, svg);
-    el('rect', { x: upX('dcedge', 'mpls') - 22, y: MPLS_Y - 15, width: upX('edge2', 'mpls') - upX('dcedge', 'mpls') + 44, height: 30, rx: 15 }, mp);
-    el('text', { x: (upX('dcedge', 'mpls') + upX('edgeH', 'inet')) / 2, y: MPLS_Y + 5, 'text-anchor': 'middle' }, mp).textContent = 'MPLS';
+    el('text', { x: cx + 26, y: cy + 46, class: 't-cloud-cap' }, cloud).textContent = p === 0 ? 'not deployed yet' : 'one policy, a PoP near every site';
+    el('text', { x: X('web') - 80, y: BUS_Y - 8, class: 't-bus-label' }, svg).textContent = 'INTERNET';
 
     // Links (labels are drawn later, above the flow)
     const linkLabels = [];
@@ -1388,20 +1660,22 @@
       }
     }
 
-    // Flow (under the nodes, so it reads as passing through them)
-    if (sc.risk) {
-      el('path', { d: pathD(expand(sc.risk)), class: 't-risk', 'marker-end': 'url(#arrowRisk)' }, svg);
+    // Flow (under the nodes, so it reads as passing through them). A "what if" replaces it with its own paths.
+    if (scn) {
+      for (const q of scn.paths) el('path', { d: pathD(expand(q.path)), class: `t-sc ${q.cls}`, 'marker-end': q.end === 'arrow' ? 'url(#arrowRisk)' : null }, svg);
+    } else {
+      if (sc.risk) el('path', { d: pathD(expand(sc.risk)), class: 't-risk', 'marker-end': 'url(#arrowRisk)' }, svg);
+      const d = pathD(expand(sc.path));
+      el('path', { d, class: 't-flow-glow' }, svg);
+      el('path', { d, class: 't-flow', 'marker-end': 'url(#arrow)' }, svg);
     }
-    const d = pathD(expand(sc.path));
-    el('path', { d, class: 't-flow-glow' }, svg);
-    el('path', { d, class: 't-flow', 'marker-end': 'url(#arrow)' }, svg);
 
     for (const [at, anchor, label] of linkLabels) el('text', { x: at.x, y: at.y, 'text-anchor': anchor, class: 't-link-label' }, svg).textContent = label;
 
     // Nodes
     const labels = phaseLabels(p);
     for (const id in N) {
-      const n = N[id], on = onPath.has(id), active = live(n.from, 3);
+      const n = N[id], on = onPath.has(id), active = live(n.from, n.to);
       if (n.kind === 'pop') {
         const g = el('g', { class: `t-pop${on ? ' on' : ''}${active ? '' : ' ghost'}`, 'data-id': id }, svg);
         el('circle', { cx: n.x, cy: n.y, r: R.pop }, g);
@@ -1413,6 +1687,12 @@
         el('text', { x: n.x, y: n.y - 6, 'text-anchor': 'middle', class: 'n1' }, g).textContent = 'ONE POLICY';
         el('text', { x: n.x, y: n.y + 9, 'text-anchor': 'middle', class: 'n2' }, g).textContent = 'SWG · CASB · FW';
         el('text', { x: n.x, y: n.y + 22, 'text-anchor': 'middle', class: 'n2' }, g).textContent = 'ZTNA · DLP · IPS';
+      } else if (n.kind === 'net') {
+        const [w, h] = BOX.net;
+        const g = el('g', { class: `t-net ${id}${on ? ' on' : ''}${active ? '' : ' ghost'}`, 'data-id': id }, svg);
+        el('rect', { x: n.x - w / 2, y: n.y - h / 2, width: w, height: h, rx: h / 2 }, g);
+        el('text', { x: n.x, y: n.y + 2, 'text-anchor': 'middle', class: 'n1' }, g).textContent = n.l;
+        el('text', { x: n.x, y: n.y + 22, 'text-anchor': 'middle', class: 'n2' }, g).textContent = p === 3 && id === 'mpls' ? 'retired' : n.s;
       } else {
         const lb = { l: n.l, s: n.s, ...(labels[id] || {}) };
         const [w, h] = BOX[n.kind];
@@ -1423,8 +1703,29 @@
       }
     }
 
+    // What if: marks on what failed or got hit, stop signs where a PoP blocked it, and the explanation card.
+    if (scn) {
+      const mark = (id, cls) => {
+        // On a box, the mark sits on its top-right corner so the name stays readable.
+        const n = N[id], b = BOX[n.kind], g = el('g', { class: `t-mark ${cls}` }, svg);
+        const q = b && n.kind !== 'net' ? { x: n.x + b[0] / 2 - 6, y: n.y - b[1] / 2 + 2 } : pt(id);
+        el('circle', { cx: q.x, cy: q.y, r: cls === 'block' ? 14 : 16 }, g);
+        if (cls === 'block') el('rect', { x: q.x - 8, y: q.y - 2.5, width: 16, height: 5, rx: 1.5 }, g);
+        else { el('line', { x1: q.x - 7, y1: q.y - 7, x2: q.x + 7, y2: q.y + 7 }, g); el('line', { x1: q.x + 7, y1: q.y - 7, x2: q.x - 7, y2: q.y + 7 }, g); }
+      };
+      scn.down.forEach((id) => mark(id, 'x'));
+      scn.infected.forEach((id) => mark(id, 'x'));
+      [...new Set(scn.blocked)].forEach((id) => mark(id, 'block'));
+      const text = scn.lines.flatMap((t) => wrap(t, 82));
+      const g = el('g', { class: 't-card' }, svg), h = 46 + text.length * 19 + 26;
+      el('rect', { x: 16, y: 14, width: 620, height: h, rx: 12 }, g);
+      el('text', { x: 32, y: 42, class: 'tt' }, g).textContent = scn.title;
+      text.forEach((t, i) => { el('text', { x: 32, y: 68 + i * 19, class: 'tx' }, g).textContent = t; });
+      el('text', { x: 32, y: 68 + text.length * 19 + 8, class: 'tk' }, g).textContent = 'Red: stops, spreads or leaks · green: keeps working · amber: degraded · bar: blocked in the PoP';
+    }
+
     // Risk label on top of everything
-    if (sc.risk && sc.riskLabel) {
+    if (!scn && sc.risk && sc.riskLabel) {
       const pts = expand(sc.risk).map(pt), i = Math.floor((pts.length - 1) / 2);
       const m = sc.riskAt ? { x: sc.riskAt[0], y: sc.riskAt[1] } : { x: (pts[i].x + pts[i + 1].x) / 2, y: (pts[i].y + pts[i + 1].y) / 2 };
       const w = sc.riskLabel.length * 6.6 + 16;
@@ -1436,7 +1737,7 @@
 
   // Legacy views list the problems; SASE views show how each one is answered.
   function issuesHTML(flow, sc, inTab) {
-    const list = ISSUES[flow];
+    const list = issuesFor(flow);
     if (sc.vclass === 'legacy' || sc.issuesOpen) {
       const h = sc.issuesOpen ? `Legacy issues still open (${sc.issuesOpen})` : 'Legacy issues';
       return `<div class="sect">${inTab ? '' : `<h3>${h}</h3>`}<div class="pits">${list.map(([t, bad]) => `<div class="pit issue"><b>${esc(t)}</b><p>${esc(bad)}</p></div>`).join('')}</div></div>`;
@@ -1563,7 +1864,7 @@
     $('main').classList.toggle('collapsed', !state.panel);
     $('panelBtn').textContent = state.panel ? 'Hide details ▸' : '◂ Details';
     $('panelBtn').setAttribute('aria-expanded', String(state.panel));
-    if (lab) { renderControls(); draw(); renderDetail(); }
+    if (lab) { renderControls(); draw(); renderDetail(); renderBoard(); }
     renderTalk();
     fit();
     if (push) history.replaceState(null, '', hashFor());
@@ -1613,7 +1914,7 @@
     for (const id in N) if (N[id].x !== DEFAULT_POS[id][0] || N[id].y !== DEFAULT_POS[id][1]) out[id] = [N[id].x, N[id].y];
     return out;
   }
-  const saveLayout = () => store.set('tornog-layout-v2', movedLayout());
+  const saveLayout = () => store.set('tornog-layout-v3', movedLayout());
   const HINT = $('traceHint').innerHTML;
   let hintTimer = 0;
   function flashHint(msg) {
@@ -1704,6 +2005,15 @@
     b.addEventListener('click', () => { state.flow = f.id; render(); });
     $('flows').appendChild(b);
   });
+  $('board').addEventListener('click', (e) => {
+    const w = e.target.closest('[data-what]'), d = e.target.closest('[data-dia]');
+    if (w) { state.what = state.what === w.dataset.what ? null : w.dataset.what; render(true, true); }
+    if (d) {
+      OPT.dia = d.dataset.dia === '1';
+      try { localStorage.setItem('tornog-dia', OPT.dia ? '1' : '0'); } catch (err) {}
+      buildS(); render(true, true);
+    }
+  });
   function setPanel(open) {
     state.panel = open;
     try { localStorage.setItem('tornog-panel', open ? 'open' : 'closed'); } catch (e) {}
@@ -1786,6 +2096,7 @@
     else if (k === 'w' || k === 'W') toggleWhy();
     else if (k === 'd' || k === 'D') setMode('trace');
     else if (k === 'e' || k === 'E') setMode('edit');
+    else if (k === 'Escape' && state.what) { state.what = null; render(true, true); }
     else if (k === 'Escape' && state.mode) setMode(null);
     else if (k === 'g' || k === 'G') (state.talk ? endTalk() : startTalk());
     else if (k === 'Escape' && state.talk && !document.fullscreenElement) endTalk();
@@ -1822,7 +2133,7 @@
   }
   window.addEventListener('hashchange', () => { if (fromHash() === true) render(false); });
   if (fromHash() !== 'done') render(false);
-  window.__lab = { state, S, N, FLOWS, TALKS, render, goStep, startTalk, endTalk, setMode, setPanel, buildS, draw, traceBetween, route, get trace() { return trace; } };
+  window.__lab = { state, S, N, FLOWS, TALKS, render, goStep, startTalk, endTalk, setMode, setPanel, buildS, draw, traceBetween, route, scenario, metrics, OPT, get trace() { return trace; } };
 })();
 </script>
 </body>
