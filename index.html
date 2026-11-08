@@ -298,10 +298,10 @@
   body.present .detail { max-height: calc(100vh - 150px); }
 
   /* Intro: what SASE means */
-  .intro { padding: 18px 22px 20px; display: grid; gap: 16px; align-content: start; }
+  .intro { padding: 16px 22px 18px; display: grid; gap: 12px; align-content: start; }
   .intro-head h2 { margin: 0; font: 700 clamp(26px, 2.6vw, 34px)/1.1 var(--display); }
   .intro-head p { margin: 6px 0 0; color: var(--muted); font-size: 16px; max-width: 80ch; }
-  .eq { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1.1fr); gap: 12px; align-items: stretch; }
+  .eq { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.2fr) auto minmax(0, 1fr); gap: 12px; align-items: stretch; }
   .op { align-self: center; font: 700 36px/1 var(--display); color: var(--muted); }
   .half { --c: var(--c-net); border: 1px solid color-mix(in srgb, var(--c) 40%, transparent); border-top: 4px solid var(--c); border-radius: 12px; padding: 12px 14px; background: color-mix(in srgb, var(--c) 6%, var(--surface)); display: grid; gap: 8px; align-content: start; }
   .half.sse { --c: var(--c-sec); }
@@ -312,7 +312,7 @@
   .half li { padding-left: 14px; position: relative; }
   .half li::before { content: ""; position: absolute; left: 0; top: 0.6em; width: 6px; height: 6px; border-radius: 2px; background: var(--c); }
   .shift { display: grid; grid-template-columns: 170px minmax(0, 1fr) 24px minmax(0, 1fr); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; font-size: 14.5px; }
-  .shift > * { padding: 9px 12px; border-top: 1px solid var(--line); }
+  .shift > * { padding: 6px 12px; border-top: 1px solid var(--line); }
   .shift > .sh { border-top: 0; font: 600 12px var(--display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); background: var(--surface-2); }
   .shift .area { font-weight: 600; background: var(--surface-2); }
   .shift .was { color: var(--muted); }
@@ -322,16 +322,16 @@
   .btn.go { border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
   /* On a projector-sized screen, use the height: bigger type for the room. */
   @media (min-width: 1400px) and (min-height: 1000px) {
-    .intro { padding: 26px 30px 28px; gap: 22px; }
-    .intro-head h2 { font-size: 46px; }
-    .intro-head p { font-size: 20px; max-width: 105ch; }
+    .intro { padding: 20px 28px 22px; gap: 14px; }
+    .intro-head h2 { font-size: 40px; }
+    .intro-head p { font-size: 18px; max-width: 115ch; }
     .half { padding: 16px 18px; gap: 10px; }
     .half .sub { font-size: 14px; }
     .half h3 { font-size: 28px; }
-    .half ul { font-size: 18px; gap: 9px; }
+    .half ul { font-size: 16.5px; gap: 6px; }
     .op { font-size: 46px; }
-    .shift { font-size: 17.5px; grid-template-columns: 210px minmax(0, 1fr) 28px minmax(0, 1fr); }
-    .shift > * { padding: 12px 14px; }
+    .shift { font-size: 16px; grid-template-columns: 210px minmax(0, 1fr) 28px minmax(0, 1fr); }
+    .shift > * { padding: 7px 14px; }
     .shift > .sh { font-size: 14px; }
     .intro-foot p { font-size: 15.5px; }
     .btn.go { font-size: 15px; padding: 11px 16px; }
@@ -368,6 +368,11 @@
   .w-fix .caps { margin-top: 4px; }
   .w-to { color: var(--accent); font-weight: 700; text-align: center; padding-left: 0 !important; padding-right: 0 !important; align-self: stretch; display: grid; place-items: center; }
   .cat-core { --c: var(--cloud); }
+  /* What is SASE: every capability as a tag, grouped */
+  .fgrp { display: grid; gap: 4px; }
+  .fg { font: 600 11px var(--display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .feats { display: flex; flex-wrap: wrap; gap: 4px; }
+  .half .tag.sm { font-size: 12.5px; padding: 3px 7px; }
   .reveal { transition: opacity .35s ease; }
   .why[data-stage="1"] .r2, .why[data-stage="1"] .r3, .why[data-stage="2"] .r3 { opacity: 0; visibility: hidden; }
   .why[data-stage="1"] .wh.sase, .why[data-stage="2"] .wh.gap { display: none; }
@@ -691,23 +696,17 @@
       <div class="half">
         <span class="sub">The network half</span>
         <h3>SD-WAN</h3>
-        <ul>
-          <li>An edge at every site: a box, a virtual edge in the cloud, or an agent on a laptop</li>
-          <li>Any underlay: broadband, 5G, and MPLS while it lasts</li>
-          <li>Application-aware routing, QoS and loss mitigation</li>
-          <li>A provider backbone (middle mile) between PoPs</li>
-        </ul>
+        <div class="fgrp"><span class="fg">Edges and links</span><div class="feats"><span class="tag sm cat-net">SD-WAN edge: box, virtual or agent</span><span class="tag sm cat-net">Broadband, 5G and MPLS, all active</span><span class="tag sm cat-net">Zero-touch provisioning</span><span class="tag sm cat-net">High availability and failover</span><span class="tag sm cat-net">Cloud edges in AWS, Azure, GCP</span></div></div>
+        <div class="fgrp"><span class="fg">Traffic</span><div class="feats"><span class="tag sm cat-net">Application-aware routing</span><span class="tag sm cat-net">Dynamic path selection</span><span class="tag sm cat-net">QoS and traffic shaping</span><span class="tag sm cat-net">Loss mitigation (FEC, duplication)</span><span class="tag sm cat-net">WAN optimization</span><span class="tag sm cat-net">BGP and OSPF</span></div></div>
+        <div class="fgrp"><span class="fg">Backbone and LAN</span><div class="feats"><span class="tag sm cat-net">Global private backbone (middle mile)</span><span class="tag sm cat-net">LAN segmentation</span><span class="tag sm cat-net">IoT / OT device discovery</span></div></div>
       </div>
       <span class="op" aria-hidden="true">+</span>
       <div class="half sse">
         <span class="sub">The security half</span>
         <h3>SSE (Security Service Edge)</h3>
-        <ul>
-          <li>SWG: web filtering, TLS inspection, anti-malware</li>
-          <li>CASB and DLP: SaaS control and data protection</li>
-          <li>ZTNA: access to one app at a time, not the network</li>
-          <li>FWaaS and IPS: for internet and site-to-site traffic</li>
-        </ul>
+        <div class="fgrp"><span class="fg">Access</span><div class="feats"><span class="tag sm cat-access">ZTNA with an agent</span><span class="tag sm cat-access">Browser-based ZTNA (no agent)</span><span class="tag sm cat-access">SSO, MFA and IdP groups</span><span class="tag sm cat-access">Device posture, checked continuously</span></div></div>
+        <div class="fgrp"><span class="fg">Threat protection</span><div class="feats"><span class="tag sm cat-sec">FWaaS: internet and WAN firewall</span><span class="tag sm cat-sec">SWG and URL filtering</span><span class="tag sm cat-sec">TLS inspection</span><span class="tag sm cat-sec">IPS</span><span class="tag sm cat-sec">Anti-malware and sandboxing</span><span class="tag sm cat-sec">DNS security</span><span class="tag sm cat-sec">Remote browser isolation</span><span class="tag sm cat-sec">Threat intelligence</span></div></div>
+        <div class="fgrp"><span class="fg">Data and AI</span><div class="feats"><span class="tag sm cat-data">CASB: inline and API</span><span class="tag sm cat-data">DLP</span><span class="tag sm cat-data">SaaS security posture (SSPM)</span><span class="tag sm cat-data">Shadow-IT discovery</span><span class="tag sm cat-ai">Shadow-AI discovery</span><span class="tag sm cat-ai">AI tenant and activity control</span><span class="tag sm cat-ai">AI agent and MCP control</span></div></div>
       </div>
       <span class="op" aria-hidden="true">=</span>
       <div class="half sase">
@@ -717,8 +716,8 @@
           <li>The policy is written once and enforced in every PoP</li>
           <li>The same rules for a branch, a remote user and a cloud VPC</li>
           <li>Single-pass inspection, so no chain of boxes to size</li>
-          <li>One log for network and security events</li>
         </ul>
+        <div class="fgrp"><span class="fg">Platform</span><div class="feats"><span class="tag sm cat-core">One policy engine</span><span class="tag sm cat-core">Global PoPs near users</span><span class="tag sm cat-core">One console</span><span class="tag sm cat-core">Unified logs and analytics</span><span class="tag sm cat-core">Digital experience monitoring</span><span class="tag sm cat-core">API and Terraform</span><span class="tag sm cat-core">SIEM / XDR export</span></div></div>
       </div>
     </div>
     <div class="shift" role="table" aria-label="What changes for the network operator">
@@ -2458,7 +2457,7 @@
       let best = [1600, 0];
       for (const D of [1600, 1500, 1400, 1300, 1200, 1100]) {
         w.style.width = `${D}px`;
-        const availH = innerHeight - (wrap.offsetHeight - w.offsetHeight) - 4;
+        const availH = innerHeight - (wrap.offsetHeight - w.offsetHeight) - 12;
         const z = Math.min(availW / D, availH / w.offsetHeight);
         if (z > best[1]) best = [D, z];
       }
