@@ -1948,7 +1948,7 @@
   }
   function renderWhy() {
     const i = state.whyRow, [t, bad, good, caps, ask] = WHY[i];
-    $('whyQ').innerHTML = `<b>Ask the room</b>${esc(ask)}`;
+    $('whyQ').innerHTML = `<b>Your network?</b>${esc(ask)}`;
     $('whyList').querySelectorAll('.wrow').forEach((b, j) => b.setAttribute('aria-pressed', String(j === i)));
     $('whyT').textContent = t;
     mini($('whyL'), WHY_DIAG[i].legacy, 'wl');
