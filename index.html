@@ -609,11 +609,13 @@
     fwaas: ['FWaaS', 'sec'], swg: ['Secure Web Gateway', 'sec'], tls: ['TLS inspection', 'sec'], ips: ['IPS and anti-malware', 'sec'], rbi: ['Remote browser isolation', 'sec'],
     casb: ['CASB', 'data'], dlp: ['DLP', 'data'],
     aidisc: ['Shadow-AI discovery', 'ai'], aictl: ['AI tenant and activity control', 'ai'], mcp: ['AI agent and MCP allow-list', 'ai'],
-    branchfw: ['Branch firewall (DIA)', 'legacy'], dnssec: ['DNS security', 'sec'], iotid: ['IoT device discovery', 'sec'], seg: ['LAN segmentation at the edge', 'net']
+    branchfw: ['Branch firewall (DIA)', 'legacy'], dnssec: ['DNS security', 'sec'], waf: ['WAF and DDoS (a separate service)', 'sec'], dmz: ['DMZ and inbound NAT', 'legacy'], iotid: ['IoT device discovery', 'sec'], seg: ['LAN segmentation at the edge', 'net']
   };
 
   // ---------- Field pitfalls ----------
   const PIT = {
+    notWaf: ['SASE is not a WAF', 'Inbound firewall rules and IPS do not replace application-layer protection for a public site, or volumetric DDoS protection.', 'Keep or add a WAF and DDoS service in front of public apps, and publish them to the PoP behind it.'],
+    inboundIP: ['Public IPs and DNS move', 'The portal\'s public IP moves from the DC range to the provider\'s, so DNS records, certificates and partner allow-lists change.', 'Plan the DNS cutover with a low TTL, and tell partners early.'],
     mediaBypass: ['Inspecting real-time media hurts it', 'Decrypting and proxying call media adds delay and breaks some clients.', 'Bypass TLS inspection for the provider\'s published media ranges, and keep inspecting sign-in and signalling.'],
     dnsDoh: ['Apps that skip your DNS', 'Browsers and malware can use DNS over HTTPS to public resolvers and bypass your filtering.', 'Block or redirect known DoH resolvers, and hand out the PoP resolver through DHCP and the agent.'],
     instance: ['Sanctioned app, personal account', 'The same service is both approved and personal, so a domain block breaks real work.', 'Write rules on the instance (tenant) and the activity, not the domain.'],
@@ -754,12 +756,19 @@
     ['The category says "allow"', 'File sharing is allowed, because the business uses it.', 'Browsing is allowed, uploads to personal instances are not.'],
     ['No record of what left', 'Nobody knows which files went where.', 'DLP logs the file, the user and the destination to the SOC.']
   ];
+  ISSUES['inet-portal'] = [
+    ['The DC link is the front door', 'All inbound traffic lands on the DC\'s ISP links and one firewall pair.', 'Inbound lands on the provider\'s PoP, with the provider\'s capacity in front of the DC.'],
+    ['A DMZ to run yourself', 'NAT, DMZ rules and the perimeter pair are sized, patched and refreshed in house.', 'Inbound rules live in the same policy as everything else, and the DC firewall stays internal.'],
+    ['DDoS hits you first', 'A flood fills the DC link before any box can filter it.', 'The PoP filters before the DC; a DDoS service still adds a layer for public apps.'],
+    ['Admin pages on the internet', 'Management pages are often reachable from the internet by accident.', 'Publish only the public paths. Admins use ZTNA, never the internet.']
+  ];
   const DIA_FLOWS = ['branch-saas', 'branch-web', 'branch-ai', 'branch-voice'];
 
   // ---------- Topology ----------
   // kind: end (selectable endpoint), dev (device), net (a transport cloud), pop, core
   const N = {
     // Top: services on the internet, plus the identity provider and the SOC that SASE ties in
+    pubuser: { x: 90, y: 48, kind: 'end', l: 'Internet user', s: 'customers · anyone' },
     ucaas:  { x: 260, y: 48, kind: 'end', l: 'Voice & video', s: 'Teams · Zoom · Webex' },
     web:    { x: 440, y: 48, kind: 'end', l: 'Internet sites', s: 'web · uncategorized' },
     saas:   { x: 620, y: 48, kind: 'end', l: 'SaaS', s: 'M365 · CRM · storage' },
@@ -779,8 +788,9 @@
     popU:   { x: 1530, y: 440, kind: 'pop', from: 1 },
     popC:   { x: 1675, y: 440, kind: 'pop', from: 2 },
     // Bottom: the sites and the people
-    dcfw:   { x: 96, y: 610, kind: 'dev', l: 'Perimeter FW', s: 'NGFW · proxy · VPN' },
-    dcedge: { x: 251, y: 610, kind: 'dev', l: 'WAN edge', s: 'MPLS + IPsec hub' },
+    portal: { x: 96, y: 610, kind: 'end', l: 'Customer portal', s: 'DMZ · public web' },
+    dcfw:   { x: 251, y: 610, kind: 'dev', l: 'Perimeter FW', s: 'NGFW · proxy · VPN' },
+    dcedge: { x: 406, y: 610, kind: 'dev', l: 'WAN edge', s: 'MPLS + IPsec hub' },
     agent:  { x: 96, y: 725, kind: 'end', l: 'AI agent', s: 'server · LLM APIs' },
     apps:   { x: 251, y: 725, kind: 'end', l: 'Private apps', s: 'ERP · file shares' },
     conn:   { x: 406, y: 725, kind: 'dev', l: 'ZTNA connector', s: 'dials out', from: 1 },
@@ -805,7 +815,7 @@
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   };
   const DEFAULT_POS = Object.fromEntries(Object.entries(N).map(([id, n]) => [id, [n.x, n.y]]));
-  const savedPos = store.get('tornog-layout-v3', {});
+  const savedPos = store.get('tornog-layout-v4', {});
   for (const id in savedPos) if (N[id] && Array.isArray(savedPos[id])) [N[id].x, N[id].y] = savedPos[id];
 
   // Labels that change as the migration progresses (and with DIA).
@@ -819,6 +829,7 @@
       iot: { s: p < 2 ? 'cameras · flat LAN' : 'cameras · segmented' },
       c2: { cls: 'threat' },
       dns: { cls: 'sase' },
+      portal: { s: p < 3 ? 'DMZ · public web' : 'via the PoP' },
       soc: { s: p === 3 ? 'one log, from SASE' : p ? `${boxes} boxes + SASE` : `logs from ${boxes} boxes` },
       dcfw: p === 3 ? { l: 'DC firewall', s: 'east-west only', cls: 'legacy' } : { l: 'Perimeter FW', s: 'NGFW · proxy · VPN', cls: 'legacy' },
       dcedge: p < 2 ? { l: 'WAN edge', s: 'MPLS + IPsec hub', cls: 'legacy' } : sd(p === 2 ? 'SASE + MPLS hub' : 'dual ISP'),
@@ -844,16 +855,16 @@
   // [a, b, firstPhase, lastPhase, class, label, labelPos (fraction of the last segment, or [x, y, anchor]), waypoints]
   function links() {
     const L = [
-      [[X('ucaas'), BUS_Y], [X('soc'), BUS_Y], 0, 3, 'bus'],
+      [[X('pubuser'), BUS_Y], [X('soc'), BUS_Y], 0, 3, 'bus'],
       ['inet', [X('inet'), BUS_Y], 0, 3, 'bus'],
-      ...['ucaas', 'web', 'saas', 'genai', 'pcloud', 'c2', 'idp', 'soc'].map((id) => [id, [X(id), BUS_Y], 0, 3, id === 'c2' ? 'threat' : null]),
+      ...['pubuser', 'ucaas', 'web', 'saas', 'genai', 'pcloud', 'c2', 'idp', 'soc'].map((id) => [id, [X(id), BUS_Y], 0, 3, id === 'c2' ? 'threat' : null]),
       ['dns', 'core', 1, 3, 'core'],
       ['core', [X('core'), BUS_Y], 1, 3, null, 'egress', [X('core') - 8, BUS_Y + 24, 'end']],
       ['core', 'idp', 1, 3, 'dashed', 'identity', 0.3],
       ['core', 'soc', 1, 3, 'dashed', 'one log', 0.3],
       ...Object.keys(N).filter((id) => N[id].kind === 'pop').map((id) => [id, 'core', N[id].from, 3, 'core']),
       ['dcfw', 'inet', 0, 2],
-      ['apps', 'dcfw', 0, 3], ['apps', 'dcedge', 0, 3], ['dcedge', 'dcfw', 0, 3], ['agent', 'dcfw', 0, 3], ['agent', 'dcedge', 0, 3],
+      ['portal', 'dcfw', 0, 3], ['apps', 'dcfw', 0, 3], ['apps', 'dcedge', 0, 3], ['dcedge', 'dcfw', 0, 3], ['agent', 'dcfw', 0, 3], ['agent', 'dcedge', 0, 3],
       ['conn', 'popD', 1, 3, 'tunnel', null, null, via()['conn>popD']], ['conn', 'apps', 1, 3], ['conn', 'agent', 1, 3, null, null, null, via()['conn>agent']], ['conn', 'dcfw', 1, 1],
       ['usersH', 'edgeH', 0, 3], ['users1', 'edge1', 0, 3], ['iot', 'edge1', 0, 3], ['users2', 'edge2', 0, 3], ['cloudapp', 'vgw', 0, 3],
       ['remote', 'inet', 0, 2, 'ipsec', 'VPN', 0.25], ['contractor', 'inet', 0, 0, 'ipsec', 'VPN', 0.25],
@@ -872,7 +883,8 @@
   // Waypoints between two nodes on a flow, so flows follow the drawn links.
   function via() {
     return {
-      'conn>popD': [[X('conn'), Y('conn') - 205]],
+      // Up the right edge of the DC, clear of the WAN edge above the connector.
+      'conn>popD': [[X('conn') + 76, Y('conn')], [X('conn') + 76, Y('conn') - 205]],
       // Under the DC's boxes, so it doesn't cross the apps.
       'conn>agent': [[X('conn'), Y('agent') + 42], [X('agent'), Y('agent') + 42]],
       // The cloud's legacy IPsec runs below the SASE cloud, clear of its PoPs.
@@ -910,6 +922,7 @@
     { id: 'contractor-app', group: 'Contractor', label: 'DC app', title: 'Contractor to a DC app', src: 'contractor', dst: 'apps' },
     { id: 'branch-iot', group: 'IoT', label: 'Vendor cloud', title: 'Branch IoT camera to its cloud service', src: 'iot', dst: 'web' },
     { id: 'dc-agent', group: 'AI agent', label: 'LLM API', title: 'AI agent in the DC to an LLM API', src: 'agent', dst: 'genai' },
+    { id: 'inet-portal', group: 'Internet user', label: 'DC portal', title: 'Internet user to the customer portal in the DC', src: 'pubuser', dst: 'portal' },
     { id: 'branch-c2', group: 'Threat', label: 'C2 via DNS', title: 'Infected laptop calling its attacker', src: 'users1', dst: 'c2' }
   ];
 
@@ -1236,6 +1249,26 @@
   };
   S['branch-c2'] = [c2Legacy, { ...c2Legacy, note: 'Unchanged: phase 1 moved remote users only.' }, c2Sase, c2Sase];
 
+  // Inbound from the internet: to the DC firewall and its DMZ, or (phase 3) through the PoP.
+  const inbound = (p) => (p < 3
+    ? ['pubuser', [X('pubuser'), BUS_Y], [X('inet'), BUS_Y], 'inet', 'dcfw', 'portal']
+    : ['pubuser', [X('pubuser'), BUS_Y], [X('core'), BUS_Y], 'core', 'popD', 'dcedge', 'dcfw', 'portal']);
+  const portalLegacy = {
+    path: inbound(0), verdict: 'In through the DC perimeter', vclass: 'legacy',
+    steps: [['Internet user', 'Reaches the portal\'s public IP on the DC\'s own ISP link.'],
+      ['DC perimeter', 'NAT into the DMZ and firewall rules, plus a WAF if you bought one. A DDoS fills the DC link first.'],
+      ['Portal', 'Patched, sized and monitored by you. The DC link and firewall pair are the bottleneck.']],
+    caps: ['ngfw', 'dmz'], pits: []
+  };
+  S['inet-portal'] = [portalLegacy, { ...portalLegacy, note: 'Unchanged: phase 1 moved remote users only.' },
+    { ...portalLegacy, note: 'Still inbound through the DC perimeter: it stays until the DC firewall is internal only.' },
+    { path: inbound(3), verdict: 'Published through the PoP', vclass: 'good',
+      steps: [['Internet user', 'Reaches a public IP on the provider\'s PoP, not on the DC.'],
+        ['PoP', 'Inbound firewall rules and IPS in front of the portal, under the same policy as everything else.'],
+        ['DC SD-WAN edge', 'Carries it through the tunnel. The DC firewall now only segments inside the DC, including the DMZ.'],
+        ['Still needed', 'A WAF and DDoS service for a public web app: SASE inspects the traffic, but it is not a WAF.']],
+      caps: ['fwaas', 'ips', 'sdwan', 'waf'], pits: ['notWaf', 'inboundIP'] }];
+
   const pcloudSase = {
     path: ['remote', 'popU', ...coreOut('pcloud')], verdict: 'Company tenant only, uploads checked', vclass: 'good',
     steps: [['Agent', 'Always on, at home or in the office: traffic goes to the nearest PoP.'],
@@ -1274,11 +1307,11 @@
   // The path in each phase is worked out from the same rules the hand-written flows follow.
   const NET = ['web', 'saas', 'genai', 'ucaas', 'pcloud', 'c2'];
   // Dropping on a device means the endpoint behind it.
-  const ENDPOINT = { usersH: 'usersH', edgeH: 'usersH', users1: 'users1', edge1: 'users1', iot: 'iot', users2: 'users2', edge2: 'users2', remote: 'remote', contractor: 'contractor',
+  const ENDPOINT = { pubuser: 'pubuser', portal: 'portal', usersH: 'usersH', edgeH: 'usersH', users1: 'users1', edge1: 'users1', iot: 'iot', users2: 'users2', edge2: 'users2', remote: 'remote', contractor: 'contractor',
     apps: 'apps', agent: 'agent', dcedge: 'apps', dcfw: 'apps', conn: 'apps', cloudapp: 'cloudapp', vgw: 'cloudapp', web: 'web', saas: 'saas', genai: 'genai', ucaas: 'ucaas', pcloud: 'pcloud', c2: 'c2' };
-  const NAME = { usersH: 'HQ user', users1: 'Branch 1 user', iot: 'Branch IoT device', users2: 'Branch 2 user', remote: 'Remote worker', contractor: 'Contractor',
+  const NAME = { pubuser: 'Internet user', portal: 'the customer portal', usersH: 'HQ user', users1: 'Branch 1 user', iot: 'Branch IoT device', users2: 'Branch 2 user', remote: 'Remote worker', contractor: 'Contractor',
     apps: 'DC app', agent: 'DC AI agent', cloudapp: 'Cloud app', web: 'the internet', saas: 'SaaS', genai: 'a generative AI tool', ucaas: 'a Teams or Zoom call', pcloud: 'a personal cloud', c2: 'an attacker\'s C2 server' };
-  const SHORT = { usersH: 'HQ', users1: 'Branch 1', iot: 'IoT', users2: 'Branch 2', remote: 'Remote', contractor: 'Contractor', apps: 'DC app', agent: 'AI agent', cloudapp: 'Cloud app', web: 'Internet', saas: 'SaaS', genai: 'GenAI', ucaas: 'Voice & video', pcloud: 'Personal cloud', c2: 'Attacker', dns: 'DNS security' };
+  const SHORT = { pubuser: 'Internet user', portal: 'Portal', usersH: 'HQ', users1: 'Branch 1', iot: 'IoT', users2: 'Branch 2', remote: 'Remote', contractor: 'Contractor', apps: 'DC app', agent: 'AI agent', cloudapp: 'Cloud app', web: 'Internet', saas: 'SaaS', genai: 'GenAI', ucaas: 'Voice & video', pcloud: 'Personal cloud', c2: 'Attacker', dns: 'DNS security' };
   const EDGE = { usersH: 'edgeH', users1: 'edge1', iot: 'edge1', users2: 'edge2' };
   const AWAY = ['remote', 'contractor'];   // people off the network: VPN first, then agent or browser
   const DCSIDE = ['apps', 'agent'];        // things hosted in the DC
@@ -1310,6 +1343,9 @@
     return [...a, ...b];
   }
   function route(src, dst, p) {
+    if (src === 'pubuser') return p < 3
+      ? ['pubuser', [X('pubuser'), BUS_Y], [X('inet'), BUS_Y], 'inet', 'dcfw', 'portal']
+      : ['pubuser', [X('pubuser'), BUS_Y], [X('core'), BUS_Y], 'core', 'popD', 'dcedge', 'dcfw', 'portal'];
     // Two things in the same branch: the edge's LAN firewall sits between them. Two things in the DC: the DC firewall.
     if (EDGE[src] && EDGE[src] === EDGE[dst]) return [src, EDGE[src], dst];
     if (DCSIDE.includes(src) && DCSIDE.includes(dst)) return [src, 'dcfw', dst];
@@ -1416,6 +1452,7 @@
   function analogFor(src, dst) {
     const k = (e) => (e === 'iot' || e === 'agent' ? e : EDGE[e] ? 'branch' : e);
     if (dst === 'c2') return 'branch-c2';
+    if (dst === 'portal') return 'inet-portal';
     if (dst === 'ucaas') return 'branch-voice';
     if (dst === 'pcloud') return 'remote-pcloud';
     const d = dst === 'contractor' ? 'remote' : dst === 'agent' ? 'apps' : EDGE[dst] ? 'branch' : dst;
@@ -1508,13 +1545,13 @@
     const n = flows.length, paths = [], lines = [], blocked = [];
     let down = [];
     if (kind === 'dc') {
-      down = ['dcfw', 'dcedge', 'apps', 'conn', 'agent'];
+      down = ['portal', 'dcfw', 'dcedge', 'apps', 'conn', 'agent'];
       const hit = flows.filter((x) => x.path.some((y) => down.includes(y)));
       for (const x of flows) paths.push({ path: x.path, cls: hit.includes(x) ? 'down' : 'ok' });
-      const netHit = hit.some((x) => NET.includes(x.f.dst) && !DCSIDE.includes(x.f.src));
+      const netHit = hit.some((x) => NET.includes(x.f.dst) && !DCSIDE.includes(x.f.src) && x.f.src !== 'pubuser');
       lines.push(`${hit.length} of ${n} flows stop.`);
       if (netHit) lines.push('Internet, SaaS and AI stop for every site still backhauled, and for anyone on the VPN. The DC is the hub, so it is also the single point of failure.');
-      else lines.push('Internet, SaaS, AI, the cloud and branch-to-branch keep working: they never touch the DC.', 'Only the apps and agents hosted in the DC are unreachable, as you would expect.');
+      else lines.push('Internet, SaaS, AI, the cloud and branch-to-branch keep working: they never touch the DC.', 'Only what is hosted in the DC (apps, agents, the portal) is unreachable, as you would expect.');
     } else if (kind === 'mpls') {
       down = ['mpls'];
       const hit = flows.filter((x) => x.path.includes('mpls'));
@@ -1572,7 +1609,7 @@
   function metrics(p) {
     const legacy = Object.keys(SITE).filter((e) => SITE[e][1] > p).length;
     const fw = OPT.dia ? EDGES.filter((e) => SITE[e][1] > p).length : 0;
-    const inDC = (e) => DCSIDE.includes(e);
+    const inDC = (e) => DCSIDE.includes(e) || e === 'portal';
     const paths = FLOWS.map((f) => [f, S[f.id][p].path]);
     return {
       boxes: boxCount(p),
@@ -1608,6 +1645,12 @@
   // Checks a drag from one node to another. Returns the flow id, or a message saying why it can't be traced.
   function traceBetween(a, b) {
     let src = ENDPOINT[a], dst = ENDPOINT[b];
+    // The internet user only reaches what is published: the customer portal.
+    if ([src, dst].includes('pubuser') || [src, dst].includes('portal')) {
+      const pair = [src, dst].sort().join();
+      if (pair !== 'portal,pubuser') return { msg: 'Internet users reach only what is published to the internet: drag from the Internet user to the customer portal in the DC.' };
+      src = 'pubuser'; dst = 'portal';
+    }
     if (!src || !dst) return { msg: 'Start and end on a user, a site, an app or a service, not on a PoP or the policy core.' };
     if (NET.includes(src) && !NET.includes(dst)) [src, dst] = [dst, src];
     if (src === dst) return { msg: 'Pick two different places.' };
@@ -1765,7 +1808,7 @@
 
     // Bottom: every place traffic starts. Zones are 245 high, labels at the bottom.
     const ZY = 565, ZH = 245;
-    zone(grow(16, ZY, 470, ZH, ['dcfw', 'dcedge', 'apps', 'conn', 'agent']), 'Data center', null, true);
+    zone(grow(16, ZY, 470, ZH, ['portal', 'dcfw', 'dcedge', 'apps', 'conn', 'agent']), 'Data center', null, true);
     zone(grow(498, ZY, 170, ZH, ['edgeH', 'usersH']), 'HQ', null, true);
     zone(grow(680, ZY, 320, ZH, ['edge1', 'users1', 'iot']), 'Branch 1', null, true);
     zone(grow(1012, ZY, 170, ZH, ['edge2', 'users2']), 'Branch 2', null, true);
@@ -1779,7 +1822,7 @@
     el('rect', { x: cx, y: cy, width: cw, height: ch, rx: 44, class: 't-cloud' }, cloud);
     el('text', { x: cx + 26, y: cy + 30, class: 't-cloud-label' }, cloud).textContent = 'SASE CLOUD';
     el('text', { x: cx + 26, y: cy + 46, class: 't-cloud-cap' }, cloud).textContent = p === 0 ? 'not deployed yet' : 'one policy, a PoP near every site';
-    el('text', { x: X('ucaas') - 80, y: BUS_Y - 8, class: 't-bus-label' }, svg).textContent = 'INTERNET';
+    el('text', { x: X('ucaas') - 88, y: BUS_Y - 8, class: 't-bus-label' }, svg).textContent = 'INTERNET';
 
     // Links (labels are drawn later, above the flow)
     const linkLabels = [];
@@ -2077,7 +2120,7 @@
     for (const id in N) if (N[id].x !== DEFAULT_POS[id][0] || N[id].y !== DEFAULT_POS[id][1]) out[id] = [N[id].x, N[id].y];
     return out;
   }
-  const saveLayout = () => store.set('tornog-layout-v3', movedLayout());
+  const saveLayout = () => store.set('tornog-layout-v4', movedLayout());
   const HINT = $('traceHint').innerHTML;
   let hintTimer = 0;
   function flashHint(msg) {
