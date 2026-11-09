@@ -700,17 +700,14 @@
     <div class="tools">
       <span class="keys"><kbd>←</kbd><kbd>→</kbd> phase · <kbd>↑</kbd><kbd>↓</kbd> flow · <kbd>S</kbd> details · <kbd>F</kbd> pitfalls · <kbd>G</kbd> talk · <kbd>D</kbd> trace · <kbd>E</kbd> edit · <kbd>P</kbd> present</span>
       <div class="talkbar" id="talkbar" hidden>
-        <div class="seg" role="group" aria-label="Talk length">
-          <button type="button" data-len="10">10 min</button><button type="button" data-len="15">15 min</button>
-        </div>
         <span class="tb-prog" id="tbProg"></span>
         <span class="tb-pos" id="tbPos"></span>
         <span class="tb-cue" id="tbCue"></span>
         <button class="tb-time" id="tbTime" type="button" title="Elapsed / planned end of this step. Click to restart the clock."></button>
       </div>
       <nav class="pages" aria-label="Pages">
-        <button class="pg" id="whyBtn" type="button">Why SASE</button>
         <button class="pg" id="introBtn" type="button">What is SASE</button>
+        <button class="pg" id="whyBtn" type="button">Why SASE</button>
         <button class="pg" id="labBtn" type="button">Diagram</button>
         <button class="pg" id="aiBtn" type="button">AI security</button>
       </nav>
@@ -850,7 +847,7 @@
     </div>
     <div class="intro-foot">
       <p>Gartner named SASE in 2019, and the SSE label for the security half followed in 2021. Whether it comes from one vendor or two (SD-WAN from one, SSE from another), ask where the policy lives and how many consoles you will run.</p>
-      <button class="btn go" id="introGo" type="button">Start with the legacy network</button>
+      <button class="btn go" id="introGo" type="button">Next: why SASE</button>
     </div>
   </section>
 
@@ -925,6 +922,11 @@
           <li><b>AI firewall:</b> runtime guardrails in front of in-house AI apps and agents stop prompt injection, jailbreaks and data leaks.</li>
           <li><b>Policy between users, agents, apps and models:</b> the same rules on premises and in the cloud.</li>
           <li><b>AI security posture:</b> models and AI pipelines are scanned for misconfigurations and vulnerabilities before they reach production.</li>
+          <li><b>Access to your own models:</b> users reach internal LLM and inference endpoints through ZTNA, by identity, not over a flat network. The same goes for the GPU cluster's admin interfaces.</li>
+          <li><b>Model supply chain:</b> models and weights from public hubs are untrusted code. Scan them and pin known versions.</li>
+          <li><b>RAG data exposure:</b> the app is only as private as what it retrieves. If the vector store ignores user permissions, anyone can pull any document.</li>
+          <li><b>Egress from model servers:</b> inference and agent hosts reach only an allow-list of destinations, so an injected "send it to X" fails.</li>
+          <li><b>Keys and identity:</b> one API key per app or agent, rotated, with traffic logged under that identity.</li>
         </ul>
       </div>
       <div class="half ai-core">
@@ -2254,32 +2256,17 @@
     $('whyLp').textContent = bad;
     $('whySp').innerHTML = `${esc(good)}<span class="caps">${caps.map(whyTag).join('')}</span>`;
   }
-  const WHY_NEXT = ['Next: what SASE is', 'Next: how SASE covers it', 'Next: SD-WAN + SSE in detail'];
+  const WHY_NEXT = ['Next: the SASE answer', 'Next: how SASE covers it', 'Next: the migration, step by step'];
 
   // ---------- Talk run orders ----------
-  // { v: 'start' }, { v: 'why', s: 1-3 }, { v: 'intro' } or { p: phase, f: flow, tab: 'main' | 'pits' }, t = planned seconds, opt = "if time allows".
+  // { v: 'start' }, { v: 'intro' }, { v: 'why', s: 1-3 }, { v: 'ai' } or { p: phase, f: flow, tab: 'main' | 'pits' }, t = planned seconds, opt = "if time allows".
   const TALKS = {
-    10: [
-      { v: 'start', t: 10, cue: 'SASE in Practice: scan to follow along' },
-      { v: 'why', s: 1, t: 15, cue: 'What hurts in the legacy network' },
-      { v: 'why', s: 2, t: 15, cue: 'What SASE is' },
-      { v: 'why', s: 3, t: 40, cue: 'How SASE covers each issue' },
-      { v: 'intro', t: 45, cue: 'SD-WAN + SSE under one policy' },
-      { p: 0, f: 'branch-saas', t: 30, cue: 'Where most networks start: everything backhauled' },
-      { p: 1, f: 'remote-app', t: 60, cue: 'Phase 1: remote users first, VPN to ZTNA' },
-      { p: 1, f: 'remote-app', tab: 'pits', t: 45, cue: 'Field lessons: the app list, private DNS, two agents' },
-      { p: 2, f: 'branch-dc', tab: 'pits', t: 60, cue: 'Phase 2, field lesson: asymmetric return over MPLS' },
-      { p: 2, f: 'branch-saas', tab: 'pits', t: 60, cue: 'Field lessons: egress IP, TLS inspection, MTU' },
-      { p: 3, f: 'branch-branch', tab: 'pits', t: 45, cue: 'Target state: the last mile is now your WAN' },
-      { p: 0, f: 'branch-ai', t: 45, cue: 'What AI changes: allow or block is not enough', opt: true },
-      { p: 2, f: 'branch-ai', t: 60, cue: 'Discover, then control by tenant and activity' }
-    ],
     15: [
       { v: 'start', t: 15, cue: 'SASE in Practice: scan to follow along' },
-      { v: 'why', s: 1, t: 20, cue: 'What hurts in the legacy network' },
-      { v: 'why', s: 2, t: 20, cue: 'What SASE is' },
+      { v: 'intro', t: 60, cue: 'What SASE is: SD-WAN + SSE under one policy' },
+      { v: 'why', s: 1, t: 20, cue: 'Why SASE: what hurts in the legacy network' },
+      { v: 'why', s: 2, t: 20, cue: 'The SASE answer' },
       { v: 'why', s: 3, t: 45, cue: 'How SASE covers each issue' },
-      { v: 'intro', t: 60, cue: 'SD-WAN + SSE under one policy' },
       { p: 0, f: 'branch-saas', t: 45, cue: 'Where most networks start: everything backhauled' },
       { p: 1, f: 'remote-app', t: 75, cue: 'Phase 1: remote users first, VPN to ZTNA' },
       { p: 1, f: 'remote-app', tab: 'pits', t: 60, cue: 'Field lessons: the app list, private DNS, two agents' },
@@ -2288,9 +2275,7 @@
       { p: 2, f: 'branch-branch', tab: 'pits', t: 60, cue: 'Field lesson: the DC becomes a transit hub' },
       { p: 2, f: 'branch-saas', tab: 'pits', t: 60, cue: 'Field lessons: egress IP, TLS inspection, MTU' },
       { p: 3, f: 'branch-branch', tab: 'pits', t: 60, cue: 'Target state: the last mile is now your WAN' },
-      { p: 0, f: 'branch-ai', t: 60, cue: 'What AI changes: allow or block is not enough', opt: true },
-      { p: 2, f: 'branch-ai', t: 60, cue: 'Discover, then control by tenant and activity' },
-      { p: 2, f: 'branch-ai', tab: 'pits', t: 45, cue: 'AI pitfalls: TLS, AI inside SaaS, logging prompts', opt: true }
+      { v: 'ai', t: 60, cue: 'AI security: discover, then control', opt: true }
     ]
   };
 
@@ -2570,7 +2555,7 @@
   function onStep() {
     if (!state.talk) return false;
     const s = steps()[state.talk.i];
-    if (s.v === 'intro') return state.view === 'intro';
+    if (s.v === 'intro' || s.v === 'ai') return state.view === s.v;
     if (s.v === 'start') return state.view === 'start';
     if (s.v === 'why') return state.view === 'why' && state.whyStage === s.s;
     return state.view === 'lab' && state.phase === s.p && state.flow === s.f && state.tab === (s.tab || 'main');
@@ -2579,7 +2564,7 @@
     const list = steps();
     state.talk.i = Math.max(0, Math.min(list.length - 1, i));
     const s = list[state.talk.i];
-    if (s.v === 'intro') state.view = 'intro';
+    if (s.v === 'intro' || s.v === 'ai') state.view = s.v;
     else if (s.v === 'start') state.view = 'start';
     else if (s.v === 'why') { state.view = 'why'; state.whyStage = s.s; }
     else { state.view = 'lab'; state.phase = s.p; state.flow = s.f; state.tab = s.tab || 'main'; }
@@ -2592,13 +2577,6 @@
     goStep(0);
   }
   function endTalk() { state.talk = null; render(true, true); }
-  function setLen(len) {
-    if (!state.talk || state.talk.len === len) return;
-    const cur = steps()[state.talk.i];
-    lastLen = state.talk.len = len;
-    const j = steps().findIndex((s) => s.cue === cur.cue && (s.tab || 'main') === (cur.tab || 'main'));
-    goStep(j < 0 ? 0 : j);
-  }
   function tick() {
     if (!state.talk) return;
     const list = steps(), plan = list.slice(0, state.talk.i + 1).reduce((a, s) => a + s.t, 0);
@@ -2614,7 +2592,6 @@
     $('talkBtn').textContent = t ? 'End talk' : 'Talk';
     if (!t) return;
     const list = steps(), s = list[t.i], total = list.reduce((a, x) => a + x.t, 0);
-    $('talkbar').querySelectorAll('[data-len]').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.len === t.len)));
     $('tbProg').innerHTML = list.map((x, j) => `<button type="button" data-step="${j}" style="flex:${x.t}" class="${j < t.i ? 'done' : j === t.i ? 'cur' : ''}${x.opt ? ' opt' : ''}" title="${j + 1}. ${esc(x.cue)} (${fmt(x.t)})${x.opt ? ', if time' : ''}" aria-label="Step ${j + 1}: ${esc(x.cue)}"></button>`).join('');
     $('tbProg').title = `Planned ${fmt(total)}`;
     $('tbPos').textContent = `${t.i + 1}/${list.length}`;
@@ -2644,7 +2621,7 @@
     }
     if (v === 'why') {
       $('why').dataset.stage = state.whyStage;
-      $('whyDots').innerHTML = [1, 2, 3].map((n) => `<i class="${n <= state.whyStage ? 'on' : ''}"></i>`).join('') + `<span>${['The legacy network', 'What SASE is', 'How SASE covers it'][state.whyStage - 1]}</span>`;
+      $('whyDots').innerHTML = [1, 2, 3].map((n) => `<i class="${n <= state.whyStage ? 'on' : ''}"></i>`).join('') + `<span>${['The legacy network', 'The SASE answer', 'How SASE covers it'][state.whyStage - 1]}</span>`;
       $('whyGo').textContent = WHY_NEXT[state.whyStage - 1];
       renderWhy();
     }
@@ -2702,20 +2679,20 @@
   function toggleWhy() { if (state.view === 'why') state.view = 'lab'; else { state.view = 'why'; state.whyStage = 1; } render(); }
   function toggleAi() { state.view = state.view === 'ai' ? 'lab' : 'ai'; render(); }
   function toggleStart() { state.view = state.view === 'start' ? 'lab' : 'start'; render(); }
-  // Outside talk mode, → and ← walk: Start → Why SASE (3 steps) → What SASE is → phase 0 … phase 3 → AI security.
+  // Outside talk mode, → and ← walk: Start → What is SASE → Why SASE (3 steps) → phase 0 … phase 3 → AI security.
   function navNext() {
-    if (state.view === 'start') { state.view = 'why'; state.whyStage = 1; render(); }
-    else if (state.view === 'why') { if (state.whyStage < 3) state.whyStage += 1; else state.view = 'intro'; render(); }
-    else if (state.view === 'intro') { state.phase = 0; showLab(); }
+    if (state.view === 'start') { state.view = 'intro'; render(); }
+    else if (state.view === 'intro') { state.view = 'why'; state.whyStage = 1; render(); }
+    else if (state.view === 'why') { if (state.whyStage < 3) state.whyStage += 1; else { state.phase = 0; state.view = 'lab'; } render(); }
     else if (state.phase === 3) { state.view = 'ai'; render(); }
     else { state.phase = Math.min(3, state.phase + 1); render(); }
   }
   function navPrev() {
     if (state.view === 'start') return;
     if (state.view === 'ai') { state.phase = 3; showLab(); return; }
-    if (state.view === 'why') { if (state.whyStage > 1) state.whyStage -= 1; else state.view = 'start'; render(); }
-    else if (state.view === 'intro') { state.view = 'why'; state.whyStage = 3; render(); }
-    else if (state.phase === 0) { state.view = 'intro'; render(); }
+    if (state.view === 'intro') { state.view = 'start'; render(); }
+    else if (state.view === 'why') { if (state.whyStage > 1) state.whyStage -= 1; else state.view = 'intro'; render(); }
+    else if (state.phase === 0) { state.view = 'why'; state.whyStage = 3; render(); }
     else { state.phase -= 1; render(); }
   }
 
@@ -2900,7 +2877,7 @@
       // Remember the code for 10 hours (the stored value is the expiry time).
       try { localStorage.setItem('tornog-unlocked', String(Date.now() + 10 * 3600 * 1000)); } catch (err) {}
       $('gateMsg').textContent = '';
-      state.view = 'why'; state.whyStage = 1;
+      state.view = 'intro';
       render();
     } else {
       $('gateMsg').textContent = 'That code is not right. Try again.';
@@ -2912,9 +2889,8 @@
   $('whyBtn').addEventListener('click', () => { if (state.view !== 'why') { state.view = 'why'; state.whyStage = 1; } render(); });
   $('talkBtn').addEventListener('click', () => (state.talk ? endTalk() : startTalk()));
   $('talkbar').addEventListener('click', (e) => {
-    const len = e.target.closest('[data-len]'), step = e.target.closest('[data-step]');
-    if (len) setLen(+len.dataset.len);
-    else if (step) goStep(+step.dataset.step);
+    const step = e.target.closest('[data-step]');
+    if (step) goStep(+step.dataset.step);
     else if (e.target.closest('#tbTime')) { talkStart = Date.now(); tick(); }
   });
 
@@ -2961,13 +2937,13 @@
   });
 
   // Deep links such as #p2/branch-dc, so slides can jump straight to a view.
-  // Also #intro, and #talk10/3 or #talk15/3 for step 3 of a talk run order.
+  // Also #intro, and #talk/3 (or #talk15/3) for step 3 of the talk run order.
   function fromHash() {
     const h = location.hash;
-    const t = h.match(/^#talk(10|15)(?:\/(\d+))?$/);
+    const t = h.match(/^#talk(?:10|15)?(?:\/(\d+))?$/);
     if (t) {
-      if (!state.talk || state.talk.len !== +t[1]) { talkStart = Date.now(); state.talk = { len: +t[1], i: 0 }; lastLen = +t[1]; }
-      goStep((+t[2] || 1) - 1);
+      if (!state.talk) { talkStart = Date.now(); state.talk = { len: 15, i: 0 }; }
+      goStep((+t[1] || 1) - 1);
       return 'done';
     }
     if (h === '#intro') { state.view = 'intro'; return true; }
