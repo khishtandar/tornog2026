@@ -658,6 +658,12 @@
   }
   /* Short windows (the laptop): Work Sans runs wide, so the Why text sits a little tighter. */
   @media (max-height: 820px) { .why-viz p, .why-def span, .wask { font-size: 13.5px !important; letter-spacing: -0.01em; } .wp { padding-top: 8px; padding-bottom: 10px; gap: 4px; } }
+  /* AI security page: four cards, each in its own colour, in a 2 x 2 grid */
+  .aigrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .half.ai-ai { --c: var(--c-ai); } .half.ai-data { --c: var(--c-data); } .half.ai-sec { --c: var(--c-sec); } .half.ai-core { --c: var(--cloud); }
+  .aisec .half ul { gap: 7px; }
+  .aisec .half li b { font-weight: 600; color: var(--ink); }
+  @media (max-width: 900px) { .aigrid { grid-template-columns: 1fr; } }
   /* Hover and press feedback (ui-ux-pro-max checklist): short colour transitions, off under reduced motion. */
   .btn, .pg, .wrow, .phase, .tabs button, select, .gate input { transition: background-color .18s ease, border-color .18s ease, color .18s ease, box-shadow .18s ease, filter .18s ease; }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
@@ -685,6 +691,7 @@
         <button class="pg" id="whyBtn" type="button">Why SASE</button>
         <button class="pg" id="introBtn" type="button">What is SASE</button>
         <button class="pg" id="labBtn" type="button">Diagram</button>
+        <button class="pg" id="aiBtn" type="button">AI security</button>
       </nav>
       <span class="tsep" aria-hidden="true"></span>
       <span class="viewctl" role="group" aria-label="View">
@@ -823,6 +830,59 @@
     <div class="intro-foot">
       <p>Gartner named SASE in 2019, and the SSE label for the security half followed in 2021. Whether it comes from one vendor or two (SD-WAN from one, SSE from another), ask where the policy lives and how many consoles you will run.</p>
       <button class="btn go" id="introGo" type="button">Start with the legacy network</button>
+    </div>
+  </section>
+
+  <section class="panel intro aisec" id="ai" aria-labelledby="aiTitle" hidden>
+    <div class="intro-head">
+      <h2 id="aiTitle">AI security in a SASE platform</h2>
+      <p>Beyond allow or block: one policy for the people using AI, for the agents acting on their behalf, and for the AI apps you build.</p>
+    </div>
+    <div class="aigrid">
+      <div class="half ai-ai">
+        <span class="sub">People using AI</span>
+        <h3>Employees and AI tools</h3>
+        <ul>
+          <li><b>Shadow-AI discovery:</b> every AI app, assistant and plugin in use, with a risk score for each one.</li>
+          <li><b>Tenant control:</b> the company's AI tenant is allowed; personal accounts on the same site are blocked.</li>
+          <li><b>Activity control:</b> allow prompts but block file uploads, or make an app read-only.</li>
+          <li><b>Prompts and answers inspected:</b> inline, with DLP on prompts, uploads and responses, and a coaching message instead of a silent block.</li>
+          <li><b>AI inside approved SaaS:</b> assistants built into office suites and CRMs are governed by activity and data, not by a URL category.</li>
+          <li><b>Beyond the browser:</b> an endpoint agent finds AI desktop apps and applies the same policy to them.</li>
+        </ul>
+      </div>
+      <div class="half ai-data">
+        <span class="sub">AI agents and MCP</span>
+        <h3>Agents that act for you</h3>
+        <ul>
+          <li><b>Agent and MCP discovery:</b> local agents, AI coding assistants and the MCP servers they connect to are found and listed.</li>
+          <li><b>Tool-call control:</b> risky MCP tool calls are blocked or flagged, so an agent gets only the actions it needs.</li>
+          <li><b>Indirect prompt injection:</b> instructions hidden in a web page, a ticket or a tool response are blocked before they reach the agent.</li>
+          <li><b>One trail:</b> user, device, prompt, response, tool calls and the policy decision are tied together, so odd agent behaviour stands out.</li>
+        </ul>
+      </div>
+      <div class="half ai-sec">
+        <span class="sub">The AI you build</span>
+        <h3>Your own AI apps</h3>
+        <ul>
+          <li><b>AI firewall:</b> runtime guardrails in front of in-house AI apps and agents stop prompt injection, jailbreaks and data leaks.</li>
+          <li><b>Policy between users, agents, apps and models:</b> the same rules on premises and in the cloud.</li>
+          <li><b>AI security posture:</b> models and AI pipelines are scanned for misconfigurations and vulnerabilities before they reach production.</li>
+        </ul>
+      </div>
+      <div class="half ai-core">
+        <span class="sub">Together</span>
+        <h3>One platform</h3>
+        <ul>
+          <li><b>One policy engine:</b> AI rules sit next to the SD-WAN, firewall, SWG, CASB and ZTNA rules, in one console.</li>
+          <li><b>Inspection in the PoP:</b> GPUs in the PoPs run semantic and behavioural inspection inline, without a detour.</li>
+          <li><b>Threat prevention that predicts:</b> AI models how an AI-assisted attacker could chain techniques against this network, and tightens protection ahead of time.</li>
+          <li><b>Alone or with SASE:</b> it can run on its own, or as part of the platform.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="intro-foot">
+      <p>Capabilities shipping in SASE platforms in 2026. Ask which ones work inline today and which need an endpoint agent. And no guardrail stops every prompt injection: plan for it to come back.</p>
     </div>
   </section>
 
@@ -2144,9 +2204,9 @@
   const TALKS = {
     10: [
       { v: 'start', t: 10, cue: 'SASE in Practice: scan to follow along' },
-      { v: 'why', s: 1, t: 20, cue: 'What hurts in the legacy network' },
-      { v: 'why', s: 2, t: 20, cue: 'What SASE is' },
-      { v: 'why', s: 3, t: 50, cue: 'How SASE covers each issue' },
+      { v: 'why', s: 1, t: 15, cue: 'What hurts in the legacy network' },
+      { v: 'why', s: 2, t: 15, cue: 'What SASE is' },
+      { v: 'why', s: 3, t: 40, cue: 'How SASE covers each issue' },
       { v: 'intro', t: 45, cue: 'SD-WAN + SSE under one policy' },
       { p: 0, f: 'branch-saas', t: 30, cue: 'Where most networks start: everything backhauled' },
       { p: 1, f: 'remote-app', t: 60, cue: 'Phase 1: remote users first, VPN to ZTNA' },
@@ -2155,13 +2215,13 @@
       { p: 2, f: 'branch-saas', tab: 'pits', t: 60, cue: 'Field lessons: egress IP, TLS inspection, MTU' },
       { p: 3, f: 'branch-branch', tab: 'pits', t: 45, cue: 'Target state: the last mile is now your WAN' },
       { p: 0, f: 'branch-ai', t: 45, cue: 'What AI changes: allow or block is not enough', opt: true },
-      { p: 2, f: 'branch-ai', t: 60, cue: 'Discover, then control by tenant and activity', opt: true }
+      { p: 2, f: 'branch-ai', t: 60, cue: 'Discover, then control by tenant and activity' }
     ],
     15: [
       { v: 'start', t: 15, cue: 'SASE in Practice: scan to follow along' },
-      { v: 'why', s: 1, t: 30, cue: 'What hurts in the legacy network' },
-      { v: 'why', s: 2, t: 30, cue: 'What SASE is' },
-      { v: 'why', s: 3, t: 60, cue: 'How SASE covers each issue' },
+      { v: 'why', s: 1, t: 20, cue: 'What hurts in the legacy network' },
+      { v: 'why', s: 2, t: 20, cue: 'What SASE is' },
+      { v: 'why', s: 3, t: 45, cue: 'How SASE covers each issue' },
       { v: 'intro', t: 60, cue: 'SD-WAN + SSE under one policy' },
       { p: 0, f: 'branch-saas', t: 45, cue: 'Where most networks start: everything backhauled' },
       { p: 1, f: 'remote-app', t: 75, cue: 'Phase 1: remote users first, VPN to ZTNA' },
@@ -2172,7 +2232,7 @@
       { p: 2, f: 'branch-saas', tab: 'pits', t: 60, cue: 'Field lessons: egress IP, TLS inspection, MTU' },
       { p: 3, f: 'branch-branch', tab: 'pits', t: 60, cue: 'Target state: the last mile is now your WAN' },
       { p: 0, f: 'branch-ai', t: 60, cue: 'What AI changes: allow or block is not enough', opt: true },
-      { p: 2, f: 'branch-ai', t: 60, cue: 'Discover, then control by tenant and activity', opt: true },
+      { p: 2, f: 'branch-ai', t: 60, cue: 'Discover, then control by tenant and activity' },
       { p: 2, f: 'branch-ai', tab: 'pits', t: 45, cue: 'AI pitfalls: TLS, AI inside SaaS, logging prompts', opt: true }
     ]
   };
@@ -2509,6 +2569,7 @@
   function hashFor() {
     if (onStep()) return `#talk${state.talk.len}/${state.talk.i + 1}`;
     if (state.view === 'intro') return '#intro';
+    if (state.view === 'ai') return '#ai';
     if (state.view === 'start') return '#qr';
     if (state.view === 'why') return `#why/${state.whyStage}`;
     return `#p${state.phase}/${state.flow}`;
@@ -2520,8 +2581,8 @@
     const v = state.view, lab = v === 'lab';
     document.body.classList.toggle('labview', lab);
     document.body.classList.toggle('startview', v === 'start');
-    $('start').hidden = v !== 'start'; $('intro').hidden = v !== 'intro'; $('why').hidden = v !== 'why'; $('phases').hidden = !lab; $('main').hidden = !lab;
-    for (const [id, page] of [['whyBtn', 'why'], ['introBtn', 'intro'], ['labBtn', 'lab']]) {
+    $('start').hidden = v !== 'start'; $('intro').hidden = v !== 'intro'; $('why').hidden = v !== 'why'; $('ai').hidden = v !== 'ai'; $('phases').hidden = !lab; $('main').hidden = !lab;
+    for (const [id, page] of [['whyBtn', 'why'], ['introBtn', 'intro'], ['labBtn', 'lab'], ['aiBtn', 'ai']]) {
       if (v === page) $(id).setAttribute('aria-current', 'page'); else $(id).removeAttribute('aria-current');
     }
     if (v === 'why') {
@@ -2544,7 +2605,7 @@
   // In present mode the Why and intro slides scale like a slide: laid out at a fixed design width,
   // then zoomed as a whole so the slide fills the window without scrolling.
   function fitSlide() {
-    for (const id of ['start', 'why', 'intro']) {
+    for (const id of ['start', 'why', 'intro', 'ai']) {
       const w = $(id);
       w.style.zoom = ''; w.style.width = ''; w.style.justifySelf = '';
       if (state.view !== id || !document.body.classList.contains('present') || innerWidth <= 900) continue;
@@ -2581,16 +2642,19 @@
   const showLab = () => { state.view = 'lab'; render(); };
   function toggleIntro() { state.view = state.view === 'intro' ? 'lab' : 'intro'; render(); }
   function toggleWhy() { if (state.view === 'why') state.view = 'lab'; else { state.view = 'why'; state.whyStage = 1; } render(); }
+  function toggleAi() { state.view = state.view === 'ai' ? 'lab' : 'ai'; render(); }
   function toggleStart() { state.view = state.view === 'start' ? 'lab' : 'start'; render(); }
-  // Outside talk mode, → and ← walk: Start → Why SASE (3 steps) → What SASE is → phase 0 … phase 3.
+  // Outside talk mode, → and ← walk: Start → Why SASE (3 steps) → What SASE is → phase 0 … phase 3 → AI security.
   function navNext() {
     if (state.view === 'start') { state.view = 'why'; state.whyStage = 1; render(); }
     else if (state.view === 'why') { if (state.whyStage < 3) state.whyStage += 1; else state.view = 'intro'; render(); }
     else if (state.view === 'intro') { state.phase = 0; showLab(); }
+    else if (state.phase === 3) { state.view = 'ai'; render(); }
     else { state.phase = Math.min(3, state.phase + 1); render(); }
   }
   function navPrev() {
     if (state.view === 'start') return;
+    if (state.view === 'ai') { state.phase = 3; showLab(); return; }
     if (state.view === 'why') { if (state.whyStage > 1) state.whyStage -= 1; else state.view = 'start'; render(); }
     else if (state.view === 'intro') { state.view = 'why'; state.whyStage = 3; render(); }
     else if (state.phase === 0) { state.view = 'intro'; render(); }
@@ -2768,6 +2832,7 @@
   // The page tabs always go to their page (the keys W and I still toggle).
   $('introBtn').addEventListener('click', () => { state.view = 'intro'; render(); });
   $('labBtn').addEventListener('click', () => { state.view = 'lab'; render(); });
+  $('aiBtn').addEventListener('click', () => { state.view = 'ai'; render(); });
   $('introGo').addEventListener('click', () => (state.talk ? goStep(state.talk.i + 1) : navNext()));
   // A soft gate for the audience (not real security: the page source is public).
   $('gate').addEventListener('submit', (e) => {
@@ -2820,6 +2885,7 @@
     else if (k === 's' || k === 'S') { if (state.view === 'lab') setPanel(!state.panel); }
     else if (k === 'i' || k === 'I') toggleIntro();
     else if (k === 'h' || k === 'H') toggleStart();
+    else if (k === 'a' || k === 'A') toggleAi();
     else if (k === 'w' || k === 'W') toggleWhy();
     else if (k === 'd' || k === 'D') setMode('trace');
     else if (k === 'e' || k === 'E') setMode('edit');
@@ -2847,6 +2913,7 @@
       return 'done';
     }
     if (h === '#intro') { state.view = 'intro'; return true; }
+    if (h === '#ai') { state.view = 'ai'; return true; }
     if (h === '#qr' || h === '#start') { state.view = 'start'; return true; }
     const w = h.match(/^#why(?:\/([1-3]))?$/);
     if (w) { state.view = 'why'; state.whyStage = +w[1] || 1; return true; }
