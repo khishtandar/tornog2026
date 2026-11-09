@@ -658,6 +658,27 @@
   }
   /* Short windows (the laptop): Work Sans runs wide, so the Why text sits a little tighter. */
   @media (max-height: 820px) { .why-viz p, .why-def span, .wask { font-size: 13.5px !important; letter-spacing: -0.01em; } .wp { padding-top: 8px; padding-bottom: 10px; gap: 4px; } }
+  /* Below What is SASE: thin vs thick edge, and the providers compared */
+  .cmp { display: grid; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; font-size: 14.5px; }
+  .cmp > span { padding: 7px 12px; border-top: 1px solid var(--line); min-width: 0; }
+  .cmp > .ch { border-top: 0; font: 600 14px var(--display); color: var(--muted); background: var(--surface-2); }
+  .cmp.edge { grid-template-columns: 210px minmax(0, 1fr) minmax(0, 1fr); }
+  .cmp.edge .ch.thin { color: var(--cloud); } .cmp.edge .ch.thick { color: var(--c-legacy); }
+  .cmp .ca, .cmp .cv { font-weight: 600; background: var(--surface-2); }
+  .cmp.vend { grid-template-columns: 170px 120px minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 1.3fr); font-size: 14px; }
+  .cmp .cq { font-weight: 600; }
+  .cmp .q-leader { color: var(--cloud); } .cmp .q-challenger { color: var(--c-net); } .cmp .q-visionary { color: var(--c-ai); } .cmp .q-niche { color: var(--muted); }
+  .cmp .cn { color: var(--muted); }
+  .cmp-note { margin: 0; color: var(--muted); font-size: 13.5px; max-width: 120ch; }
+  .intro.more .intro-head h2 { font-size: clamp(22px, 2vw, 28px); }
+  @media (max-width: 900px) {
+    .cmp.edge, .cmp.vend { grid-template-columns: 1fr; }
+    .cmp > .ch { display: none; }
+    .cmp.edge .cthin::before { content: "Thin: "; font-weight: 600; color: var(--cloud); }
+    .cmp.edge .cthick::before { content: "Thick: "; font-weight: 600; }
+    .cmp.edge .cthin, .cmp.edge .cthick { border-top: 0; padding-top: 0; }
+    .cmp.vend > span:not(.cv) { border-top: 0; padding-top: 0; }
+  }
   /* AI security page: four cards, each in its own colour, in a 2 x 2 grid */
   .aigrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   .half.ai-ai { --c: var(--c-ai); } .half.ai-data { --c: var(--c-data); } .half.ai-sec { --c: var(--c-sec); } .half.ai-core { --c: var(--cloud); }
@@ -831,6 +852,42 @@
       <p>Gartner named SASE in 2019, and the SSE label for the security half followed in 2021. Whether it comes from one vendor or two (SD-WAN from one, SSE from another), ask where the policy lives and how many consoles you will run.</p>
       <button class="btn go" id="introGo" type="button">Start with the legacy network</button>
     </div>
+  </section>
+
+  <section class="panel intro more" id="introMore" aria-label="Thin and thick edges, and SASE providers compared" hidden>
+    <div class="intro-head">
+      <h2>Thin edge or thick edge?</h2>
+      <p>The box at the site (the CPE) decides where security runs: in the PoP, or on the box itself.</p>
+    </div>
+    <div class="cmp edge" role="table" aria-label="Thin edge compared with thick edge">
+      <span class="ch" role="columnheader"></span><span class="ch thin" role="columnheader">Thin edge: security in the PoP</span><span class="ch thick" role="columnheader">Thick edge: security on the box</span>
+      <span class="ca" role="rowheader">What runs on the box</span><span class="cthin" role="cell">SD-WAN, routing, QoS and a basic LAN firewall</span><span class="cthick" role="cell">SD-WAN plus NGFW and IPS, sometimes web filtering and sandboxing</span>
+      <span class="ca" role="rowheader">Where traffic is inspected</span><span class="cthin" role="cell">In the nearest PoP, for every site and user, in one pass</span><span class="cthick" role="cell">At the branch for site traffic; in the cloud for remote users</span>
+      <span class="ca" role="rowheader">Patching</span><span class="cthin" role="cell">The provider patches the PoPs; the box gets small, rare updates</span><span class="cthick" role="cell">Every box needs security updates and emergency CVE patches</span>
+      <span class="ca" role="rowheader">Sizing and refresh</span><span class="cthin" role="cell">Sized for bandwidth only; inspection scales in the cloud</span><span class="cthick" role="cell">Sized for the inspection peak, refreshed every few years</span>
+      <span class="ca" role="rowheader">East-west and local traffic</span><span class="cthin" role="cell">LAN segments filtered on the box; site to site inspected in the PoP, a few ms away</span><span class="cthick" role="cell">Inspected on site, with no trip to the cloud</span>
+      <span class="ca" role="rowheader">Internet down at the site</span><span class="cthin" role="cell">The LAN keeps working; inspected traffic waits for a link</span><span class="cthick" role="cell">Local policy keeps working</span>
+      <span class="ca" role="rowheader">Best fit</span><span class="cthin" role="cell">Most branches, stores and small sites</span><span class="cthick" role="cell">Large campuses, plants, heavy local traffic, strict sovereignty</span>
+    </div>
+    <p class="cmp-note">Many platforms offer both. Thin is the SASE model; thick keeps a firewall estate at the site, with its patching and refresh cycle.</p>
+    <div class="intro-head">
+      <h2>The 10 providers in the 2026 SASE Magic Quadrant</h2>
+      <p>Ordered by quadrant, as placed by Gartner in July 2026.</p>
+    </div>
+    <div class="cmp vend" role="table" aria-label="SASE providers compared">
+      <span class="ch" role="columnheader">Provider</span><span class="ch" role="columnheader">Gartner 2026</span><span class="ch" role="columnheader">Branch edge</span><span class="ch" role="columnheader">How it was built</span><span class="ch" role="columnheader">Gartner noted</span>
+      <span class="cv" role="rowheader">Netskope</span><span class="cq q-leader" role="cell">Leader</span><span role="cell">Thin gateway; security in the cloud</span><span role="cell">SSE first; SD-WAN added by acquisition (2022)</span><span class="cn" role="cell">Broad, deep features and PoP strategy; told not to over-focus on AI security</span>
+      <span class="cv" role="rowheader">Cato Networks</span><span class="cq q-leader" role="cell">Leader</span><span role="cell">Thin edge; all inspection in the PoP</span><span role="cell">One cloud platform for network and security from the start (2015)</span><span class="cn" role="cell">Above-average customer experience; higher pricing, weaker for modular adoption</span>
+      <span class="cv" role="rowheader">Palo Alto Networks</span><span class="cq q-leader" role="cell">Leader</span><span role="cell">Both: thin SD-WAN appliance, or NGFW</span><span role="cell">NGFW plus cloud SSE; SD-WAN added by acquisition (2020)</span><span class="cn" role="cell">Vision on post-quantum and AI agent traffic; expensive, on-prem appliance security cloud-reliant</span>
+      <span class="cv" role="rowheader">Zscaler</span><span class="cq q-leader" role="cell">Leader (new)</span><span role="cell">Thin branch appliance; security in the cloud</span><span role="cell">Cloud proxy (SSE) first; branch and segmentation added (2024)</span><span class="cn" role="cell">Networking improvements, PoP infrastructure, financial health</span>
+      <span class="cv" role="rowheader">Fortinet</span><span class="cq q-challenger" role="cell">Challenger</span><span role="cell">Thick: NGFW and SD-WAN on one box, plus cloud</span><span role="cell">Firewall first, with SD-WAN built into the firewall</span><span class="cn" role="cell">Delayed features, below-average customer experience, frequent patching</span>
+      <span class="cv" role="rowheader">Cisco</span><span class="cq q-challenger" role="cell">Challenger</span><span role="cell">Both: SD-WAN routers and appliances, plus cloud SSE</span><span role="cell">SD-WAN lines from acquisitions plus a cloud SSE</span><span class="cn" role="cell">PoP infrastructure and sales; management complexity across SD-WAN and SSE</span>
+      <span class="cv" role="rowheader">Versa Networks</span><span class="cq q-challenger" role="cell">Challenger</span><span role="cell">Both, on one OS: thin, or full NGFW</span><span role="cell">One operating system for SD-WAN, NGFW and SSE</span><span class="cn" role="cell">Product capabilities and PoPs; warned against non-SASE features</span>
+      <span class="cv" role="rowheader">Cloudflare</span><span class="cq q-visionary" role="cell">Visionary</span><span role="cell">Thin connector; security in its global network</span><span role="cell">Global edge network first; WAN and SSE built on it</span><span class="cn" role="cell">AI and post-quantum focus; a narrow view of sovereignty</span>
+      <span class="cv" role="rowheader">HPE</span><span class="cq q-niche" role="cell">Niche player</span><span role="cell">Both: SD-WAN edge with firewall and IPS, plus cloud SSE</span><span role="cell">SD-WAN (2020) and SSE (2023) acquisitions, plus Juniper (2025)</span><span class="cn" role="cell">About 600 SASE customers; management complexity, fewer PoPs</span>
+      <span class="cv" role="rowheader">Sangfor</span><span class="cq q-niche" role="cell">Niche player</span><span role="cell">Both: NGFW-based SD-WAN, plus cloud SASE</span><span role="cell">Firewall and SD-WAN vendor with a cloud SASE platform</span><span class="cn" role="cell">No detail in public coverage</span>
+    </div>
+    <p class="cmp-note">Placement and notes from Gartner's Magic Quadrant for SASE Platforms (28 July 2026), as reported in press coverage; edge models from vendor documentation, November 2026. Check the details with each vendor. Disclosure: the speaker works for one of these vendors.</p>
   </section>
 
   <section class="panel intro aisec" id="ai" aria-labelledby="aiTitle" hidden>
@@ -2581,7 +2638,7 @@
     const v = state.view, lab = v === 'lab';
     document.body.classList.toggle('labview', lab);
     document.body.classList.toggle('startview', v === 'start');
-    $('start').hidden = v !== 'start'; $('intro').hidden = v !== 'intro'; $('why').hidden = v !== 'why'; $('ai').hidden = v !== 'ai'; $('phases').hidden = !lab; $('main').hidden = !lab;
+    $('start').hidden = v !== 'start'; $('intro').hidden = v !== 'intro'; $('introMore').hidden = v !== 'intro'; $('why').hidden = v !== 'why'; $('ai').hidden = v !== 'ai'; $('phases').hidden = !lab; $('main').hidden = !lab;
     for (const [id, page] of [['whyBtn', 'why'], ['introBtn', 'intro'], ['labBtn', 'lab'], ['aiBtn', 'ai']]) {
       if (v === page) $(id).setAttribute('aria-current', 'page'); else $(id).removeAttribute('aria-current');
     }
@@ -2615,7 +2672,8 @@
       let best = [1600, 0];
       for (const D of [1600, 1500, 1400, 1300, 1200, 1100]) {
         w.style.width = `${D}px`;
-        const availH = innerHeight - (wrap.offsetHeight - w.offsetHeight) - 12;
+        const below = id === 'intro' ? $('introMore').offsetHeight + 8 : 0;
+        const availH = innerHeight - (wrap.offsetHeight - w.offsetHeight - below) - 12;
         const z = Math.min(availW / D, availH / w.offsetHeight);
         if (z > best[1]) best = [D, z];
       }
