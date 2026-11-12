@@ -510,7 +510,7 @@
   }
   .wask { display: grid; gap: 1px; padding: 7px 10px; border-left: 4px solid var(--accent); border-radius: 6px; background: var(--accent-soft); font-size: 14.5px !important; font-weight: 600; color: var(--ink); }
   .wask b { font: 600 12.5px var(--display); color: var(--accent-ink); }
-  /* 14 issues: a tighter list below 1000px of height */
+  /* 20 issues: a tighter list below 1000px of height */
   @media (max-height: 1000px) {
     .why-list { gap: 4px; }
     .why .wrow { padding: 4px 9px; }
@@ -746,7 +746,7 @@
           <a href="https://www.linkedin.com/in/khishtandar" target="_blank" rel="noopener noreferrer">linkedin.com/in/khishtandar</a>
         </div>
         <ul class="st-what">
-          <li>Why SASE: 14 problems with the legacy network, and how SASE covers each</li>
+          <li>Why SASE: 20 problems with the legacy network, and how SASE covers each</li>
           <li>A migration in four phases, with 18 traffic flows you can step through</li>
           <li>What if: a DC outage, ransomware, a DNS attack, an AI data leak</li>
         </ul>
@@ -2075,16 +2075,22 @@
     ['Everything hairpins through the DC', 'Internet and SaaS ride MPLS to the DC and back out. Far branches and remote users feel it most.', 'Each site and user breaks out at the nearest PoP and is inspected there.', ['sdwan', 'swg'], 'How far is your farthest branch from the DC, in milliseconds?'],
     ['A WAN that is slow to change and costly', 'MPLS takes months to deliver and is the priciest bandwidth. The IPsec backup sits idle and untested.', 'Any internet link, all links active, zero-touch sites, and a provider backbone between PoPs.', ['sdwan', 'mm', 'qos'], 'How long did your last new site wait for its circuit?'],
     ['The VPN gives the whole network', 'Users get routes to whole subnets, and the VPN gateway is exposed on the internet.', 'ZTNA gives one app at a time, by identity and device posture. Nothing listens inbound.', ['ztna', 'idp'], 'If a VPN account were stolen today, what could it reach?'],
-    ['VPN capacity in a crisis', 'Concentrators were sized for a few remote users. When everyone went home, the VPN and the DC link became the bottleneck overnight.', 'Users connect to the nearest of many PoPs. Capacity grows with the provider, not with a box you have to order.', ['ztna', 'sub'], 'What happened to your VPN when everyone went home in 2020?'],
+    ['Hardware to replace every 5 years', 'Firewalls, proxies, VPN concentrators and routers reach end of life together: a forklift project and a capital spike every cycle.', 'The security stack is a cloud service, upgraded continuously. Only a thin edge stays on site, and it is swapped zero-touch.', ['sub', 'ztp'], 'When is your next firewall refresh, and how big is the bill?'],
     ['Nothing inspects the WAN', 'Any-to-any MPLS is "trusted", so ransomware moves from site to site.', 'A firewall and IPS between every pair of sites, under the same policy as internet traffic.', ['fwaas', 'ips'], 'Do you inspect traffic between your sites, or only to the internet?'],
     ['Security capped by the box', 'Appliances are sized for the peak someone guessed years ago. TLS inspection costs throughput, so it is often left off.', 'Single-pass inspection in every PoP, scaled by the provider, so TLS inspection stays on.', ['tls', 'swg', 'ips'], 'Is TLS inspection on for everything? If not, why not?'],
-    ['Hardware to replace every 5 years', 'Firewalls, proxies, VPN concentrators and routers reach end of life together: a forklift project and a capital spike every cycle.', 'The security stack is a cloud service, upgraded continuously. Only a thin edge stays on site, and it is swapped zero-touch.', ['sub', 'ztp'], 'When is your next firewall refresh, and how big is the bill?'],
+    ['VPN capacity in a crisis', 'Concentrators were sized for a few remote users. When everyone went home, the VPN and the DC link became the bottleneck overnight.', 'Users connect to the nearest of many PoPs. Capacity grows with the provider, not with a box you have to order.', ['ztna', 'sub'], 'What happened to your VPN when everyone went home in 2020?'],
     ['Emergency patching of edge boxes', 'Internet-facing VPN gateways and firewalls are favourite targets: a new CVE means patching tonight, sometimes before a fix exists.', 'The provider patches every PoP. Private apps sit behind connectors that dial out, so there is nothing listening to attack.', ['ztna', 'ips'], 'How much time does your team spend patching and upgrading firewalls and routers?'],
     ['A different policy everywhere', 'HQ, branches, remote users and the cloud each have their own rules, consoles and logs.', 'One policy and one log for every site, user and cloud workload.', ['one'], 'How many consoles do you log into to change one rule everywhere?'],
     ['Compliance and audits', 'Proving who can reach what means exporting configs and logs from many boxes, then reconciling them by hand.', 'One policy and one log: the audit report is a query, by user, app and site.', ['one', 'anal'], 'How long does it take you to prove to an auditor who can reach what?'],
     ['Operations cost', 'Every change touches several boxes and teams, plus carrier tickets. Most of the time goes to keeping boxes alive.', 'One change in one console applies everywhere, with fewer boxes, circuits and contracts. Compare the subscription honestly with hardware, support and people time.', ['one', 'sub'], 'How long does a simple change take, from ticket to done?'],
     ['Slow to troubleshoot', '"Teams is bad" turns into a carrier ticket and logs from three different tools.', 'Loss, jitter and latency per link and per application, next to the security events, in one place.', ['qos', 'anal'], 'How long did your last "the network is slow" ticket take to close?'],
     ['Mergers and new companies', 'Joining an acquired company takes months: new circuits, overlapping IP ranges, and firewall rules on both sides.', 'Their sites get edges, their users get agents, and both sides reach each other app by app through connectors, so overlapping ranges don\'t block day-one access. Renumber later, if you fully merge.', ['ztp', 'ztna'], 'How long did it take to connect the last company you acquired?', 'Overlap still matters site to site: server-to-server traffic and AD trusts need routing or NAT, and a full integration still means renumbering.'],
+    ['Availability rests on a few boxes', 'The DC firewall pair, the VPN gateway and each branch router are single points of failure. An HA pair shares one room, one power feed and one software bug.', 'Many PoPs, each one redundant. Sites and users move to the next PoP by themselves, and links run active-active, so a failure is routine, not an outage.', ['sdwan', 'mm'], 'Which single box, if it died right now, would take down the most users?', 'The provider is now your dependency: check its SLA, how fast sites move to another PoP, and what the edge does if it cannot reach any PoP.'],
+    ['Example: the DC goes dark', 'A power or cooling failure at the DC. Every branch and remote user loses internet, SaaS and the VPN at the same moment, because everything ran through it.', 'Branches and users keep internet and SaaS through the nearest PoP. Only the apps hosted in that DC are down, until a second DC or a cloud copy takes over.', ['sdwan', 'swg', 'ztna'], 'When did your DC last lose power or cooling, and who noticed first?'],
+    ['Scaling up is a project', 'Every step up means a bigger firewall, a faster circuit or a new regional hub, each with its own lead time, budget and change window.', 'New sites come up zero-touch, more bandwidth is a license change, and the provider scales the PoPs and the backbone.', ['ztp', 'sdwan', 'sub'], 'How long did your last bandwidth upgrade take, from request to done?', 'The last mile still scales the old way: a faster ISP link is still an order with the carrier.'],
+    ['Laptops off the VPN are unprotected', 'At home or in a café, a laptop with the VPN off goes straight to the internet. Split tunnels and "connect when needed" leave it with no inspection and no log.', 'An always-on agent sends traffic to the nearest PoP, so the same policy and inspection apply in the office, at home and on the road.', ['swg', 'dnssec', 'idp'], 'What protects a laptop when the VPN is off?'],
+    ['Contractors and partners', 'Vendors get VPN accounts, often shared, that reach whole subnets and stay active long after the project ends.', 'Browser-based ZTNA gives each contractor one app, with their own identity and an end date. No agent on a laptop you don\'t own.', ['clientless', 'idp', 'ztna'], 'How many contractor VPN accounts are still active, and whose are they?'],
+    ['Cloud is bolted on', 'VPCs hang off the DC with IPsec tunnels and a virtual firewall in each one: another set of rules, and traffic that hairpins through the DC.', 'Each VPC or VNet connects to the nearest PoP like any other site, under the same policy as branches and users.', ['sdwan', 'fwaas', 'one'], 'How many firewalls, physical and virtual, sit in front of your cloud workloads?', 'Cloud availability is still on you: one virtual edge in one zone, with one tunnel, is a single point of failure.'],
     ['Blind to SaaS data and AI', 'URL categories only allow or block. No view of tenants, uploads or prompts.', 'CASB and DLP see the data. AI tools are discovered and controlled per app and activity.', ['casb', 'dlp', 'aidisc'], 'Do you know which AI tools your users paste company data into?']
   ];
   // Tags that are not single capabilities.
@@ -2112,12 +2118,12 @@
       sase: { nodes: [['lap', 68, 122, 'Laptop', 'agent'], ['pop', 205, 122, 'PoP', '', 'pop'], ['a1', 385, 40, 'App A', 'allowed', 'box', 'good'], ['a2', 385, 122, 'File server', '', 'box', 'dim'], ['a3', 385, 204, 'Domain controller', '', 'box', 'dim']],
         links: [['lap', 'pop', 'flow'], ['pop', 'a1', 'ok']],
         badges: [[205, 243, 'one app, by identity and device posture', 'good']] } },
-    { legacy: { nodes: [['u1', 70, 45, 'Users', 'at home'], ['u2', 70, 130, 'Users', 'at home'], ['u3', 70, 215, 'Users', 'at home'], ['vpn', 245, 120, 'VPN concentrator', 'sized for 20%', 'box', 'bad'], ['dc', 395, 120, 'DC link', 'full']],
-        links: [['u1', 'vpn', 'bad'], ['u2', 'vpn', 'bad'], ['u3', 'vpn', 'bad'], ['vpn', 'dc', 'flow']],
-        meters: [[245, 172, 0.98, 'bad', 'sessions 98%']], badges: [[245, 30, 'everyone went home overnight', 'bad']] },
-      sase: { nodes: [['u1', 70, 45, 'Users', 'at home'], ['u2', 70, 130, 'Users', 'at home'], ['u3', 70, 215, 'Users', 'at home'], ['p1', 240, 45, 'PoP', '', 'pop'], ['p2', 240, 130, 'PoP', '', 'pop'], ['p3', 240, 215, 'PoP', '', 'pop'], ['app', 390, 130, 'Apps', 'any location', 'box', 'good']],
-        links: [['u1', 'p1', 'flow'], ['u2', 'p2', 'flow'], ['u3', 'p3', 'flow'], ['p1', 'app', 'okline'], ['p2', 'app', 'okline'], ['p3', 'app', 'okline']],
-        badges: [[300, 248, 'nearest PoP; capacity grows with demand', 'good']] } },
+    { legacy: { nodes: [['b', 75, 105, 'Buy', 'year 0'], ['s', 230, 105, 'Support', 'every year'], ['e', 385, 105, 'End of life', 'year 5', 'box', 'bad'], ['f', 230, 205, 'Forklift swap', 'buy it all again', 'box', 'bad']],
+        links: [['b', 's', 'plain'], ['s', 'e', 'plain'], ['e', 'f', 'bad'], ['f', 'b', 'bad', 'again']],
+        badges: [[230, 35, 'a capital spike every cycle', 'bad']] },
+      sase: { nodes: [['sub', 95, 105, 'Subscription', 'monthly or yearly'], ['up', 365, 105, 'New features', 'added continuously', 'box', 'good'], ['edge', 230, 205, 'Thin edge', 'swapped zero-touch', 'box', 'good']],
+        links: [['sub', 'up', 'ok'], ['up', 'edge', 'okline'], ['sub', 'edge', 'okline']],
+        badges: [[230, 35, 'no forklift upgrades', 'good']] } },
     { legacy: { nodes: [['b1', 80, 45, 'Branch 1', 'infected laptop', 'box', 'bad'], ['mpls', 230, 125, 'MPLS', '"trusted"', 'cloud'], ['b2', 380, 45, 'Branch 2', ''], ['hq', 80, 205, 'HQ', ''], ['dc', 380, 205, 'DC', '']],
         links: [['b1', 'mpls', 'bad'], ['mpls', 'b2', 'bad'], ['mpls', 'hq', 'bad'], ['mpls', 'dc', 'bad']],
         marks: [['b2', 'x'], ['hq', 'x'], ['dc', 'x']], badges: [[230, 245, 'spreads site to site', 'bad']] },
@@ -2130,12 +2136,12 @@
       sase: { nodes: [['u', 70, 110, 'Users', ''], ['pop', 230, 110, 'PoP', '', 'pop'], ['inet', 390, 110, 'Internet', '', 'cloud']],
         links: [['u', 'pop', 'flow'], ['pop', 'inet', 'flow']],
         meters: [[230, 165, 0.3, 'good', 'load 30%']], badges: [[230, 40, 'TLS inspection: on, single pass', 'good'], [230, 228, 'the provider scales it', 'good']] } },
-    { legacy: { nodes: [['b', 75, 105, 'Buy', 'year 0'], ['s', 230, 105, 'Support', 'every year'], ['e', 385, 105, 'End of life', 'year 5', 'box', 'bad'], ['f', 230, 205, 'Forklift swap', 'buy it all again', 'box', 'bad']],
-        links: [['b', 's', 'plain'], ['s', 'e', 'plain'], ['e', 'f', 'bad'], ['f', 'b', 'bad', 'again']],
-        badges: [[230, 35, 'a capital spike every cycle', 'bad']] },
-      sase: { nodes: [['sub', 95, 105, 'Subscription', 'monthly or yearly'], ['up', 365, 105, 'New features', 'added continuously', 'box', 'good'], ['edge', 230, 205, 'Thin edge', 'swapped zero-touch', 'box', 'good']],
-        links: [['sub', 'up', 'ok'], ['up', 'edge', 'okline'], ['sub', 'edge', 'okline']],
-        badges: [[230, 35, 'no forklift upgrades', 'good']] } },
+    { legacy: { nodes: [['u1', 70, 45, 'Users', 'at home'], ['u2', 70, 130, 'Users', 'at home'], ['u3', 70, 215, 'Users', 'at home'], ['vpn', 245, 120, 'VPN concentrator', 'sized for 20%', 'box', 'bad'], ['dc', 395, 120, 'DC link', 'full']],
+        links: [['u1', 'vpn', 'bad'], ['u2', 'vpn', 'bad'], ['u3', 'vpn', 'bad'], ['vpn', 'dc', 'flow']],
+        meters: [[245, 172, 0.98, 'bad', 'sessions 98%']], badges: [[245, 30, 'everyone went home overnight', 'bad']] },
+      sase: { nodes: [['u1', 70, 45, 'Users', 'at home'], ['u2', 70, 130, 'Users', 'at home'], ['u3', 70, 215, 'Users', 'at home'], ['p1', 240, 45, 'PoP', '', 'pop'], ['p2', 240, 130, 'PoP', '', 'pop'], ['p3', 240, 215, 'PoP', '', 'pop'], ['app', 390, 130, 'Apps', 'any location', 'box', 'good']],
+        links: [['u1', 'p1', 'flow'], ['u2', 'p2', 'flow'], ['u3', 'p3', 'flow'], ['p1', 'app', 'okline'], ['p2', 'app', 'okline'], ['p3', 'app', 'okline']],
+        badges: [[300, 248, 'nearest PoP; capacity grows with demand', 'good']] } },
     { legacy: { nodes: [['att', 75, 50, 'Attacker', 'new CVE', 'box', 'bad'], ['vpn', 230, 130, 'VPN gateway', 'exposed, unpatched', 'box', 'bad'], ['net', 385, 130, 'Internal network', ''], ['adm', 75, 205, 'Admin', 'patching at 2 a.m.']],
         links: [['att', 'vpn', 'bad'], ['vpn', 'net', 'bad'], ['adm', 'vpn', 'idle']],
         marks: [['net', 'x']], badges: [[300, 245, 'patch tonight, hope it holds', 'bad']] },
@@ -2171,6 +2177,42 @@
       sase: { nodes: [['us', 80, 130, 'Your users', ''], ['pop', 230, 130, 'PoP', '', 'pop'], ['them', 380, 130, 'Their apps', 'edge or connector', 'box', 'good']],
         links: [['us', 'pop', 'flow'], ['pop', 'them', 'ok']],
         badges: [[230, 45, 'app by app: overlap doesn\'t matter', 'good'], [230, 215, 'days or weeks, not months', 'good']] } },
+    { legacy: { nodes: [['br', 75, 60, 'Branch', 'one router, one link'], ['u', 75, 195, 'Remote users', 'one VPN gateway'], ['fw', 245, 128, 'DC firewall pair', 'same room and power', 'box', 'bad'], ['inet', 395, 128, 'Internet', '', 'cloud']],
+        links: [['br', 'fw', 'flow'], ['u', 'fw', 'flow'], ['fw', 'inet', 'flow']],
+        badges: [[245, 245, 'a few boxes carry everyone', 'bad']] },
+      sase: { nodes: [['br', 75, 60, 'Branch', 'two links, both active'], ['u', 75, 195, 'Remote users', 'agent'], ['pa', 250, 55, 'PoP', '', 'pop'], ['pb', 250, 190, 'PoP', '', 'pop'], ['app', 395, 122, 'Apps', 'any location', 'box', 'good']],
+        links: [['br', 'pa', 'idle'], ['br', 'pb', 'flow'], ['u', 'pb', 'flow'], ['pa', 'app', 'idle'], ['pb', 'app', 'ok']],
+        marks: [['pa', 'x']], badges: [[230, 245, 'a PoP fails: sites move to the next one', 'good']] } },
+    { legacy: { nodes: [['b1', 80, 45, 'Branch 1', ''], ['b2', 80, 130, 'Branch 2', ''], ['u', 80, 215, 'Remote users', 'VPN'], ['dc', 245, 130, 'DC', 'power failure', 'box', 'bad'], ['saas', 395, 130, 'Internet, SaaS', '', 'cloud']],
+        links: [['b1', 'dc', 'bad'], ['b2', 'dc', 'bad'], ['u', 'dc', 'bad'], ['dc', 'saas', 'idle']],
+        marks: [['dc', 'x']], badges: [[300, 40, 'everything stops at once', 'bad']] },
+      sase: { nodes: [['b1', 80, 45, 'Branch 1', ''], ['b2', 80, 130, 'Branch 2', ''], ['u', 80, 215, 'Remote users', 'agent'], ['pop', 245, 130, 'PoP', '', 'pop'], ['saas', 395, 55, 'Internet, SaaS', '', 'cloud'], ['dc', 395, 205, 'DC', 'down: its apps only', 'box', 'bad']],
+        links: [['b1', 'pop', 'flow'], ['b2', 'pop', 'flow'], ['u', 'pop', 'flow'], ['pop', 'saas', 'ok'], ['pop', 'dc', 'idle']],
+        marks: [['dc', 'x']], badges: [[245, 250, 'internet and SaaS keep working', 'good']] } },
+    { legacy: { nodes: [['br', 75, 120, 'Branch', '+200 users'], ['fw', 245, 120, 'Firewall', 'max 500 Mbps', 'box', 'bad'], ['inet', 395, 120, 'Internet', '', 'cloud']],
+        links: [['br', 'fw', 'flow'], ['fw', 'inet', 'flow']],
+        meters: [[245, 168, 1, 'bad', 'throughput 100%']], badges: [[245, 40, 'next step: buy a bigger box', 'bad'], [245, 232, 'weeks of lead time', 'bad']] },
+      sase: { nodes: [['br', 75, 120, 'Branch', '+200 users'], ['pop', 245, 120, 'PoP', '', 'pop'], ['inet', 395, 120, 'Internet', '', 'cloud']],
+        links: [['br', 'pop', 'flow'], ['pop', 'inet', 'flow']],
+        meters: [[245, 168, 0.4, 'good', 'license: 500 Mbps to 1 Gbps']], badges: [[245, 40, 'more bandwidth: a license change', 'good'], [245, 232, 'new sites: zero-touch, in days', 'good']] } },
+    { legacy: { nodes: [['lap', 70, 122, 'Laptop', 'VPN off', 'box', 'bad'], ['inet', 235, 122, 'Internet', '', 'cloud'], ['mal', 385, 45, 'Phishing site', '', 'box', 'bad'], ['saas', 385, 200, 'SaaS', 'personal account']],
+        links: [['lap', 'inet', 'bad'], ['inet', 'mal', 'bad'], ['inet', 'saas', 'flow']],
+        badges: [[230, 248, 'no inspection, no log', 'bad']] },
+      sase: { nodes: [['lap', 70, 122, 'Laptop', 'agent, always on'], ['pop', 235, 122, 'PoP', '', 'pop'], ['mal', 385, 45, 'Phishing site', 'blocked', 'box', 'dim'], ['saas', 385, 200, 'SaaS', 'company tenant', 'box', 'good']],
+        links: [['lap', 'pop', 'flow'], ['pop', 'mal', 'bad'], ['pop', 'saas', 'ok']],
+        marks: [['mal', 'block']], badges: [[215, 248, 'same policy at home, in the office, on the road', 'good']] } },
+    { legacy: { nodes: [['c', 70, 122, 'Contractor', 'shared VPN login', 'box', 'bad'], ['vpn', 230, 122, 'VPN gateway', ''], ['a1', 385, 40, 'Their app', ''], ['a2', 385, 122, 'File server', ''], ['a3', 385, 204, 'Domain controller', '']],
+        links: [['c', 'vpn', 'flow'], ['vpn', 'a1', 'flow'], ['vpn', 'a2', 'bad'], ['vpn', 'a3', 'bad']],
+        badges: [[200, 248, 'still active after the project ended', 'bad']] },
+      sase: { nodes: [['c', 70, 122, 'Contractor', 'own identity, browser'], ['pop', 230, 122, 'PoP', '', 'pop'], ['a1', 385, 40, 'Their app', 'until Dec 31', 'box', 'good'], ['a2', 385, 122, 'File server', '', 'box', 'dim'], ['a3', 385, 204, 'Domain controller', '', 'box', 'dim']],
+        links: [['c', 'pop', 'flow'], ['pop', 'a1', 'ok']],
+        badges: [[200, 248, 'one app, one identity, an end date', 'good']] } },
+    { legacy: { nodes: [['br', 75, 60, 'Branch', ''], ['dc', 230, 130, 'DC', 'IPsec hub'], ['v1', 385, 60, 'Cloud VPC', 'own virtual firewall', 'box', 'bad'], ['v2', 385, 200, 'Cloud VNet', 'own virtual firewall', 'box', 'bad']],
+        links: [['br', 'dc', 'flow'], ['dc', 'v1', 'flow'], ['dc', 'v2', 'flow']],
+        badges: [[200, 245, 'through the DC, rules in every VPC', 'bad']] },
+      sase: { nodes: [['br', 75, 60, 'Branch', ''], ['u', 75, 200, 'Remote users', ''], ['pop', 230, 130, 'PoP', '', 'pop'], ['v1', 385, 60, 'Cloud VPC', 'virtual edge', 'box', 'good'], ['v2', 385, 200, 'Cloud VNet', 'virtual edge', 'box', 'good']],
+        links: [['br', 'pop', 'flow'], ['u', 'pop', 'flow'], ['pop', 'v1', 'ok'], ['pop', 'v2', 'ok']],
+        badges: [[230, 245, 'the cloud is just another site', 'good']] } },
     { legacy: { nodes: [['u', 68, 122, 'User', ''], ['px', 215, 122, 'Proxy', 'sees a domain only'], ['ai', 385, 45, 'GenAI', 'personal account'], ['pc', 385, 200, 'Personal cloud', 'Dropbox · Gmail']],
         links: [['u', 'px', 'flow'], ['px', 'ai', 'bad', 'source code'], ['px', 'pc', 'bad', 'customer list']],
         badges: [[215, 245, 'allowed by category, nobody sees what left', 'bad']] },
